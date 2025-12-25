@@ -1,0 +1,48 @@
+server:
+  port: 4003
+spring:
+  datasource:
+    primary:
+      url: ${DB_URL}
+      username: ${DB_USER}
+      password: ${DB_PASSWORD}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    open-in-view: false
+    primary:
+      properties:
+        hibernate:
+          show_sql: true
+      hibernate:
+        ddl-auto: update
+    secondary:
+      properties:
+        hibernate:
+          show_sql: true
+      hibernate:
+        ddl-auto: none
+  data:
+    redis:
+      host: redis
+      port: 6379
+      timeout: 60000
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${GMAIL_USERNAME}
+    password: ${GMAIL_APP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          timeout: 5000
+          starttls:
+            enable: true
+  web:
+    resources:
+      add-mappings: false
+  mvc:
+    throw-exception-if-no-handler-found: true
+jwt:
+  secret: ${JWT_SECRET}
+

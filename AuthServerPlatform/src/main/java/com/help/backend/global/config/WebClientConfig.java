@@ -1,0 +1,18 @@
+package com.help.backend.global.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.client.WebClient;
+
+@Configuration
+public class WebClientConfig {
+	@Bean
+	public WebClient koreaInvestWebClient() {
+		return WebClient.builder()
+			.baseUrl("https://openapivts.koreainvestment.com:29443")
+			.defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+			.build();
+	}
+}
