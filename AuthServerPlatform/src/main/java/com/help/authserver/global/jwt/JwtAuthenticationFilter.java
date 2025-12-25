@@ -74,16 +74,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		final FilterChain filterChain) throws ServletException, IOException {
 		jwtUtil.extractAccessTokenFromRequest(request)
 			.filter(jwtUtil::isTokenValidate)
-			.flatMap(jwtUtil::extractUsername)  // discordID
-			.flatMap(userRepository::findWithProfileByUsername)
+			.flatMap(jwtUtil::extractUsername)  // FIXME : discordID보단 membershipID 같은게 좋을 듯? -> 표준화
+			.flatMap(userRepository::findWithProfileByUsername)  // FIXME : 일반화된 레포지터리 필요..?
 			.ifPresent(this::saveAuthentication);
 
 		filterChain.doFilter(request, response);
 	}
 
 	// FIXME : 로그인 방식에 따라 객체가 다르게 들어오지 않음?
+	// Memo : User 인터페이스 : 이걸 기존 EmailUser, DiscordMembership 등이 구현하기 !
 	private void saveAuthentication(final User myUser) {
-		final UserDetails userDetails = CustomUser.from(myUser);0
+		final UserDetails userDetails = CustomUser.from(myUser);  // Memo : 그럼 각 사용자별로로 from 정의
 		final Authentication authentication =
 			new UsernamePasswordAuthenticationToken(
 				userDetails,

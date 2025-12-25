@@ -71,7 +71,7 @@ public class CustomUser extends User {
 		}
 
 		return new CustomUser(
-			membershipViews.get(0).getUsername(),
+			membershipViews.get(0).getDiscordID(),  // username 대용
 			"OAUTH_USER",
 			authorities
 		);
