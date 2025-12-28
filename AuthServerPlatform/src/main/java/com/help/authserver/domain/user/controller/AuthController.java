@@ -1,33 +1,27 @@
 package com.help.authserver.domain.user.controller;
 
+import com.help.authserver.domain.user.dto.response.LoginCheckResponseDto;
 import com.help.authserver.domain.user.service.DiscordAuthService;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.help.authserver.domain.user.dto.request.LoginRequestDto;
-import com.help.authserver.domain.user.dto.request.PasswordResetConfirmDto;
-import com.help.authserver.domain.user.dto.request.PasswordResetRequestDto;
-import com.help.authserver.domain.user.dto.response.LoginCheckResponseDto;
-import com.help.authserver.domain.user.service.AuthService;
-import com.help.authserver.domain.user.service.UserService;
-import com.help.authserver.domain.user.service.VerificationTokenService;
-import com.help.authserver.global.common.response.ApiResponse;
-import com.help.authserver.global.jwt.CustomUser;
+//import com.help.authserver.domain.user.service.AuthService;
+import com.help.global.common.response.ApiResponse;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.net.URI;
+
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/auth")
 @Slf4j
 @RequiredArgsConstructor
 public class AuthController {
@@ -48,12 +42,19 @@ public class AuthController {
 
 	// 로그인
 	@GetMapping("/discord_login")
-	public ApiResponse<?> loginWithDiscord(
-			@RequestParam("code") String code,
-			@RequestParam(value = "redirectUrl", required = false) String redirectUrl,
+	public ResponseEntity<Void> loginWithDiscord(
+			@RequestParam("code") String code,  // OAuth2 발급 요청에 쓰는 코드
+//			@RequestParam(value = "redirectUrl", required = false) String redirectUrl,
+			@RequestParam(value = "state", required = false) String state,
 			HttpServletResponse response
 	) {
-		return discordAuthService.login(code, redirectUrl, response);
+//		return discordAuthService.login(code, redirectUrl, response);
+		String redirectTo = discordAuthService.login(code, state, response);
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setLocation(URI.create(redirectTo));
+		log.info("로그인 성공, 리다이렉션 시작");
+		return new ResponseEntity<>(headers, HttpStatus.FOUND); // 302
 	}
 
 	// AccessToken 갱신 요청
@@ -73,11 +74,11 @@ public class AuthController {
 //		return ApiResponse.success(null);
 //	}
 
-//	@GetMapping("/check")
-//	public ApiResponse<?> loginCheck(final HttpServletRequest request) {
-//		final Boolean isLogin = authService.checkLogin(request);
-//		return ApiResponse.success(new LoginCheckResponseDto(isLogin));
-//	}
+	@GetMapping("/check")
+	public ApiResponse<?> loginCheck(final HttpServletRequest request) {
+		final Boolean isLogin = discordAuthService.checkLogin(request);
+		return ApiResponse.success(new LoginCheckResponseDto(isLogin));
+	}
 
 //	@PreAuthorize("isAuthenticated()")
 //	@PostMapping("/password-reset-request")
