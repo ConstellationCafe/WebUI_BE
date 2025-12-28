@@ -9,8 +9,8 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.help.authserver.domain.user.dto.request.SignupRequestDto;
-import com.help.authserver.global.common.exception.CustomException;
-import com.help.authserver.global.common.exception.ErrorCode;
+import com.help.global.common.exception.CustomException;
+import com.help.global.common.exception.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

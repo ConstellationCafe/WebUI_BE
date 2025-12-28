@@ -7,11 +7,11 @@ import org.springframework.transaction.annotation.Transactional;
 import com.help.authserver.domain.user.dto.request.PasswordChangeRequestDto;
 import com.help.authserver.domain.user.dto.request.ProfileUpdateRequestDto;
 import com.help.authserver.domain.user.dto.request.SignupRequestDto;
-import com.help.authserver.domain.user.entity.User;
+import com.help.authserver.domain.user.entity.EmailUser;
 import com.help.authserver.domain.user.repository.UserRepository;
-import com.help.authserver.global.common.exception.CustomException;
-import com.help.authserver.global.common.exception.ErrorCode;
-import com.help.authserver.global.jwt.CustomUser;
+import com.help.global.common.exception.CustomException;
+import com.help.global.common.exception.ErrorCode;
+import com.help.global.jwt.CustomUser;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,13 +28,13 @@ public class UserService {
 	public void registerUser(final SignupRequestDto userInfo) {
 		final String encodedPassword = passwordEncoder.encode(userInfo.getPassword());
 		validateDuplicateEmail(userInfo.getEmail());
-		final User user = User.builder()
+		final EmailUser emailUser = EmailUser.builder()
 			.username(userInfo.getEmail())
 			.password(encodedPassword)
 			.nickname(userInfo.getNickname())
 			.build();
-		userRepository.save(user);
-		log.info("User registered: {}", user);
+		userRepository.save(emailUser);
+		log.info("User registered: {}", emailUser);
 	}
 
 	@Transactional
@@ -42,25 +42,25 @@ public class UserService {
 		final CustomUser user,
 		final PasswordChangeRequestDto requestDto
 	) {
-		final User loginUser = userRepository.findByUsername(user.getUsername())
+		final EmailUser loginEmailUser = userRepository.findByUsername(user.getUsername())
 			.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-		if (!passwordEncoder.matches(requestDto.oldPassword(), loginUser.getPassword())) {
+		if (!passwordEncoder.matches(requestDto.oldPassword(), loginEmailUser.getPassword())) {
 			throw new CustomException(ErrorCode.INVALID_PASSWORD);
 		}
-		loginUser.updatePassword(passwordEncoder.encode(requestDto.newPassword()));
-		userRepository.save(loginUser);
-		log.info("User password updated: {}", loginUser);
+		loginEmailUser.updatePassword(passwordEncoder.encode(requestDto.newPassword()));
+		userRepository.save(loginEmailUser);
+		log.info("User password updated: {}", loginEmailUser);
 	}
 
 	@Transactional
-	public void updateUserProfile(final User loginUser, final ProfileUpdateRequestDto requestDto) {
-		loginUser.getUserProfile().updateNickname(requestDto.getNickname());
-		requestDto.getDescription().ifPresent(loginUser.getUserProfile()::updateDescription);
-		userRepository.save(loginUser);
-		log.info("User profile updated: {}", loginUser);
+	public void updateUserProfile(final EmailUser loginEmailUser, final ProfileUpdateRequestDto requestDto) {
+		loginEmailUser.getUserProfile().updateNickname(requestDto.getNickname());
+		requestDto.getDescription().ifPresent(loginEmailUser.getUserProfile()::updateDescription);
+		userRepository.save(loginEmailUser);
+		log.info("User profile updated: {}", loginEmailUser);
 	}
 
-	public User findUserByUsername(final String username) {
+	public EmailUser findUserByUsername(final String username) {
 		return userRepository.findWithProfileByUsername(username)
 			.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 	}
@@ -73,10 +73,10 @@ public class UserService {
 
 	@Transactional
 	public void deleteUser(final CustomUser user) {
-		final User loginUser = userRepository.findByUsername(user.getUsername())
+		final EmailUser loginEmailUser = userRepository.findByUsername(user.getUsername())
 			.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
-		userRepository.delete(loginUser);
-		log.info("User deleted: {}", loginUser);
+		userRepository.delete(loginEmailUser);
+		log.info("User deleted: {}", loginEmailUser);
 	}
 
 	@Transactional
@@ -84,12 +84,12 @@ public class UserService {
 		final CustomUser user,
 		final String newPassword
 	) {
-		final User loginUser = userRepository.findByUsername(user.getUsername())
+		final EmailUser loginEmailUser = userRepository.findByUsername(user.getUsername())
 			.orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
-		loginUser.updatePassword(passwordEncoder.encode(newPassword));
-		userRepository.save(loginUser);
-		log.info("User password updated: {}", loginUser);
+		loginEmailUser.updatePassword(passwordEncoder.encode(newPassword));
+		userRepository.save(loginEmailUser);
+		log.info("User password updated: {}", loginEmailUser);
 	}
 
 	public void checkEmailOwnership(

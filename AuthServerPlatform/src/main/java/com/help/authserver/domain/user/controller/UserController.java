@@ -21,7 +21,7 @@
 //import lombok.RequiredArgsConstructor;
 //
 //@RestController
-//@RequestMapping("/api/users")
+//@RequestMapping("/auth/users")
 //@RequiredArgsConstructor
 //public class UserController {
 //	private final UserService userService;

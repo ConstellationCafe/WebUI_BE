@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Getter
-@ToString(exclude = "user")
+@ToString(exclude = "emailUser")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "user_profile")
 @Entity
@@ -29,7 +29,7 @@ public class UserProfile {
 	@MapsId
 	@OneToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "user_id", nullable = false)
-	private User user;
+	private EmailUser emailUser;
 
 	@Column(nullable = false, unique = true, name = "user_email")
 	private String email;
@@ -41,9 +41,9 @@ public class UserProfile {
 	private String description = "";
 
 	@Builder
-	UserProfile(final User user, final String email, final String nickname) {
-		this.user = user;
-		userId = user.getUserId();
+	UserProfile(final EmailUser emailUser, final String email, final String nickname) {
+		this.emailUser = emailUser;
+		userId = emailUser.getUserId();
 		this.email = email;
 		this.nickname = nickname;
 		description = "";

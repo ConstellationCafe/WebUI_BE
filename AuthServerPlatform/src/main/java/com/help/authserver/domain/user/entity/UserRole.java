@@ -1,6 +1,6 @@
 package com.help.authserver.domain.user.entity;
 
-import com.help.authserver.global.data.Authority;
+import com.help.global.data.Authority;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
