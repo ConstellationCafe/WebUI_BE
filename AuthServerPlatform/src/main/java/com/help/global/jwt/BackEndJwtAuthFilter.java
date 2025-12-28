@@ -1,9 +1,9 @@
-package com.help.backend.global.jwt;
+package com.help.global.jwt;
 
-import com.help.authserver.domain.user.entity.User;
+import com.help.authserver.domain.user.entity.EmailUser;
 import com.help.authserver.domain.user.repository.UserRepository;
-import com.help.authserver.global.jwt.CustomUser;
-import com.help.authserver.global.jwt.JwtUtil;
+import com.help.global.jwt.CustomUser;
+import com.help.global.jwt.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,16 +25,16 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @Component
-public class JwtAuthenticationFilter extends OncePerRequestFilter {
+public class BackEndJwtAuthFilter extends OncePerRequestFilter {
 	// 요청에 포함된 JWT를 검사하고, 인증된 사용자 정보(SecurityContext)를 설정
 	private record WhiteListEntry(String method, String uriPattern) { }
 
 	// 인증이 필요 없는 API 요청을 허용
 	private static final List<WhiteListEntry> WHITE_LIST = List.of(
-		new WhiteListEntry("GET", "/"),
-		new WhiteListEntry("GET", "/api/auth/verify"),
-		new WhiteListEntry("POST", "/api/auth/login"),
-		new WhiteListEntry("POST", "/api/auth/logout")
+//		new WhiteListEntry("GET", "/"),
+//		new WhiteListEntry("GET", "/api/auth/verify"),
+//		new WhiteListEntry("POST", "/api/auth/login"),
+//		new WhiteListEntry("POST", "/api/auth/logout")
 	);
 
 	private final JwtUtil jwtUtil;
@@ -55,8 +55,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			return;
 		}
 		// 요청에서 JWT 토큰을 추출하고, 유효성을 검사하여 인증 정보를 저장
+		if (shouldNotFilter(request)) {
+			filterChain.doFilter(request, response);
+			return;
+		}
 		log.info("인증 필터 시작: [{}]{}", method, requestUri);
 		checkAccessTokenAndAuthentication(request, response, filterChain);
+	}
+
+	@Override
+	protected boolean shouldNotFilter(HttpServletRequest request) {
+		String uri = request.getRequestURI();
+		return uri.startsWith("/auth/");
 	}
 
 	private boolean isWhiteListed(final String method, final String uri) {
@@ -79,8 +89,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		filterChain.doFilter(request, response);
 	}
 
-	private void saveAuthentication(final User myUser) {
-		final UserDetails userDetails = CustomUser.from(myUser);
+	private void saveAuthentication(final EmailUser myEmailUser) {
+		final UserDetails userDetails = CustomUser.from(myEmailUser);
 		final Authentication authentication =
 			new UsernamePasswordAuthenticationToken(
 				userDetails,
@@ -89,7 +99,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			);
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-		log.info("Security Context에 '{}' 인증 정보를 저장", myUser.getUsername());
+		log.info("Security Context에 '{}' 인증 정보를 저장", myEmailUser.getUsername());
 		log.info("isAuthenticated: {}", SecurityContextHolder.getContext().getAuthentication().isAuthenticated());
 	}
 }
