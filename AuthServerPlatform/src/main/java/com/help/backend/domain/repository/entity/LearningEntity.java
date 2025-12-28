@@ -4,18 +4,16 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "learning")
+@Table(name = "Learning")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Access(AccessType.FIELD)
 public class LearningEntity {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "ln_key", nullable = false)
+    @Column(name = "ln_key")
     private String lnKey;
 
     @Column(name = "ln_value", nullable = false, columnDefinition = "TEXT")
@@ -23,4 +21,8 @@ public class LearningEntity {
 
     @Column(name = "teacher", nullable = false)
     private String teacher;
+
+    public static LearningEntity of(String lnKey, String lnValue, String teacher) {
+        return new LearningEntity(lnKey, lnValue, teacher);
+    }
 }
