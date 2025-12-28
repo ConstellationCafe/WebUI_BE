@@ -1,7 +1,7 @@
 package com.help.backend.domain.repository.service;
 
-import com.help.backend.global.common.response.ApiResponse;
-import com.help.backend.global.jwt.CustomUser;
+import com.help.global.common.response.ApiResponse;
+import com.help.global.jwt.CustomUser;
 import com.help.backend.domain.repository.dto.request.repository.LearningDto;
 import com.help.backend.domain.repository.entity.LearningEntity;
 import com.help.backend.domain.repository.repository.LearningRepository;
