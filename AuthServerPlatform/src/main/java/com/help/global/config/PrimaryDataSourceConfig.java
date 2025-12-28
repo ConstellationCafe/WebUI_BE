@@ -1,10 +1,8 @@
-package com.help.authserver.global.config;
+package com.help.global.config;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.sql.DataSource;
-
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import jakarta.persistence.EntityManagerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
@@ -18,10 +16,9 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
-
-import jakarta.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
+import java.util.HashMap;
+import java.util.Map;
 
 /** JPA와 DB를 연결하는 코드 */
 @Configuration
@@ -29,7 +26,8 @@ import jakarta.persistence.EntityManagerFactory;
 @EnableTransactionManagement
 @EnableJpaRepositories(
 	basePackages = {
-		"com.help.authserver.domain.user.repository"
+		"com.help.authserver.domain.user.repository",
+		"com.help.backend.domain.repository.repository"
 	},
 	entityManagerFactoryRef = "primaryEntityManagerFactory",
 	transactionManagerRef = "primaryTransactionManager"
@@ -74,13 +72,14 @@ public class PrimaryDataSourceConfig {
 		properties.put("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
 		properties.put("hibernate.show_sql", true);
 		properties.put("hibernate.hbm2ddl.auto", "none");
-		// properties.put("hibernate.physical_naming_strategy",
-		// 	"org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl");
+		 properties.put("hibernate.physical_naming_strategy",
+		 	"org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl");
 
 		return builder
 			.dataSource(dataSource)
 			.packages(
-				"com.help.authserver.domain.user.entity"
+				"com.help.authserver.domain.user.entity",
+				"com.help.backend.domain.repository.entity"
 			)
 			.persistenceUnit("primary")
 			.properties(properties)
