@@ -1,4 +1,4 @@
-package com.help.authserver.global.config.properties;
+package com.help.global.config.properties;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

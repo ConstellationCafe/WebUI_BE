@@ -1,4 +1,4 @@
-package com.help.authserver.global.common;
+package com.help.global.common;
 
 import java.time.LocalDateTime;
 

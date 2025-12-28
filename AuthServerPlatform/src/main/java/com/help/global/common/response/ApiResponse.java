@@ -1,8 +1,7 @@
-package com.help.authserver.global.common.response;
+package com.help.global.common.response;
 
+import com.help.global.common.exception.ErrorCode;
 import org.springframework.http.HttpStatusCode;
-
-import com.help.authserver.global.common.exception.ErrorCode;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

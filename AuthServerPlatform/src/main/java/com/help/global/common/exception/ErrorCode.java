@@ -1,4 +1,4 @@
-package com.help.authserver.global.common.exception;
+package com.help.global.common.exception;
 
 import lombok.Getter;
 

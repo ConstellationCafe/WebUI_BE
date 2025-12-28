@@ -1,4 +1,4 @@
-package com.help.authserver.global.data;
+package com.help.global.data;
 
 public class Authority {
     public static String user = "ROLE_USER";

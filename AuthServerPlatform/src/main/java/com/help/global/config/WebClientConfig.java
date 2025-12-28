@@ -1,4 +1,4 @@
-package com.help.authserver.global.config;
+package com.help.global.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,4 +1,4 @@
-package com.help.authserver.global.jwt;
+package com.help.global.jwt;
 
 import java.util.Date;
 import java.util.Optional;
@@ -58,7 +58,8 @@ public class JwtUtil {
 			.signWith(secretKey)
 			.compact();
 		// Bearer 접두어를 붙여 반환
-		return TOKEN_PREFIX + accessToken;
+//		return TOKEN_PREFIX + accessToken;
+		return accessToken;
 	}
 
 	public String createRefreshToken(final CustomUser user) {
@@ -87,6 +88,15 @@ public class JwtUtil {
 		} catch (final JwtException e) {
 			return Optional.empty();
 		}
+	}
+
+	public ResponseCookie createAccessTokenCookie(final String accessToken) {
+		return ResponseCookie.from(ACCESS_TOKEN, accessToken)
+				.httpOnly(true)
+				.secure(true)
+				.path("/")
+				.maxAge(ACCESS_TOKEN_EXP / 1000L)
+				.build();
 	}
 
 	public ResponseCookie createRefreshTokenCookie(final String refreshToken) {

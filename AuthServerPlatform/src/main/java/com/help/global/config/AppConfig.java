@@ -1,9 +1,8 @@
-package com.help.authserver.global.config;
+package com.help.global.config;
 
+import com.help.global.config.properties.KisProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
-
-import com.help.authserver.global.config.properties.KisProperties;
 
 @Configuration
 @EnableConfigurationProperties({KisProperties.class})
