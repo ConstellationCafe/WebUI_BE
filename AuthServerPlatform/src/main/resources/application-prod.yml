@@ -1,5 +1,5 @@
 server:
-  port: 4003
+  port: 80
 spring:
   datasource:
     primary:
@@ -26,23 +26,31 @@ spring:
       host: redis
       port: 6379
       timeout: 60000
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${GMAIL_USERNAME}
-    password: ${GMAIL_APP_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          timeout: 5000
-          starttls:
-            enable: true
+#  mail:
+#    host: smtp.gmail.com
+#    port: 587
+#    username: ${GMAIL_USERNAME}
+#    password: ${GMAIL_APP_PASSWORD}
+#    properties:
+#      mail:
+#        smtp:
+#          auth: true
+#          timeout: 5000
+#          starttls:
+#            enable: true
   web:
     resources:
       add-mappings: false
-  mvc:
-    throw-exception-if-no-handler-found: true
+#  mvc:
+#    throw-exception-if-no-handler-found: true
+discord:
+  client-id: ${DISCORD_CLIENT_ID}
+  client-secret: ${DISCORD_CLIENT_SECRET}
+  token-uri: ${DISCORD_TOKEN_URI}
+  user-uri: ${DISCORD_USER_URI}
+  redirect-uri: ${DISCORD_REDIRECT_URI}
+front:
+  redirect-uri: ${FRONT_REDIRECT_URI}
 jwt:
   secret: ${JWT_SECRET}
 
