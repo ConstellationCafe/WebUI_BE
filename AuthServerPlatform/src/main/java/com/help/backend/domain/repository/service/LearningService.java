@@ -27,27 +27,24 @@ public class LearningService {
 
     public ApiResponse<?> getLearningList(CustomUser user) {
         String discordId = user.getUsername();
-        // 프로시저 호출
-        StoredProcedureQuery query = entityManager
-                .createStoredProcedureQuery("Constellation_Network.search_sk")
-                .registerStoredProcedureParameter(1, String.class, ParameterMode.IN)
-                .registerStoredProcedureParameter(2, String.class, ParameterMode.OUT);
 
-        query.setParameter(1, discordId);
-        query.execute();
+        String sk = (String) entityManager
+                .createNativeQuery("SELECT Constellation_Network.search_sk(:cardType, :membershipId)")
+                .setParameter("cardType", "discord")
+                .setParameter("membershipId", discordId)
+                .getSingleResult();
 
-        String sk = (String) query.getOutputParameterValue(2);
         log.info("Discord ID '{}' resolved to SK '{}'", discordId, sk);
 
-        // 엔티티 조회 후 DTO 변환
         List<LearningDto> learningList = learningRepository.findByTeacher(sk)
-                                                    .stream()
-                                                    .map(entity -> LearningDto.builder()
-                                                            .lnKey(entity.getLnKey())
-                                                            .lnValue(entity.getLnValue())
-                                                            .teacher(entity.getTeacher())
-                                                            .build())
-                                                    .collect(Collectors.toList());
+                .stream()
+                .map(entity -> LearningDto.builder()
+                        .lnKey(entity.getLnKey())
+                        .lnValue(entity.getLnValue())
+                        .teacher(entity.getTeacher())
+                        .build())
+                .toList();
+
         return ApiResponse.success(learningList);
     }
 
