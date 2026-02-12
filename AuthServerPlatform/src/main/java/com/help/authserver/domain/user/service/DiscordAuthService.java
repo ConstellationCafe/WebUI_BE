@@ -1,10 +1,12 @@
 package com.help.authserver.domain.user.service;
 import com.help.authserver.api.LoginAPI;
+import com.help.authserver.domain.user.dto.response.LoginCheckResponseDto;
 import com.help.authserver.domain.user.dto.response.LoginResponseDto;
 import com.help.authserver.domain.user.dto.user.DiscordUserDto;
 import com.help.authserver.domain.user.entity.DiscordUser;
-import com.help.authserver.domain.user.repository.DiscordMembershipRepository;
+//import com.help.authserver.domain.user.repository.DiscordMembershipRepository;
 import com.help.authserver.domain.user.repository.DiscordUserRepository;
+import com.help.global.common.exception.CustomException;
 import com.help.global.common.exception.ErrorCode;
 import com.help.global.common.response.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,6 +14,7 @@ import com.help.global.jwt.CustomUser;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -61,8 +64,34 @@ public class DiscordAuthService implements UserDetailsService  {
         return redirectUri;
     }
 
-    public Boolean checkLogin(final HttpServletRequest request) {
-		return jwtUtil.extractAccessTokenFromRequest(request)
-			.filter(jwtUtil::isTokenValidate).isPresent();
+    public ApiResponse<?> checkLogin(final HttpServletRequest request) {
+        boolean isLogin = jwtUtil.extractAccessTokenFromRequest(request)
+                .filter(jwtUtil::isTokenValidate)
+                .isPresent();
+
+        boolean refreshHint = jwtUtil.extractRefreshTokenFromRequest(request)
+                .filter(jwtUtil::isTokenValidate)
+                .isPresent();
+
+        return ApiResponse.success(new LoginCheckResponseDto(isLogin, refreshHint));
+    }
+
+    // TODO : access Token 재발급시 refresh Token도 교체하기
+    public ApiResponse<?> refresh(final HttpServletRequest request, final HttpServletResponse response) {
+		final DiscordUser user = jwtUtil.extractRefreshTokenFromRequest(request)
+			.filter(jwtUtil::isTokenValidate)
+			.flatMap(jwtUtil::extractUsername)
+			.flatMap(userRepository::findByDiscordID)
+			.orElseThrow(() -> new CustomException(ErrorCode.INVALID_TOKEN));
+
+		final String accessToken = jwtUtil.createAccessToken(CustomUser.from(user));
+        ResponseCookie accessCookie = jwtUtil.createAccessTokenCookie(accessToken);
+        response.addHeader("Set-Cookie", accessCookie.toString());
+		return ApiResponse.success(true);
+	}
+
+	public void logout(final HttpServletResponse response) {
+		response.addHeader("Set-Cookie", jwtUtil.createExpiredRefreshTokenCookie().toString());
+		ApiResponse.success(null);
 	}
 }
