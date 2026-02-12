@@ -6,10 +6,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 //import com.help.authserver.domain.user.service.AuthService;
 import com.help.global.common.response.ApiResponse;
@@ -58,26 +55,25 @@ public class AuthController {
 	}
 
 	// AccessToken 갱신 요청
-//	@PostMapping("/refresh")
-//	public ApiResponse<?> refresh(
-//		final HttpServletRequest request,
-//		final HttpServletResponse response
-//	) {
-//		log.info("[POST] /api/auth/refresh");
-//		return authService.refresh(request, response);
-//	}
+	@PostMapping("/refresh")
+	public ApiResponse<?> refresh(
+		final HttpServletRequest request,
+		final HttpServletResponse response
+	) {
+		log.info("[POST] /auth/refresh");
+		return discordAuthService.refresh(request, response);
+	}
 
-	// 로그아웃
-//	@PostMapping("/logout")
-//	public ApiResponse<?> logout(final HttpServletResponse response) {
-//		authService.logout(response);
-//		return ApiResponse.success(null);
-//	}
+	@PostMapping("/logout")
+	public ApiResponse<?> logout(final HttpServletResponse response) {
+		discordAuthService.logout(response);
+		return ApiResponse.success(null);
+	}
 
 	@GetMapping("/check")
 	public ApiResponse<?> loginCheck(final HttpServletRequest request) {
-		final Boolean isLogin = discordAuthService.checkLogin(request);
-		return ApiResponse.success(new LoginCheckResponseDto(isLogin));
+		log.info("[GET] /auth/check");
+		return discordAuthService.checkLogin(request);
 	}
 
 //	@PreAuthorize("isAuthenticated()")
