@@ -7,4 +7,5 @@ import lombok.Getter;
 @AllArgsConstructor
 public class LoginCheckResponseDto {
 	private Boolean isLogin;
+	private Boolean refreshHint;
 }
