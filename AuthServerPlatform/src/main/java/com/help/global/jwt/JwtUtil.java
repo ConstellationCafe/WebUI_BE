@@ -1,5 +1,6 @@
 package com.help.global.jwt;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -12,6 +13,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -121,12 +123,13 @@ public class JwtUtil {
 	}
 
 	public Optional<String> extractAccessTokenFromRequest(final HttpServletRequest request) {
-		return Optional.ofNullable(request.getHeader(ACCESS_HEADER))
-			.filter(accessToken -> {
-				log.info("accessToken: " + accessToken);
-				return accessToken.startsWith(TOKEN_PREFIX);
-			})
-			.map(accessToken -> accessToken.substring(TOKEN_PREFIX.length()));
+		if (null == request.getCookies()) {
+			return Optional.empty();
+		}
+		return Arrays.stream(request.getCookies())
+				.filter(c -> ACCESS_TOKEN.equals(c.getName()))
+				.map(Cookie::getValue)
+				.findFirst();
 	}
 
 	public ResponseCookie createExpiredRefreshTokenCookie() {
@@ -149,8 +152,8 @@ public class JwtUtil {
 	private boolean isTokenExpired(final Claims claims) {
 		final Date expiration = claims.getExpiration();
 		final Date now = new Date();
-		log.info("현재 시간: " + now);
-		log.info("토큰 만료: " + expiration);
+//		log.info("현재 시간: " + now);
+//		log.info("토큰 만료: " + expiration);
 		return claims.getExpiration().before(now);
 	}
 }
