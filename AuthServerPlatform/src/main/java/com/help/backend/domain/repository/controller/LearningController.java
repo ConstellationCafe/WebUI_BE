@@ -26,8 +26,17 @@ public class LearningController {
 
     @PostMapping("/save_all")
     public ApiResponse<?> saveAll(
+            @AuthenticationPrincipal CustomUser user,
             @Valid @RequestBody final List<LearningDto> learningList
     ) {
-        return learningService.saveAll(learningList);
+        return learningService.saveAll(user, learningList);
+    }
+
+    @PostMapping("/delete_all")
+    public ApiResponse<?> deleteAll(
+            @AuthenticationPrincipal CustomUser user,
+            @Valid @RequestBody final List<LearningDto> learningList
+    ) {
+        return learningService.deleteAll(user, learningList);
     }
 }
