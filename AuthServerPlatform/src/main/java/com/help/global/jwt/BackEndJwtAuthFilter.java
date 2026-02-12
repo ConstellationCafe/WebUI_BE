@@ -1,9 +1,9 @@
 package com.help.global.jwt;
 
-import com.help.authserver.domain.user.entity.EmailUser;
-import com.help.authserver.domain.user.repository.UserRepository;
-import com.help.global.jwt.CustomUser;
-import com.help.global.jwt.JwtUtil;
+//import com.help.authserver.domain.user.entity.EmailUser;
+import com.help.authserver.domain.user.entity.DiscordUser;
+import com.help.authserver.domain.user.repository.DiscordUserRepository;
+//import com.help.authserver.domain.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,7 +38,7 @@ public class BackEndJwtAuthFilter extends OncePerRequestFilter {
 	);
 
 	private final JwtUtil jwtUtil;
-	private final UserRepository userRepository;
+	private final DiscordUserRepository userRepository;
 
 	@Override
 	protected void doFilterInternal(
@@ -83,14 +83,14 @@ public class BackEndJwtAuthFilter extends OncePerRequestFilter {
 		jwtUtil.extractAccessTokenFromRequest(request)
 			.filter(jwtUtil::isTokenValidate)
 			.flatMap(jwtUtil::extractUsername)
-			.flatMap(userRepository::findWithProfileByUsername)
+			.flatMap(userRepository::findByDiscordID)
 			.ifPresent(this::saveAuthentication);
 
 		filterChain.doFilter(request, response);
 	}
 
-	private void saveAuthentication(final EmailUser myEmailUser) {
-		final UserDetails userDetails = CustomUser.from(myEmailUser);
+	private void saveAuthentication(final DiscordUser discordUser) {
+		final UserDetails userDetails = CustomUser.from(discordUser);
 		final Authentication authentication =
 			new UsernamePasswordAuthenticationToken(
 				userDetails,
@@ -99,7 +99,7 @@ public class BackEndJwtAuthFilter extends OncePerRequestFilter {
 			);
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-		log.info("Security Context에 '{}' 인증 정보를 저장", myEmailUser.getUsername());
+		log.info("Security Context에 '{}' 인증 정보를 저장", discordUser.getUsername());
 		log.info("isAuthenticated: {}", SecurityContextHolder.getContext().getAuthentication().isAuthenticated());
 	}
 }
