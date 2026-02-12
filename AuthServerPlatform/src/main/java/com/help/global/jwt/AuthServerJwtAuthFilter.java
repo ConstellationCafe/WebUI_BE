@@ -31,11 +31,12 @@ public class AuthServerJwtAuthFilter extends OncePerRequestFilter {
 
 	// 인증이 필요 없는 API 요청을 허용
 	private static final List<WhiteListEntry> WHITE_LIST = List.of(
-		new WhiteListEntry("GET", "/"),
-		new WhiteListEntry("GET", "/auth/verify"),
-		new WhiteListEntry("POST", "/auth/login"),
+//		new WhiteListEntry("GET", "/"),
 		new WhiteListEntry("GET", "/auth/discord_login"),
-		new WhiteListEntry("POST", "/auth/logout")
+		new WhiteListEntry("GET", "/auth/check"),
+		new WhiteListEntry("POST", "/auth/refresh")
+//		new WhiteListEntry("POST", "/auth/login"),
+//		new WhiteListEntry("POST", "/auth/logout")
 	);
 
 	private final JwtUtil jwtUtil;
