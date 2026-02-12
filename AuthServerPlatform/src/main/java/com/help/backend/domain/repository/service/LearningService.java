@@ -1,20 +1,22 @@
 package com.help.backend.domain.repository.service;
 
+import com.help.backend.domain.global.dto.response.ColumnMetaDto;
 import com.help.global.common.response.ApiResponse;
+import com.help.global.data.MembershipID;
 import com.help.global.jwt.CustomUser;
 import com.help.backend.domain.repository.dto.request.repository.LearningDto;
-import com.help.backend.domain.repository.entity.LearningEntity;
 import com.help.backend.domain.repository.repository.LearningRepository;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.ParameterMode;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.StoredProcedureQuery;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -30,11 +32,19 @@ public class LearningService {
 
         String sk = (String) entityManager
                 .createNativeQuery("SELECT Constellation_Network.search_sk(:cardType, :membershipId)")
-                .setParameter("cardType", "discord")
+                .setParameter("cardType", MembershipID.discord.name())
                 .setParameter("membershipId", discordId)
                 .getSingleResult();
 
-        log.info("Discord ID '{}' resolved to SK '{}'", discordId, sk);
+        List<ColumnMetaDto> metadata = learningRepository.findColumnMetas(
+                learningRepository.schemaName,  learningRepository.tableName)
+                .stream()
+                .map(v -> ColumnMetaDto.builder()
+                        .colName(v.getColName())
+                        .isPrimary(v.getIsPrimary())
+                        .isNullable(v.getIsNullable())
+                        .build())
+                .toList();
 
         List<LearningDto> learningList = learningRepository.findByTeacher(sk)
                 .stream()
@@ -45,21 +55,52 @@ public class LearningService {
                         .build())
                 .toList();
 
-        return ApiResponse.success(learningList);
+        Map<String, Object> body = new HashMap<>();
+        body.put("metadata", metadata);
+        body.put("entities", learningList);
+        return ApiResponse.success(body);
     }
 
-    public ApiResponse<?> saveAll(List<LearningDto> learningList) {
-        List<LearningEntity> entities = learningList.stream()
-                .map(dto -> LearningEntity.builder()
-                        .lnKey(dto.getLnKey())
-                        .lnValue(dto.getLnValue())
-                        .teacher(dto.getTeacher())
-                        .build())
+    @Transactional
+    public ApiResponse<?> saveAll(CustomUser user, List<LearningDto> learningList) {
+        if (learningList == null || learningList.isEmpty())
+            return ApiResponse.success("No data to save");
+
+        List<Map<String, String>> results = new ArrayList<>();
+        for (LearningDto dto : learningList) {
+            String msg = learningRepository.callLearningProcedure(
+                    MembershipID.discord.name(),
+                    user.getUsername(),
+                    dto.getLnKey(),
+                    dto.getLnValue()
+            );
+            Map<String, String> item = new HashMap<>();
+            item.put(dto.getLnKey(), msg);
+            results.add(item);
+        }
+        return ApiResponse.success(results);
+    }
+
+    @Transactional
+    public ApiResponse<?> deleteAll(CustomUser user, List<LearningDto> learningList) {
+        if (learningList == null || learningList.isEmpty())
+            return ApiResponse.success("No data to delete");
+
+        String discordId = user.getUsername();
+        String teacher = (String) entityManager
+                .createNativeQuery("SELECT Constellation_Network.search_sk(:cardType, :membershipId)")
+                .setParameter("cardType", MembershipID.discord.name())
+                .setParameter("membershipId", discordId)
+                .getSingleResult();
+
+        // teacher가 모두 동일하다는 전제에서만 사용 가능
+        List<String> keys = learningList.stream()
+                .map(LearningDto::getLnKey)
+                .distinct()
                 .toList();
 
-        learningRepository.saveAll(entities);
-
-        log.info("{} records saved successfully", entities.size());
-        return ApiResponse.success("Data saved successfully");
+        int delCount = learningRepository.deleteByLnKey(teacher, keys);
+        String msg = delCount + "행 삭제됨";
+        return ApiResponse.success(msg);
     }
 }
