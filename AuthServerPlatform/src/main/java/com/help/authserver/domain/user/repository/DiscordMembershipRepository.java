@@ -8,11 +8,11 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface DiscordMembershipRepository extends JpaRepository<DiscordUser, Long> {
-
-    @Query(value = "select * from vw_DiscordMembership", nativeQuery = true)
-    List<DiscordMembershipView> findAllMemberships();
-
-    @Query(value = "select * from vw_DiscordMembership where discordID = :discordId", nativeQuery = true)
-    List<DiscordMembershipView> findByDiscordID(@Param("discordId") String discordId);
-}
+//public interface DiscordMembershipRepository extends JpaRepository<DiscordUser, Long> {
+//
+//    @Query(value = "select * from vw_DiscordMembership", nativeQuery = true)
+//    List<DiscordMembershipView> findAllMemberships();
+//
+//    @Query(value = "select * from vw_DiscordMembership where discordID = :discordId", nativeQuery = true)
+//    List<DiscordMembershipView> findByDiscordID(@Param("discordId") String discordId);
+//}
