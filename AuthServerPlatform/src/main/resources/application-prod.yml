@@ -1,5 +1,9 @@
 server:
   port: 4003
+#  ssl:
+#    enabled: true
+#    certificate: classpath:certs/localhost+2.pem
+#    certificate-private-key: classpath:certs/localhost+2-key.pem
 spring:
   datasource:
     primary:
