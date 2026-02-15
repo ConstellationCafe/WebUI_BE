@@ -27,7 +27,7 @@ spring:
         ddl-auto: none
   data:
     redis:
-      host: redis
+      host: 192.168.0.14
       port: 6379
       timeout: 60000
 #  mail:
