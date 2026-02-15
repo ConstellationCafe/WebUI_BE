@@ -68,7 +68,7 @@ public class DiscordAuthServiceTest {
 
         // when
         HttpServletResponse response = Mockito.mock(HttpServletResponse.class);
-        String result = authService.login(code, redirectUrl, response);
+        String result = authService.login(code, response);
 
         // then
 //        LoginResponseDto dto = (LoginResponseDto) result.getResponse();

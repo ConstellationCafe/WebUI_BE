@@ -2,9 +2,11 @@ package com.help.global.jwt;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 import com.help.authserver.domain.user.entity.User;
 import com.help.authserver.domain.user.repository.DiscordUserRepository;
+import com.help.authserver.domain.user.repository.SessionRepository;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,10 +23,14 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import com.help.authserver.domain.user.entity.SessionInfo;
+
 @RequiredArgsConstructor
 @Slf4j
 @Component
 public class AuthServerJwtAuthFilter extends OncePerRequestFilter {
+	private final SessionRepository sessionRepository;
+
 	// 요청에 포함된 JWT를 검사하고, 인증된 사용자 정보(SecurityContext)를 설정
 	private record WhiteListEntry(String method, String uriPattern) {
 	}
@@ -83,10 +89,18 @@ public class AuthServerJwtAuthFilter extends OncePerRequestFilter {
 	private void checkAccessTokenAndAuthentication(final HttpServletRequest request, final HttpServletResponse response,
 		final FilterChain filterChain) throws ServletException, IOException {
 		jwtUtil.extractAccessTokenFromRequest(request)
-			.filter(jwtUtil::isTokenValidate)
-			.flatMap(jwtUtil::extractUsername)  // FIXME : discordID보단 membershipID 같은게 좋을 듯? -> 표준화
-			.flatMap(userRepository::findByDiscordID)  // FIXME : 일반화된 레포지터리 필요..?
-			.ifPresent(this::saveAuthentication);
+				.filter(jwtUtil::isTokenValidate)
+				.flatMap(jwtUtil::extractUsername)
+				.ifPresent(username -> {
+					sessionRepository.find(username)
+						.filter(SessionInfo::isValid)
+						.ifPresentOrElse(sessionInfo -> {
+							userRepository.findByDiscordID(username)
+								.ifPresent(this::saveAuthentication);
+						}, () -> {
+							log.warn("유효하지 않은 세션 또는 세션 없음: {}", username);
+						});
+				});
 
 		filterChain.doFilter(request, response);
 	}

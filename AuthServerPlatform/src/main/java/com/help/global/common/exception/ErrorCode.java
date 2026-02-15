@@ -9,6 +9,8 @@ public enum ErrorCode {
 
 	EXPIRED_TOKEN(401, "인증 토큰이 만료되었습니다"),
 	INVALID_TOKEN(401, "유효하지 않은 토큰입니다"),
+	SESSION_EXPIRED(401, "Session expired"),
+	SESSION_REVOKED(401, "Session revoked"),
 	UNAUTHORIZED(401, "로그인이 필요합니다"),
 	UNAUTHORIZED_PASSWORD_CHANGE(401, "비밀번호 변경 권한이 없습니다"),
 	UNTRUSTED_EMAIL_SERVER(403, "신뢰할 수 없는 이메일 서버입니다"),
