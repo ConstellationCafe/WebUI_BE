@@ -1,5 +1,6 @@
 package com.help.global.jwt;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Optional;
@@ -13,7 +14,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -26,10 +26,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 public class JwtUtil {
-	private static final String ACCESS_HEADER = "Authorization";
 	private static final String ACCESS_TOKEN = "AccessToken";
-	private static final String TOKEN_PREFIX = "Bearer ";
-	private static final Long ACCESS_TOKEN_EXP = (long)(30 * 1000); // 2시간(2 * 60 * 60 * 1000)
+	private static final Long ACCESS_TOKEN_EXP = (long)(30 * 1000); // 30초
 	private static final Long REFRESH_TOKEN_EXP = (long)(7 * 24 * 60 * 60 * 1000); // 7일
 	private static final String REFRESH_TOKEN = "RefreshToken";
 	private SecretKey secretKey;
@@ -44,13 +42,17 @@ public class JwtUtil {
 		secretKey = Keys.hmacShaKeyFor(keyBytes);
 	}
 
+	public Duration getAccessTokenTtl() {
+		return Duration.ofMillis(ACCESS_TOKEN_EXP);
+	}
+
 	public String createAccessToken(final CustomUser user) {
 		final var authorities = user.getAuthorities()
 			.stream()
 			.map(GrantedAuthority::getAuthority)
 			.collect(Collectors.joining(","));
 
-		final String accessToken = Jwts.builder()
+		return Jwts.builder()
 			.claim("username", user.getUsername())
 			.claim("nickname", user.getNickname())
 			.claim("authorities", authorities)
@@ -59,9 +61,6 @@ public class JwtUtil {
 			.expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXP))
 			.signWith(secretKey)
 			.compact();
-		// Bearer 접두어를 붙여 반환
-//		return TOKEN_PREFIX + accessToken;
-		return accessToken;
 	}
 
 	public String createRefreshToken(final CustomUser user) {
@@ -95,7 +94,7 @@ public class JwtUtil {
 	public ResponseCookie createAccessTokenCookie(final String accessToken) {
 		return ResponseCookie.from(ACCESS_TOKEN, accessToken)
 				.httpOnly(true)
-				.secure(true)
+				.secure(true)  // HTTPS 연결에서만 쿠키 전송
 				.path("/")
 				.maxAge(ACCESS_TOKEN_EXP / 1000L)
 				.build();
@@ -139,6 +138,15 @@ public class JwtUtil {
 			.path("/")
 			.maxAge(0L) // 쿠키 즉시 만료
 			.build();
+	}
+
+	public ResponseCookie createExpiredAccessTokenCookie() {
+		return ResponseCookie.from(ACCESS_TOKEN, "")
+				.httpOnly(true)
+				.secure(true)
+				.path("/")
+				.maxAge(0L) // 쿠키 즉시 만료
+				.build();
 	}
 
 	private Claims parseToken(final String token) {
