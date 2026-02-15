@@ -1,5 +1,6 @@
 package com.help.authserver.api;
 
 public interface LoginAPI<T> {
-    public T getUserInfo(String code);
+    public String exchangeCodeForToken(String code);
+    public T getUserInfo(String accessToken);
 }

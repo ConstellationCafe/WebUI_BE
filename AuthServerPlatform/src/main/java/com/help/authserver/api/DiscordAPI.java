@@ -29,7 +29,7 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
 
     private final RestTemplate restTemplate = new RestTemplate();
 
-    private String exchangeCodeForToken(String code) {
+    public String exchangeCodeForToken(String code) {
         // Content-Type 헤더를 application/x-www-form-urlencoded 로 설정
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -57,14 +57,13 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
     }
 
     @Override
-    public DiscordUserDto getUserInfo(String code) {
-        String accessToken = this.exchangeCodeForToken(code);
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
-        HttpEntity<Void> request = new HttpEntity<>(headers);
-
+    public DiscordUserDto getUserInfo(String accessTokenForDiscord) {
         // 발급받은 accessToken으로 사용자 정보 조회 -> 회원가입
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessTokenForDiscord);
+        HttpEntity<Void> request = new HttpEntity<>(headers);
         ResponseEntity<Map> response = restTemplate.exchange(userUri, HttpMethod.GET, request, Map.class);
+
         Map body = response.getBody();
         String discordId = (String) body.get("id");
         String username = (String) body.get("username");
