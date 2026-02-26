@@ -1,9 +1,9 @@
-package com.help.backend.domain.repository.controller;
+package com.help.backend.domain.learning.controller;
 
 import com.help.global.common.response.ApiResponse;
 import com.help.global.jwt.CustomUser;
-import com.help.backend.domain.repository.dto.request.repository.LearningDto;
-import com.help.backend.domain.repository.service.LearningService;
+import com.help.backend.domain.learning.dto.request.repository.LearningDto;
+import com.help.backend.domain.learning.service.LearningService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

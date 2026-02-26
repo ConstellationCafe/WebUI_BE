@@ -1,12 +1,10 @@
-package com.help.backend.domain.repository.repository;
+package com.help.backend.domain.learning.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.ParameterMode;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.StoredProcedureQuery;
 import org.springframework.stereotype.Repository;
-
-import java.util.Map;
 
 @Repository
 public class LearningRepositoryImpl implements LearningRepositoryCustom {

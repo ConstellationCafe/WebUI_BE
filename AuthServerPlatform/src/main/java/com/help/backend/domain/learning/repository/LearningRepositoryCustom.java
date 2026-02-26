@@ -1,6 +1,4 @@
-package com.help.backend.domain.repository.repository;
-
-import java.util.Map;
+package com.help.backend.domain.learning.repository;
 
 public interface LearningRepositoryCustom {
     String callLearningProcedure(String cardType,

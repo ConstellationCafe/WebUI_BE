@@ -1,11 +1,11 @@
-package com.help.backend.domain.repository.service;
+package com.help.backend.domain.learning.service;
 
-import com.help.backend.domain.global.dto.response.ColumnMetaDto;
+import com.help.backend.domain.metadata.response.ColumnMetaDto;
 import com.help.global.common.response.ApiResponse;
 import com.help.global.data.MembershipID;
 import com.help.global.jwt.CustomUser;
-import com.help.backend.domain.repository.dto.request.repository.LearningDto;
-import com.help.backend.domain.repository.repository.LearningRepository;
+import com.help.backend.domain.learning.dto.request.repository.LearningDto;
+import com.help.backend.domain.learning.repository.LearningRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -51,7 +51,7 @@ public class LearningService {
                 .map(entity -> LearningDto.builder()
                         .lnKey(entity.getLnKey())
                         .lnValue(entity.getLnValue())
-                        .teacher(entity.getTeacher())
+//                        .teacher(entity.getTeacher())
                         .build())
                 .toList();
 
@@ -63,27 +63,27 @@ public class LearningService {
 
     @Transactional
     public ApiResponse<?> saveAll(CustomUser user, List<LearningDto> learningList) {
+        // 애초에 저장할거 없으면 요청 자체가 안 오지만, 안전장치임
         if (learningList == null || learningList.isEmpty())
             return ApiResponse.success("No data to save");
 
-        List<Map<String, String>> results = new ArrayList<>();
+        List<String> results = new ArrayList<>();
         for (LearningDto dto : learningList) {
-            String msg = learningRepository.callLearningProcedure(
+            String result = learningRepository.callLearningProcedure(
                     MembershipID.discord.name(),
                     user.getUsername(),
                     dto.getLnKey(),
                     dto.getLnValue()
             );
-            Map<String, String> item = new HashMap<>();
-            item.put(dto.getLnKey(), msg);
-            results.add(item);
+            results.add(dto.getLnKey()+" 학습 결과 : "+result);
         }
         return ApiResponse.success(results);
     }
 
     @Transactional
-    public ApiResponse<?> deleteAll(CustomUser user, List<LearningDto> learningList) {
-        if (learningList == null || learningList.isEmpty())
+    public ApiResponse<?> deleteAll(CustomUser user, List<LearningDto> deleteList) {
+        // 애초에 삭제할게 없으면 요청 자체가 안 오지만, 안전장치임
+        if (deleteList == null || deleteList.isEmpty())
             return ApiResponse.success("No data to delete");
 
         String discordId = user.getUsername();
@@ -94,13 +94,14 @@ public class LearningService {
                 .getSingleResult();
 
         // teacher가 모두 동일하다는 전제에서만 사용 가능
-        List<String> keys = learningList.stream()
+        List<String> keys = deleteList.stream()
                 .map(LearningDto::getLnKey)
                 .distinct()
                 .toList();
 
+        int totalCount = keys.toArray().length;
         int delCount = learningRepository.deleteByLnKey(teacher, keys);
-        String msg = delCount + "행 삭제됨";
-        return ApiResponse.success(msg);
+        String result = "총 "+totalCount+"행 중 "+delCount+"행 삭제됨";
+        return ApiResponse.success(result);
     }
 }

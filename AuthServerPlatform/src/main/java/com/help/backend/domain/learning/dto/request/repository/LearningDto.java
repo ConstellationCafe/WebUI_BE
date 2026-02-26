@@ -1,4 +1,4 @@
-package com.help.backend.domain.repository.dto.request.repository;
+package com.help.backend.domain.learning.dto.request.repository;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
@@ -14,6 +14,6 @@ public class LearningDto {
     @NotBlank(message = "ln_value는 필수입니다.")
     private String lnValue;
 
-    @NotBlank(message = "teacher는 필수입니다.")
-    private String teacher;
+//    @NotBlank(message = "teacher는 필수입니다.")
+//    private String teacher;
 }

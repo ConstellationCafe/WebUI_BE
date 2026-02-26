@@ -1,4 +1,4 @@
-package com.help.backend.domain.repository.entity;
+package com.help.backend.domain.learning.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
