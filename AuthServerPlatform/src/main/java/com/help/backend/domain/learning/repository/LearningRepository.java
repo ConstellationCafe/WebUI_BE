@@ -1,7 +1,7 @@
-package com.help.backend.domain.repository.repository;
+package com.help.backend.domain.learning.repository;
 
-import com.help.backend.domain.global.repository.GlobalRepository;
-import com.help.backend.domain.repository.entity.LearningEntity;
+import com.help.backend.domain.metadata.repository.GlobalRepository;
+import com.help.backend.domain.learning.entity.LearningEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
