@@ -67,8 +67,14 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
         Map body = response.getBody();
         String discordId = (String) body.get("id");
         String username = (String) body.get("username");
-        String avatar = (String) body.get("avatar");
-
-        return new DiscordUserDto(discordId, username, avatar);
+        String globalName = (String) body.get("global_name");
+        String avatarHash = (String) body.get("avatar");
+        String avatar;
+        if (avatarHash != null) {
+            avatar = "https://cdn.discordapp.com/avatars/" + discordId + "/" + avatarHash + ".png";
+        } else {
+            avatar = "https://cdn.discordapp.com/embed/avatars/0.png"; // Discord 기본 아바타
+        }
+        return new DiscordUserDto(discordId, username, globalName, avatar);
     }
 }
