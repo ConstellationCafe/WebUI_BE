@@ -1,0 +1,62 @@
+name: WebUI_BE_CD
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout Github Repository
+        uses: actions/checkout@v4
+
+      - name: Copy project to Remote Server (SCP)
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_ADDR }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PWD }}
+          port: ${{ secrets.SERVER_PORT }}
+          source: "./*"
+          target: "/home/elaina/dockers/WebUI_BE/service"
+          rm: true
+
+      - name: Deploy with docker compose (SSH)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_ADDR }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          password: ${{ secrets.SERVER_PWD }}
+          port: ${{ secrets.SERVER_PORT }}
+          script_stop: true
+          command_timeout: 30m
+          script: |
+            set -euo pipefail
+            cd /home/elaina/dockers/WebUI_BE/service
+
+            # docker-compose.yml의 ${...} 치환용 .env 생성/갱신
+            cat > .env << 'EOF'
+            DB_URL=${{ secrets.DB_URL }}
+            DB_USER=${{ secrets.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+
+            DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
+            DISCORD_CLIENT_SECRET=${{ secrets.DISCORD_CLIENT_SECRET }}
+            DISCORD_REDIRECT_URI=${{ secrets.DISCORD_REDIRECT_URI }}
+            DISCORD_TOKEN_URI=${{ secrets.DISCORD_TOKEN_URI }}
+            DISCORD_USER_URI=${{ secrets.DISCORD_USER_URI }}
+
+            FRONT_REDIRECT_URI=${{ secrets.FRONT_REDIRECT_URI }}
+            REGISTER_URI=${{ secrets.REGISTER_URI }}
+
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            EOF
+            chmod 600 .env
+
+            # compose v2 기준 명령
+            docker compose down
+            docker compose up -d --build
+
+            docker compose ps
