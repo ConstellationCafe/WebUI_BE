@@ -2,6 +2,7 @@ package com.help.authserver.domain.user.service;
 import com.help.authserver.api.LoginAPI;
 import com.help.authserver.domain.user.dto.response.LoginCheckResponseDto;
 import com.help.authserver.domain.user.dto.response.LoginResponseDto;
+import com.help.authserver.domain.user.dto.user.AuthMeDto;
 import com.help.authserver.domain.user.dto.user.DiscordUserDto;
 import com.help.authserver.domain.user.entity.DiscordUser;
 //import com.help.authserver.domain.user.repository.DiscordMembershipRepository;
@@ -20,10 +21,12 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import com.help.global.jwt.JwtUtil;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -36,6 +39,8 @@ public class DiscordAuthService implements UserDetailsService  {
 
     @Value("${front.redirect-uri}")
     private String redirectUri;
+    @Value("${register-uri}")
+    private String registerUri;
 
     @Override
     public UserDetails loadUserByUsername(final String discordID) throws UsernameNotFoundException {
@@ -49,34 +54,35 @@ public class DiscordAuthService implements UserDetailsService  {
     @Transactional
     public String login(
             final String code,
-//            String state,
             final HttpServletResponse response
     ) {
-        // oauth를 통해 유저 정보 가져오기
-        String accessTokenForDiscord = loginAPI.exchangeCodeForToken(code);
-        DiscordUserDto userDto = loginAPI.getUserInfo(accessTokenForDiscord);
-        UserDetails discordUser = loadUserByUsername(userDto.discordId());
-        // JWT 토큰 생성
-        String accessToken = jwtUtil.createAccessToken((CustomUser) discordUser);
-        String refreshToken = jwtUtil.createRefreshToken((CustomUser) discordUser);
-        // Redis 세션 저장
-        SessionInfo sessionInfo = new SessionInfo(
-            discordUser.getUsername(),
-            true,
-            accessTokenForDiscord,
-            System.currentTimeMillis()
-        );
-        sessionRepository.save(
-            sessionInfo,
-            jwtUtil.getAccessTokenTtl()
-        );
-        // JWT 토큰 반환 (쿠키에 담아서)
-        response.addHeader("Set-Cookie", jwtUtil.createAccessTokenCookie(accessToken).toString());
-        response.addHeader("Set-Cookie", jwtUtil.createRefreshTokenCookie(refreshToken).toString());
-//        response.addHeader("Authorization", accessToken);
-//        final LoginResponseDto responseDto = new LoginResponseDto(accessToken, redirectUrl);
-//        return ApiResponse.success(responseDto);
-        return redirectUri;
+        try {
+            // oauth를 통해 유저 정보 가져오기
+            String accessTokenForDiscord = loginAPI.exchangeCodeForToken(code);
+            DiscordUserDto userDto = loginAPI.getUserInfo(accessTokenForDiscord);
+            UserDetails discordUser = loadUserByUsername(userDto.discordId());
+            // JWT 토큰 생성
+            String accessToken = jwtUtil.createAccessToken((CustomUser) discordUser);
+            String refreshToken = jwtUtil.createRefreshToken((CustomUser) discordUser);
+            // Redis 세션 저장
+            SessionInfo sessionInfo = new SessionInfo(
+                    discordUser.getUsername(),
+                    true,
+                    accessTokenForDiscord,
+                    System.currentTimeMillis()
+            );
+            sessionRepository.save(
+                    sessionInfo,
+                    jwtUtil.getRefreshTokenTtl()
+            );
+            // JWT 토큰 반환 (쿠키에 담아서)
+            response.addHeader("Set-Cookie", jwtUtil.createAccessTokenCookie(accessToken).toString());
+            response.addHeader("Set-Cookie", jwtUtil.createRefreshTokenCookie(refreshToken).toString());
+            return redirectUri;
+
+        } catch (UsernameNotFoundException e) {
+            return registerUri;
+        }
     }
 
     public ApiResponse<?> me(CustomUser user) {
@@ -94,7 +100,18 @@ public class DiscordAuthService implements UserDetailsService  {
             throw new RuntimeException("Discord token missing");
 
         DiscordUserDto userDto = loginAPI.getUserInfo(discordAccessToken);
-        return ApiResponse.success(userDto);
+        List<String> roles = user.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
+
+        AuthMeDto meDto = new AuthMeDto(
+            userDto.discordId(),
+            userDto.username(),
+            userDto.globalName(),
+            userDto.avatar(),
+            roles
+        );
+        return ApiResponse.success(meDto);
     }
 
     public ApiResponse<?> checkLogin(final HttpServletRequest request) {
@@ -123,7 +140,6 @@ public class DiscordAuthService implements UserDetailsService  {
         if (!sessionInfo.isValid()) {
             throw new CustomException(ErrorCode.SESSION_REVOKED);
         }
-        sessionRepository.refreshTtl(username, jwtUtil.getAccessTokenTtl());
 
         final String accessToken = jwtUtil.createAccessToken(CustomUser.from(user));
         ResponseCookie accessCookie = jwtUtil.createAccessTokenCookie(accessToken);
