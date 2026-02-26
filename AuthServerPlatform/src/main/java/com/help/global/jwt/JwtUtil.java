@@ -28,8 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 public class JwtUtil {
 	private static final String ACCESS_TOKEN = "AccessToken";
 	private static final Long ACCESS_TOKEN_EXP = (long)(30 * 1000); // 30초
-	private static final Long REFRESH_TOKEN_EXP = (long)(7 * 24 * 60 * 60 * 1000); // 7일
 	private static final String REFRESH_TOKEN = "RefreshToken";
+	private static final Long REFRESH_TOKEN_EXP = (long)(24 * 60 * 60 * 1000); // 1일
 	private SecretKey secretKey;
 
 	@Value("${jwt.secret}")
@@ -42,8 +42,8 @@ public class JwtUtil {
 		secretKey = Keys.hmacShaKeyFor(keyBytes);
 	}
 
-	public Duration getAccessTokenTtl() {
-		return Duration.ofMillis(ACCESS_TOKEN_EXP);
+	public Duration getRefreshTokenTtl() {
+		return Duration.ofMillis(REFRESH_TOKEN_EXP);
 	}
 
 	public String createAccessToken(final CustomUser user) {
