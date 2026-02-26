@@ -13,7 +13,7 @@ services:
   stockassist:
     build:
       context: ./
-    container_name: authserver
+    container_name: webui_be
     restart: always
     ports:
       - 4003:4003
@@ -21,8 +21,13 @@ services:
       - DB_URL=${DB_URL}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
-      - GMAIL_USERNAME=${GMAIL_USERNAME}
-      - GMAIL_APP_PASSWORD=${GMAIL_APP_PASSWORD}
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
+      - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
+      - DISCORD_TOKEN_URI=${DISCORD_TOKEN_URI}
+      - DISCORD_USER_URI=${DISCORD_USER_URI}
+      - FRONT_REDIRECT_URI=${FRONT_REDIRECT_URI}
+      - REGISTER_URI=${REGISTER_URI}
       - JWT_SECRET=${JWT_SECRET}
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_PROFILES_ACTIVE=prod
