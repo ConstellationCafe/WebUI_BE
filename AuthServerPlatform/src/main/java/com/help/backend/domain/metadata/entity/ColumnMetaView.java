@@ -1,4 +1,4 @@
-package com.help.backend.domain.repository.entity;
+package com.help.backend.domain.metadata.entity;
 
 public interface ColumnMetaView {
     String getColName();

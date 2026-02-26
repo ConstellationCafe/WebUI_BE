@@ -1,6 +1,6 @@
-package com.help.backend.domain.global.repository;
+package com.help.backend.domain.metadata.repository;
 
-import com.help.backend.domain.repository.entity.ColumnMetaView;
+import com.help.backend.domain.metadata.entity.ColumnMetaView;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 

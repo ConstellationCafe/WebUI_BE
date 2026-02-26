@@ -1,6 +1,6 @@
-package com.help.backend.domain.global.repository;
+package com.help.backend.domain.metadata.repository;
 
-import com.help.backend.domain.repository.entity.ColumnMetaView;
+import com.help.backend.domain.metadata.entity.ColumnMetaView;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;

@@ -1,4 +1,4 @@
-package com.help.backend.domain.global.dto.response;
+package com.help.backend.domain.metadata.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
