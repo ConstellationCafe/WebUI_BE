@@ -1,6 +1,7 @@
 package com.help.global.jwt;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +25,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import com.help.authserver.domain.user.entity.SessionInfo;
+
+import jakarta.servlet.http.Cookie;
 
 @RequiredArgsConstructor
 @Slf4j
