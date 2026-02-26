@@ -27,7 +27,7 @@ import java.util.Map;
 @EnableJpaRepositories(
 	basePackages = {
 		"com.help.authserver.domain.user.repository",
-		"com.help.backend.domain.repository.repository"
+		"com.help.backend.domain"
 	},
 	entityManagerFactoryRef = "primaryEntityManagerFactory",
 	transactionManagerRef = "primaryTransactionManager"
@@ -79,7 +79,7 @@ public class PrimaryDataSourceConfig {
 			.dataSource(dataSource)
 			.packages(
 				"com.help.authserver.domain.user.entity",
-				"com.help.backend.domain.repository.entity"
+				"com.help.backend.domain"
 			)
 			.persistenceUnit("primary")
 			.properties(properties)
