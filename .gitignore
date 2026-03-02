@@ -1,5 +1,8 @@
 HELP.md
 .gradle
+.env
+localhost+2.pem
+localhost+2-key.pem
 build/
 !AuthServerPlatform/gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
