@@ -1,3 +1,9 @@
+server:
+  port: 4003
+#  ssl:
+#    enabled: true
+#    certificate: classpath:certs/localhost+2.pem
+#    certificate-private-key: classpath:certs/localhost+2-key.pem
 spring:
   datasource:
     primary:
@@ -19,15 +25,36 @@ spring:
           show_sql: true
       hibernate:
         ddl-auto: none
-#  data:
-#    redis:
-#      host: localhost
-#      port: 6379
-#      timeout: 60000
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 60000
+  #  mail:
+  #    host: smtp.gmail.com
+  #    port: 587
+  #    username: ${GMAIL_USERNAME}
+  #    password: ${GMAIL_APP_PASSWORD}
+  #    properties:
+  #      mail:
+  #        smtp:
+  #          auth: true
+  #          timeout: 5000
+  #          starttls:
+  #            enable: true
   web:
     resources:
       add-mappings: false
-  mvc:
-    throw-exception-if-no-handler-found: true
+#  mvc:
+#    throw-exception-if-no-handler-found: true
+discord:
+  client-id: ${DISCORD_CLIENT_ID}
+  client-secret: ${DISCORD_CLIENT_SECRET}
+  token-uri: ${DISCORD_TOKEN_URI}
+  user-uri: ${DISCORD_USER_URI}
+  redirect-uri: ${DISCORD_REDIRECT_URI}
+front:
+  redirect-uri: ${FRONT_REDIRECT_URI}
 jwt:
   secret: ${JWT_SECRET}
+

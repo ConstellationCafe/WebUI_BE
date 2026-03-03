@@ -1,0 +1,4 @@
+rootProject.name = "AuthServer"
+
+include("AuthServerPlatform")
+project(":AuthServerPlatform").projectDir = file("AuthServerPlatform")
