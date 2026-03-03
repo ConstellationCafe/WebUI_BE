@@ -35,6 +35,9 @@ public class JwtUtil {
 	@Value("${jwt.secret}")
 	private String secretKeyBase64;
 
+	@Value("${spring.profiles.active:}")
+	private String activeProfiles;
+
 	@PostConstruct
 	public void init() {
 		// 비밀 키 초기화
@@ -92,18 +95,20 @@ public class JwtUtil {
 	}
 
 	public ResponseCookie createAccessTokenCookie(final String accessToken) {
+		boolean isProd = activeProfiles != null && activeProfiles.equals("prod");
 		return ResponseCookie.from(ACCESS_TOKEN, accessToken)
 				.httpOnly(true)
-				.secure(true)  // HTTPS 연결에서만 쿠키 전송
+				.secure(isProd)  // HTTPS 연결에서만 쿠키 전송
 				.path("/")
 				.maxAge(ACCESS_TOKEN_EXP / 1000L)
 				.build();
 	}
 
 	public ResponseCookie createRefreshTokenCookie(final String refreshToken) {
+		boolean isProd = activeProfiles != null && activeProfiles.equals("prod");
 		return ResponseCookie.from(REFRESH_TOKEN, refreshToken)
 			.httpOnly(true)
-			.secure(true)
+			.secure(isProd)
 			.path("/")
 			.maxAge(REFRESH_TOKEN_EXP / 1000L)
 			.build();
@@ -132,18 +137,22 @@ public class JwtUtil {
 	}
 
 	public ResponseCookie createExpiredRefreshTokenCookie() {
+		boolean isProd = activeProfiles != null && activeProfiles.equals("prod");
 		return ResponseCookie.from(REFRESH_TOKEN, "")
 			.httpOnly(true)
-			.secure(true)
+			.secure(isProd)
+			.sameSite("None")
 			.path("/")
 			.maxAge(0L) // 쿠키 즉시 만료
 			.build();
 	}
 
 	public ResponseCookie createExpiredAccessTokenCookie() {
+		boolean isProd = activeProfiles != null && activeProfiles.equals("prod");
 		return ResponseCookie.from(ACCESS_TOKEN, "")
 				.httpOnly(true)
-				.secure(true)
+				.secure(isProd)
+				.sameSite("None")
 				.path("/")
 				.maxAge(0L) // 쿠키 즉시 만료
 				.build();
