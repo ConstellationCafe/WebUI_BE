@@ -10,7 +10,7 @@ services:
       - redis_dev_data:/data
     command: [ "redis-server", "--appendonly", "yes", "--appendfsync", "everysec" ]
 
-  stockassist:
+  webui_be:
     build:
       context: ./
     container_name: webui_be
@@ -30,7 +30,7 @@ services:
       - REGISTER_URI=${REGISTER_URI}
       - JWT_SECRET=${JWT_SECRET}
       - SPRING_DATA_REDIS_HOST=redis
-      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
 
 
 volumes:
