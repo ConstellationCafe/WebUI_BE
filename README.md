@@ -3,7 +3,7 @@
 
 ## 📋 프로젝트 개요
 
-해당 프로젝트는 [WebUI 프로젝트](https://github.com/ConstellationCafe/WebUI_BE)의 백엔드 API 서버입니다. Discord OAuth 2.0 인증을 통한 사용자 관리와 콘텐츠, 학습 자료, 메뉴, 음악 추천 등의 CRUD 기능을 제공합니다.
+해당 프로젝트는 [WebUI 프로젝트](https://github.com/ConstellationCafe/web_frontend)의 백엔드 API 서버입니다. Discord OAuth 2.0 인증을 통한 사용자 관리와 콘텐츠, 학습 자료, 메뉴, 음악 추천 등의 CRUD 기능을 제공합니다.
 
 ### 🎯 **주요 특징**
 - Discord OAuth 2.0 기반 인증 시스템 (회원증 데베 사용)
