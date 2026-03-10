@@ -17,11 +17,10 @@
 
 ### 시스템 구조
 ```
-┌─────────────────┐    ┌──────────────────┐    
-│   Flutter Web   │    │   Spring Boot    │    │     MySQL       │                 │    │                  │ 
-│   (Port 1104)   │◄──►│   (Port 4003)    │◄──►│   Database      │                 │    │                  │ 
-│                 │    │                  │    
-└─────────────────┘    └──────────────────┘    
+┌─────────────────┐    ┌──────────────────┐    ┌───────────────┐  
+│   Flutter Web   │    │   Spring Boot    │    │     MySQL     │
+│   (Port 1104)   │◄──►│   (Port 4003)    │◄──►│   Database    │
+└─────────────────┘    └──────────────────┘    └───────────────┘ 
                                 │
                                 ▼
                        ┌──────────────────┐
@@ -35,29 +34,29 @@
 ```
 AuthServerPlatform/
 ├── src/main/java/com/help/
-│   ├── authserver/         # 인증 서버 모듈
-│   │   ├── api/            # 외부 API 통신
-│   │   └── domain/user/    # 사용자 도메인
-│   │       ├── controller/ # REST 컨트롤러
-│   │       ├── service/    # 비즈니스 로직
-│   │       ├── repository/ # 데이터 접근
-│   │       ├── entity/     # JPA 엔티티
-│   │       └── dto/        # 데이터 전송 객체
-│   ├── backend/            # 백엔드 API 모듈
+│   ├── authserver/          # 인증 서버 모듈
+│   │   ├── api/             # 외부 API 통신
+│   │   └── domain/user/     # 사용자 도메인
+│   │       ├── controller/  # REST 컨트롤러
+│   │       ├── service/     # 비즈니스 로직
+│   │       ├── repository/  # 데이터 접근
+│   │       ├── entity/      # JPA 엔티티
+│   │       └── dto/         # 데이터 전송 객체
+│   ├── backend/             # 백엔드 API 모듈
 │   │   └── domain/
-│   │       ├── content/    # 콘텐츠 추천
-│   │       ├── learning/   # 학습 자료
-│   │       ├── menu/       # 메뉴 추천
-│   │       ├── music/      # 음악 추천
-│   │       └── metadata/   # 메타데이터
-│   └── global/             # 공통 설정
-│       ├── config/         # 설정 파일
-│       ├── jwt/            # JWT 처리
-│       └── common/         # 공통 유틸리티
+│   │       ├── content/     # 콘텐츠 추천
+│   │       ├── learning/    # 학습 자료
+│   │       ├── menu/        # 메뉴 추천
+│   │       ├── music/       # 음악 추천
+│   │       └── metadata/    # 메타데이터
+│   └── global/              # 공통 설정
+│       ├── config/          # 설정 파일
+│       ├── jwt/             # JWT 처리
+│       └── common/          # 공통 유틸리티
 └── src/main/resources/
-    ├── application.yml     # 기본 설정
-    ├── application-dev.yml # 개발 환경 설정
-    └── application-prod.yml# 운영 환경 설정
+    ├── application.yml      # 기본 설정
+    ├── application-dev.yml  # 개발 환경 설정
+    └── application-prod.yml # 운영 환경 설정
 ```
 
 ## 🔐 인증 시스템
