@@ -1,5 +1,5 @@
 # 🌟 **빗자루 WebUI 프로젝트**
-**빗자루**는 섀버 별자리 Cafe에서 개발한 채팅 봇입니다. 이 프로젝트의 목표는 채팅방 운영 도구와 섀도우버스 관련 편의 기능을 제공하는 것입니다.
+[**빗자루**](https://github.com/ConstellationCafe/DiscordBot)는 섀버 별자리 Cafe에서 개발한 채팅 봇입니다. 이 프로젝트의 목표는 채팅방 운영 도구와 섀도우버스 관련 편의 기능을 제공하는 것입니다.
 
 ## 📋 **프로젝트 개요**
 이 프로젝트는 [WebUI 프로젝트](https://github.com/ConstellationCafe/web_frontend)의 백엔드 API 서버입니다.  
