@@ -1,7 +1,7 @@
 services:
   redis:
     build:
-        context: ./redis
+      context: ./redis
     container_name: redis-server
     restart: always
     ports:
