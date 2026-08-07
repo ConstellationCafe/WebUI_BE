@@ -1,4 +1,4 @@
-rootProject.name = "AuthServer"
+rootProject.name = "WebUI_BE"
 
 include("AuthServerPlatform")
 project(":AuthServerPlatform").projectDir = file("AuthServerPlatform")

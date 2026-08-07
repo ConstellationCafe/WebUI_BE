@@ -61,6 +61,14 @@ public class AuthController {
 		return discordAuthService.me(user);
 	}
 
+	@GetMapping("/guilds")
+	public ApiResponse<?> guilds(
+		@AuthenticationPrincipal CustomUser user
+	) {
+		log.info("[GET] /auth/guilds");
+		return discordAuthService.guilds(user);
+	}
+
 	// AccessToken 갱신 요청
 	@PostMapping("/refresh")
 	public ApiResponse<?> refresh(
@@ -82,6 +90,7 @@ public class AuthController {
 			@AuthenticationPrincipal CustomUser user,
 			final HttpServletResponse response
 	) {
+		log.info("[GET] /auth/logout");
 		discordAuthService.logout(user, response);
 		return ApiResponse.success(null);
 	}

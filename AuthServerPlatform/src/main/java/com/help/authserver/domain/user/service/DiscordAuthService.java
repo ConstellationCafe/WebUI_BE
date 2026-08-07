@@ -1,13 +1,14 @@
 package com.help.authserver.domain.user.service;
 import com.help.authserver.api.LoginAPI;
+import com.help.authserver.domain.user.dto.discord.DiscordGuildDto;
 import com.help.authserver.domain.user.dto.response.LoginCheckResponseDto;
-import com.help.authserver.domain.user.dto.response.LoginResponseDto;
-import com.help.authserver.domain.user.dto.user.AuthMeDto;
+import com.help.authserver.domain.user.dto.user.CurrentUserDto;
 import com.help.authserver.domain.user.dto.user.DiscordUserDto;
 import com.help.authserver.domain.user.entity.DiscordUser;
-//import com.help.authserver.domain.user.repository.DiscordMembershipRepository;
+import com.help.authserver.domain.user.entity.ErpSubscriber;
 import com.help.authserver.domain.user.entity.SessionInfo;
 import com.help.authserver.domain.user.repository.DiscordUserRepository;
+import com.help.authserver.domain.user.repository.ERPSubscriberRepository;
 import com.help.authserver.domain.user.repository.SessionRepository;
 import com.help.global.common.exception.CustomException;
 import com.help.global.common.exception.ErrorCode;
@@ -36,6 +37,7 @@ public class DiscordAuthService implements UserDetailsService  {
     private final LoginAPI<DiscordUserDto> loginAPI;
     private final DiscordUserRepository userRepository;
     private final SessionRepository sessionRepository;
+    private final ERPSubscriberRepository erpSubscriberRepository;
 
     @Value("${front.redirect-uri}")
     private String redirectUri;
@@ -90,8 +92,8 @@ public class DiscordAuthService implements UserDetailsService  {
         SessionInfo sessionInfo = sessionRepository.find(username)
                 .orElseThrow(() -> new CustomException(ErrorCode.SESSION_EXPIRED));
 
-        if (sessionInfo == null)
-            throw new RuntimeException("Session expired");
+//        if (sessionInfo == null)
+//            throw new RuntimeException("Session expired");
         if (!sessionInfo.isValid())
             throw new RuntimeException("Session revoked");
 
@@ -104,7 +106,7 @@ public class DiscordAuthService implements UserDetailsService  {
                 .map(GrantedAuthority::getAuthority)
                 .toList();
 
-        AuthMeDto meDto = new AuthMeDto(
+        CurrentUserDto meDto = new CurrentUserDto(
             userDto.discordId(),
             userDto.username(),
             userDto.globalName(),
@@ -112,6 +114,22 @@ public class DiscordAuthService implements UserDetailsService  {
             roles
         );
         return ApiResponse.success(meDto);
+    }
+
+    public ApiResponse<?> guilds(CustomUser user) {
+        String username = user.getUsername();
+        SessionInfo sessionInfo = sessionRepository.find(username)
+                .orElseThrow(() -> new CustomException(ErrorCode.SESSION_EXPIRED));
+        String discordAccessToken = sessionInfo.getDiscordAccessToken();
+
+        DiscordUserDto userDto = loginAPI.getUserInfo(discordAccessToken);
+        List<ErpSubscriber> erpSubscribers = erpSubscriberRepository
+                .findByGuildIds(userDto.guilds()
+                        .stream()
+                        .map(DiscordGuildDto::id)
+                        .toList());
+
+        return ApiResponse.success(erpSubscribers);
     }
 
     public ApiResponse<?> checkLogin(final HttpServletRequest request) {
