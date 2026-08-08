@@ -24,6 +24,7 @@ discord:
   client-secret: ${DISCORD_CLIENT_SECRET}
   token-uri: ${DISCORD_TOKEN_URI}
   user-uri: ${DISCORD_USER_URI}
+  guilds-uri: ${DISCORD_GUILDS_URI}
   redirect-uri: ${DISCORD_REDIRECT_URI}
 front:
   redirect-uri: ${FRONT_REDIRECT_URI}

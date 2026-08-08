@@ -1,5 +1,9 @@
 package com.help.authserver.api;
 
+import com.help.authserver.domain.user.dto.response.DiscordGuildResponseDto;
+import com.help.authserver.domain.user.dto.response.DiscordMeResponseDto;
+import com.help.authserver.domain.user.dto.discord.DiscordGuildDto;
+import com.help.authserver.domain.user.dto.discord.DiscordMeDto;
 import com.help.authserver.domain.user.dto.user.DiscordUserDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -9,7 +13,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class DiscordAPI implements LoginAPI<DiscordUserDto> {
@@ -24,6 +30,10 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
 
     @Value("${discord.user-uri}")
     private String userUri;
+
+    @Value("${discord.guilds-uri}")
+    private String guildsUri;
+
     @Value("${discord.redirect-uri}")
     private String redirectUri;
 
@@ -58,23 +68,84 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
 
     @Override
     public DiscordUserDto getUserInfo(String accessTokenForDiscord) {
-        // 발급받은 accessToken으로 사용자 정보 조회 -> 회원가입
+        DiscordMeDto me = this.getMeDto(accessTokenForDiscord);
+        List<DiscordGuildDto> guilds = this.getGuildsDto(accessTokenForDiscord);
+        return new DiscordUserDto(
+                me.id(),
+                me.username(),
+                me.globalName(),
+                me.avatar(),
+                guilds
+        );
+    }
+
+    private DiscordMeDto getMeDto(String accessTokenForDiscord) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessTokenForDiscord);
         HttpEntity<Void> request = new HttpEntity<>(headers);
-        ResponseEntity<Map> response = restTemplate.exchange(userUri, HttpMethod.GET, request, Map.class);
+        ResponseEntity<DiscordMeResponseDto> meResponse =
+                restTemplate.exchange(
+                        userUri,
+                        HttpMethod.GET,
+                        request,
+                        DiscordMeResponseDto.class
+                );
 
-        Map body = response.getBody();
-        String discordId = (String) body.get("id");
-        String username = (String) body.get("username");
-        String globalName = (String) body.get("global_name");
-        String avatarHash = (String) body.get("avatar");
+        DiscordMeResponseDto me = Optional.ofNullable(meResponse.getBody())
+                .orElseThrow(() -> new RuntimeException("Discord user response is empty"));
+
         String avatar;
-        if (avatarHash != null) {
-            avatar = "https://cdn.discordapp.com/avatars/" + discordId + "/" + avatarHash + ".png";
+        if (me.avatar() == null) {
+            avatar = "https://cdn.discordapp.com/embed/avatars/0.png";
         } else {
-            avatar = "https://cdn.discordapp.com/embed/avatars/0.png"; // Discord 기본 아바타
+            String extension = me.avatar().startsWith("a_") ? "gif" : "png";
+            avatar = "https://cdn.discordapp.com/avatars/"
+                    + me.id()
+                    + "/"
+                    + me.avatar()
+                    + "."
+                    + extension;
         }
-        return new DiscordUserDto(discordId, username, globalName, avatar);
+        return new DiscordMeDto(
+                me.id(),
+                me.username(),
+                me.globalName(),
+                avatar
+        );
+    }
+
+    private List<DiscordGuildDto> getGuildsDto(String accessTokenForDiscord) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessTokenForDiscord);
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+        ResponseEntity<List<DiscordGuildResponseDto>> guildsResponse =
+                restTemplate.exchange(
+                        guildsUri,
+                        HttpMethod.GET,
+                        request,
+                        new ParameterizedTypeReference<>() {}
+                );
+
+        return Optional.ofNullable(guildsResponse.getBody())
+                .orElse(List.of())
+                .stream()
+                .map(guild -> {
+                    String icon = guild.icon();
+                    if (icon != null) {
+                        String extension = icon.startsWith("a_") ? "gif" : "png";
+                        icon = "https://cdn.discordapp.com/icons/"
+                                + guild.id()
+                                + "/"
+                                + icon
+                                + "."
+                                + extension;
+                    }
+                    return new DiscordGuildDto(
+                            guild.id(),
+                            guild.name(),
+                            icon
+                    );
+                })
+                .toList();
     }
 }
