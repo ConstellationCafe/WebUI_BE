@@ -34,6 +34,9 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
     @Value("${discord.guilds-uri}")
     private String guildsUri;
 
+    @Value("${discord.guild-info-uri}")
+    private String guildInfoUri;
+
     @Value("${discord.redirect-uri}")
     private String redirectUri;
 
@@ -130,6 +133,7 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
                 .orElse(List.of())
                 .stream()
                 .map(guild -> {
+                    // guild icon url
                     String icon = guild.icon();
                     if (icon != null) {
                         String extension = icon.startsWith("a_") ? "gif" : "png";
@@ -140,10 +144,27 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
                                 + "."
                                 + extension;
                     }
+                    String guildUri = guildInfoUri
+                            + "/"
+                            + guild.id()
+                            + "?with_counts=true";
+                    // guild member count
+//                    ResponseEntity<DiscordGuildResponseDto> guildResponse =
+//                            restTemplate.exchange(
+//                                    guildUri,
+//                                    HttpMethod.GET,
+//                                    request,
+//                                    DiscordGuildResponseDto.class
+//                            );
+//                    Integer memberCount = Optional.ofNullable(guildResponse.getBody())
+//                            .map(DiscordGuildResponseDto::memberCount)
+//                            .orElse(0);
+
                     return new DiscordGuildDto(
                             guild.id(),
                             guild.name(),
-                            icon
+                            icon,
+                            guild.memberCount()
                     );
                 })
                 .toList();

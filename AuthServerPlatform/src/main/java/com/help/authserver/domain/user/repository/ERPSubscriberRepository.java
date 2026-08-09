@@ -7,5 +7,5 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface ERPSubscriberRepository extends JpaRepository<ErpSubscriber, String> {
-    List<ErpSubscriber> findByGuildIds(@Param("guildIDs") List<String> guildIDs);
+    List<ErpSubscriber> findByGuildIdIn(List<String> guildIds);
 }

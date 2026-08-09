@@ -124,7 +124,7 @@ public class DiscordAuthService implements UserDetailsService  {
 
         DiscordUserDto userDto = loginAPI.getUserInfo(discordAccessToken);
         List<ErpSubscriber> erpSubscribers = erpSubscriberRepository
-                .findByGuildIds(userDto.guilds()
+                .findByGuildIdIn(userDto.guilds()
                         .stream()
                         .map(DiscordGuildDto::id)
                         .toList());
