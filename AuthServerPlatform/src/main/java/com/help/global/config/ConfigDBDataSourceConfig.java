@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -26,24 +25,22 @@ import java.util.Map;
 @EnableTransactionManagement
 @EnableJpaRepositories(
 	basePackages = {
-		"com.help.authserver.domain.user.repository",
-		"com.help.backend.domain"
+		"com.help.authserver.domain.user.repository.config",
 	},
-	entityManagerFactoryRef = "primaryEntityManagerFactory",
-	transactionManagerRef = "primaryTransactionManager"
+	entityManagerFactoryRef = "configDBEntityManagerFactory",
+	transactionManagerRef = "configDBTransactionManager"
 )
-public class PrimaryDataSourceConfig {
-	@Value("${spring.datasource.primary.url}")
+public class ConfigDBDataSourceConfig {
+	@Value("${spring.datasource.config_db.url}")
 	private String dbUrl;
 
-	@Value("${spring.datasource.primary.username}")
+	@Value("${spring.datasource.config_db.username}")
 	private String dbUser;
 
-	@Value("${spring.datasource.primary.password}")
+	@Value("${spring.datasource.config_db.password}")
 	private String dbPassword;
 
-	@Primary
-	@Bean(name = "primaryDataSource")  // DB 연결 정보
+	@Bean(name = "configDBDataSource")  // DB 연결 정보
 	public DataSource dataSource() {
 		final HikariConfig config = new HikariConfig();
 		config.setJdbcUrl(dbUrl);
@@ -63,11 +60,10 @@ public class PrimaryDataSourceConfig {
 		return new HikariDataSource(config);
 	}
 
-	@Primary
-	@Bean(name = "primaryEntityManagerFactory")  // JPA 엔티티 매니저
+	@Bean(name = "configDBEntityManagerFactory")  // JPA 엔티티 매니저
 	public LocalContainerEntityManagerFactoryBean entityManagerFactory(
 		EntityManagerFactoryBuilder builder,
-		@Qualifier("primaryDataSource") DataSource dataSource) {
+		@Qualifier("configDBDataSource") DataSource dataSource) {
 		final Map<String, Object> properties = new HashMap<>();
 		properties.put("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
 		properties.put("hibernate.show_sql", true);
@@ -81,15 +77,14 @@ public class PrimaryDataSourceConfig {
 				"com.help.authserver.domain.user.entity",
 				"com.help.backend.domain"
 			)
-			.persistenceUnit("primary")
+			.persistenceUnit("configDB")
 			.properties(properties)
 			.build();
 	}
 
-	@Primary
-	@Bean(name = "primaryTransactionManager")  // 트랜잭션 관리
+	@Bean(name = "configDBTransactionManager")  // 트랜잭션 관리
 	public PlatformTransactionManager transactionManager(
-		@Qualifier("primaryEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
+		@Qualifier("configDBEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
 		return new JpaTransactionManager(entityManagerFactory);
 	}
 }

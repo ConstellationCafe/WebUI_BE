@@ -123,7 +123,7 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
         HttpEntity<Void> request = new HttpEntity<>(headers);
         ResponseEntity<List<DiscordGuildResponseDto>> guildsResponse =
                 restTemplate.exchange(
-                        guildsUri,
+                        guildsUri+"?with_counts=true",
                         HttpMethod.GET,
                         request,
                         new ParameterizedTypeReference<>() {}
@@ -144,22 +144,6 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
                                 + "."
                                 + extension;
                     }
-                    String guildUri = guildInfoUri
-                            + "/"
-                            + guild.id()
-                            + "?with_counts=true";
-                    // guild member count
-//                    ResponseEntity<DiscordGuildResponseDto> guildResponse =
-//                            restTemplate.exchange(
-//                                    guildUri,
-//                                    HttpMethod.GET,
-//                                    request,
-//                                    DiscordGuildResponseDto.class
-//                            );
-//                    Integer memberCount = Optional.ofNullable(guildResponse.getBody())
-//                            .map(DiscordGuildResponseDto::memberCount)
-//                            .orElse(0);
-
                     return new DiscordGuildDto(
                             guild.id(),
                             guild.name(),

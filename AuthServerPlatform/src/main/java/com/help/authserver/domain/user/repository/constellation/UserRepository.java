@@ -1,13 +1,4 @@
-package com.help.authserver.domain.user.repository;
-
-import java.util.Optional;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.help.authserver.domain.user.entity.EmailUser;
+package com.help.authserver.domain.user.repository.constellation;
 
 //public interface UserRepository extends JpaRepository<EmailUser, Long> {
 //	@Transactional(readOnly = true)

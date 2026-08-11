@@ -6,8 +6,13 @@ server:
 #    certificate-private-key: classpath:certs/localhost+2-key.pem
 spring:
   datasource:
-    primary:
+    constellation:
       url: ${DB_URL}
+      username: ${DB_USER}
+      password: ${DB_PASSWORD}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+    config_db:
+      url: ${DB_CONFIG_URL}
       username: ${DB_USER}
       password: ${DB_PASSWORD}
       driver-class-name: com.mysql.cj.jdbc.Driver
