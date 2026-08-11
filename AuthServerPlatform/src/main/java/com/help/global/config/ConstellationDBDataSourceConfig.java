@@ -26,24 +26,24 @@ import java.util.Map;
 @EnableTransactionManagement
 @EnableJpaRepositories(
 	basePackages = {
-		"com.help.authserver.domain.user.repository",
+		"com.help.authserver.domain.user.repository.constellation",
 		"com.help.backend.domain"
 	},
-	entityManagerFactoryRef = "primaryEntityManagerFactory",
-	transactionManagerRef = "primaryTransactionManager"
+	entityManagerFactoryRef = "constellationEntityManagerFactory",
+	transactionManagerRef = "constellationTransactionManager"
 )
-public class PrimaryDataSourceConfig {
-	@Value("${spring.datasource.primary.url}")
+public class ConstellationDBDataSourceConfig {
+	@Value("${spring.datasource.constellation.url}")
 	private String dbUrl;
 
-	@Value("${spring.datasource.primary.username}")
+	@Value("${spring.datasource.constellation.username}")
 	private String dbUser;
 
-	@Value("${spring.datasource.primary.password}")
+	@Value("${spring.datasource.constellation.password}")
 	private String dbPassword;
 
 	@Primary
-	@Bean(name = "primaryDataSource")  // DB 연결 정보
+	@Bean(name = "constellationDataSource")  // DB 연결 정보
 	public DataSource dataSource() {
 		final HikariConfig config = new HikariConfig();
 		config.setJdbcUrl(dbUrl);
@@ -64,10 +64,10 @@ public class PrimaryDataSourceConfig {
 	}
 
 	@Primary
-	@Bean(name = "primaryEntityManagerFactory")  // JPA 엔티티 매니저
+	@Bean(name = "constellationEntityManagerFactory")  // JPA 엔티티 매니저
 	public LocalContainerEntityManagerFactoryBean entityManagerFactory(
 		EntityManagerFactoryBuilder builder,
-		@Qualifier("primaryDataSource") DataSource dataSource) {
+		@Qualifier("constellationDataSource") DataSource dataSource) {
 		final Map<String, Object> properties = new HashMap<>();
 		properties.put("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
 		properties.put("hibernate.show_sql", true);
@@ -81,15 +81,15 @@ public class PrimaryDataSourceConfig {
 				"com.help.authserver.domain.user.entity",
 				"com.help.backend.domain"
 			)
-			.persistenceUnit("primary")
+			.persistenceUnit("constellation")
 			.properties(properties)
 			.build();
 	}
 
 	@Primary
-	@Bean(name = "primaryTransactionManager")  // 트랜잭션 관리
+	@Bean(name = "constellationTransactionManager")  // 트랜잭션 관리
 	public PlatformTransactionManager transactionManager(
-		@Qualifier("primaryEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
+		@Qualifier("constellationEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
 		return new JpaTransactionManager(entityManagerFactory);
 	}
 }

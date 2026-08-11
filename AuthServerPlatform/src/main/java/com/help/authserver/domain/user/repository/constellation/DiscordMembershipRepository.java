@@ -1,4 +1,4 @@
-package com.help.authserver.domain.user.repository;
+package com.help.authserver.domain.user.repository.constellation;
 
 //import com.help.authserver.domain.user.entity.DiscordUser;
 //import com.help.authserver.domain.user.view.DiscordMembershipView;
