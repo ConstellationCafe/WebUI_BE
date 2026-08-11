@@ -7,8 +7,8 @@ import com.help.authserver.domain.user.dto.user.DiscordUserDto;
 import com.help.authserver.domain.user.entity.DiscordUser;
 import com.help.authserver.domain.user.entity.ErpSubscriber;
 import com.help.authserver.domain.user.entity.SessionInfo;
-import com.help.authserver.domain.user.repository.DiscordUserRepository;
-import com.help.authserver.domain.user.repository.ERPSubscriberRepository;
+import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
+import com.help.authserver.domain.user.repository.config.ERPSubscriberRepository;
 import com.help.authserver.domain.user.repository.SessionRepository;
 import com.help.global.common.exception.CustomException;
 import com.help.global.common.exception.ErrorCode;
@@ -28,7 +28,6 @@ import com.help.global.jwt.JwtUtil;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -121,15 +120,25 @@ public class DiscordAuthService implements UserDetailsService  {
         SessionInfo sessionInfo = sessionRepository.find(username)
                 .orElseThrow(() -> new CustomException(ErrorCode.SESSION_EXPIRED));
         String discordAccessToken = sessionInfo.getDiscordAccessToken();
-
         DiscordUserDto userDto = loginAPI.getUserInfo(discordAccessToken);
-        List<ErpSubscriber> erpSubscribers = erpSubscriberRepository
-                .findByGuildIdIn(userDto.guilds()
-                        .stream()
-                        .map(DiscordGuildDto::id)
-                        .toList());
 
-        return ApiResponse.success(erpSubscribers);
+        List<String> registeredGuildIds = erpSubscriberRepository
+                .findByGuildIdIn(
+                        userDto.guilds()
+                                .stream()
+                                .map(DiscordGuildDto::id)
+                                .toList()
+                )
+                .stream()
+                .map(ErpSubscriber::getGuildId)
+                .toList();
+
+        List<DiscordGuildDto> guilds = userDto.guilds()
+                .stream()
+                .filter(guild -> registeredGuildIds.contains(guild.id()))
+                .toList();
+
+        return ApiResponse.success(guilds);
     }
 
     public ApiResponse<?> checkLogin(final HttpServletRequest request) {
