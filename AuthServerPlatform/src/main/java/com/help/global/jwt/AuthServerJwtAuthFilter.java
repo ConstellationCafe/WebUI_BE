@@ -1,12 +1,10 @@
 package com.help.global.jwt;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import com.help.authserver.domain.user.entity.User;
-import com.help.authserver.domain.user.repository.DiscordUserRepository;
+import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
 import com.help.authserver.domain.user.repository.SessionRepository;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -25,8 +23,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import com.help.authserver.domain.user.entity.SessionInfo;
-
-import jakarta.servlet.http.Cookie;
 
 @RequiredArgsConstructor
 @Slf4j

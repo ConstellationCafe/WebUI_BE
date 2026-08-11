@@ -2,7 +2,7 @@ package com.help.global.jwt;
 
 //import com.help.authserver.domain.user.entity.EmailUser;
 import com.help.authserver.domain.user.entity.DiscordUser;
-import com.help.authserver.domain.user.repository.DiscordUserRepository;
+import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
 //import com.help.authserver.domain.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
