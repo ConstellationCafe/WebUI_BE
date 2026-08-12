@@ -2,7 +2,9 @@ package com.help.global.jwt;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
+import com.help.authserver.domain.user.entity.DiscordUser;
 import com.help.authserver.domain.user.entity.User;
 import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
 import com.help.authserver.domain.user.repository.SessionRepository;
@@ -85,22 +87,36 @@ public class AuthServerJwtAuthFilter extends OncePerRequestFilter {
 	}
 
 	// FIXME : 로그인 종류에 따른 필터
-	private void checkAccessTokenAndAuthentication(final HttpServletRequest request, final HttpServletResponse response,
-		final FilterChain filterChain) throws ServletException, IOException {
-		jwtUtil.extractAccessTokenFromRequest(request)
+	private void checkAccessTokenAndAuthentication(
+			final HttpServletRequest request,
+			final HttpServletResponse response,
+			final FilterChain filterChain
+	) throws ServletException, IOException {
+		// Access Token 검증 및 username 추출
+		final Optional<String> username = jwtUtil.extractAccessTokenFromRequest(request)
 				.filter(jwtUtil::isTokenValidate)
-				.flatMap(jwtUtil::extractUsername)
-				.ifPresent(username -> {
-					sessionRepository.find(username)
-						.filter(SessionInfo::isValid)
-						.ifPresentOrElse(sessionInfo -> {
-							userRepository.findByDiscordID(username)
-								.ifPresent(this::saveAuthentication);
-						}, () -> {
-							log.warn("유효하지 않은 세션 또는 세션 없음: {}", username);
-						});
-				});
-
+				.flatMap(jwtUtil::extractUsername);
+		if (username.isEmpty()) {
+			log.warn("유효하지 않은 Access Token 또는 username 추출 실패");
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			return;
+		}
+		// 세션 존재 여부 및 유효성 검증
+		final Optional<SessionInfo> sessionInfo = sessionRepository.find(username.get())
+				.filter(SessionInfo::isValid);
+		if (sessionInfo.isEmpty()) {
+			log.warn("유효하지 않은 세션 또는 세션 없음: {}", username.get());
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			return;
+		}
+		// Discord 사용자 존재 여부 검증
+		final Optional<DiscordUser> user = userRepository.findByDiscordID(username.get());
+		if (user.isEmpty()) {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			return;
+		}
+	 	// 모든 인증 검증 통과
+		saveAuthentication(user.get());
 		filterChain.doFilter(request, response);
 	}
 
