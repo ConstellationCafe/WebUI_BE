@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface ERPSubscriberRepository extends JpaRepository<ErpSubscriber, String> {
     List<ErpSubscriber> findByGuildIdIn(List<String> guildIds);
+    List<ErpSubscriber> findByDiscordId(String discordId);
 }

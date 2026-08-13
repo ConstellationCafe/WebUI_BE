@@ -21,6 +21,8 @@ public class ErpSubscriber {
     private String botId;
     @Column(name = "guild_id")
     private String guildId;
+    @Column(name = "discord_id")
+    private String discordId;
     @Column(name = "subscribe_at")
     private LocalDateTime subscribeAt;
 }

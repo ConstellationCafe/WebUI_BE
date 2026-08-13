@@ -120,25 +120,42 @@ public class DiscordAuthService implements UserDetailsService  {
         SessionInfo sessionInfo = sessionRepository.find(username)
                 .orElseThrow(() -> new CustomException(ErrorCode.SESSION_EXPIRED));
         String discordAccessToken = sessionInfo.getDiscordAccessToken();
-        DiscordUserDto userDto = loginAPI.getUserInfo(discordAccessToken);
+        try {
+            // Discord API 성공
+            DiscordUserDto userDto = loginAPI.getUserInfo(discordAccessToken);
+            List<String> registeredGuildIds = erpSubscriberRepository
+                    .findByGuildIdIn(
+                            userDto.guilds()
+                                    .stream()
+                                    .map(DiscordGuildDto::id)
+                                    .toList()
+                    )
+                    .stream()
+                    .map(ErpSubscriber::getGuildId)
+                    .toList();
 
-        List<String> registeredGuildIds = erpSubscriberRepository
-                .findByGuildIdIn(
-                        userDto.guilds()
-                                .stream()
-                                .map(DiscordGuildDto::id)
-                                .toList()
-                )
-                .stream()
-                .map(ErpSubscriber::getGuildId)
-                .toList();
+            List<DiscordGuildDto> guilds = userDto.guilds()
+                    .stream()
+                    .filter(guild -> registeredGuildIds.contains(guild.id()))
+                    .toList();
 
-        List<DiscordGuildDto> guilds = userDto.guilds()
-                .stream()
-                .filter(guild -> registeredGuildIds.contains(guild.id()))
-                .toList();
+            return ApiResponse.success(guilds);
 
-        return ApiResponse.success(guilds);
+        } catch (Exception e) {
+            // Discord API 실패 → DB의 guild_id만 반환
+            List<DiscordGuildDto> guilds = erpSubscriberRepository
+                    .findByDiscordId(username)
+                    .stream()
+                    .map(subscriber -> new DiscordGuildDto(
+                            subscriber.getGuildId(),
+                            null,
+                            null,
+                            0
+                    ))
+                    .toList();
+
+            return ApiResponse.success(guilds);
+        }
     }
 
     public ApiResponse<?> checkLogin(final HttpServletRequest request) {
