@@ -1,6 +1,6 @@
 package com.help.authserver.domain.user.repository.config;
 
-import com.help.authserver.domain.user.entity.ErpSubscriber;
+import com.help.authserver.domain.user.entity.config.ErpSubscriber;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

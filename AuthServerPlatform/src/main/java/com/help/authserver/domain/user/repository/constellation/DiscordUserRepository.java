@@ -1,6 +1,6 @@
 package com.help.authserver.domain.user.repository.constellation;
 
-import com.help.authserver.domain.user.entity.DiscordUser;
+import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

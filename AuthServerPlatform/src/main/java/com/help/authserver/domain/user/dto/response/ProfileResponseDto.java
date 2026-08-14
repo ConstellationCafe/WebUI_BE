@@ -1,6 +1,6 @@
 package com.help.authserver.domain.user.dto.response;
 
-import com.help.authserver.domain.user.entity.UserProfile;
+import com.help.authserver.domain.user.entity.constellation.UserProfile;
 
 public record ProfileResponseDto(UserInfo user) {
 	public static ProfileResponseDto from(final UserProfile userProfile) {
