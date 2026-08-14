@@ -10,7 +10,7 @@
 //
 //import com.help.authserver.domain.user.dto.request.LoginRequestDto;
 //import com.help.authserver.domain.user.dto.response.LoginResponseDto;
-//import com.help.authserver.domain.user.entity.User;
+//import com.help.authserver.domain.user.entity.constellation.User;
 //import com.help.authserver.domain.user.repository.UserRepository;
 //import com.help.authserver.global.common.exception.CustomException;
 //import com.help.authserver.global.common.exception.ErrorCode;

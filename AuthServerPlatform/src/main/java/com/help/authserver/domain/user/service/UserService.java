@@ -7,7 +7,7 @@
 //import com.help.authserver.domain.user.dto.request.PasswordChangeRequestDto;
 //import com.help.authserver.domain.user.dto.request.ProfileUpdateRequestDto;
 //import com.help.authserver.domain.user.dto.request.SignupRequestDto;
-//import com.help.authserver.domain.user.entity.EmailUser;
+//import com.help.authserver.domain.user.entity.constellation.EmailUser;
 //import com.help.authserver.domain.user.repository.UserRepository;
 //import com.help.global.common.exception.CustomException;
 //import com.help.global.common.exception.ErrorCode;
