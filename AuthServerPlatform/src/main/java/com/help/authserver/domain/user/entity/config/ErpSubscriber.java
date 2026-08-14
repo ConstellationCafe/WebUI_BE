@@ -1,4 +1,4 @@
-package com.help.authserver.domain.user.entity;
+package com.help.authserver.domain.user.entity.config;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

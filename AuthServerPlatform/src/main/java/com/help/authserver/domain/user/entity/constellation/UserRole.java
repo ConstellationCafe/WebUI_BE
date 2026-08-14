@@ -1,4 +1,4 @@
-package com.help.authserver.domain.user.entity;
+package com.help.authserver.domain.user.entity.constellation;
 
 import com.help.global.data.Authority;
 import lombok.Getter;

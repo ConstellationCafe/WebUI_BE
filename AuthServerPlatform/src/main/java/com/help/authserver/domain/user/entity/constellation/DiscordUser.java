@@ -1,9 +1,7 @@
-package com.help.authserver.domain.user.entity;
+package com.help.authserver.domain.user.entity.constellation;
 
-import com.help.authserver.domain.user.dto.user.DiscordUserDto;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

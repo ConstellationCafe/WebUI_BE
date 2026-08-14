@@ -1,4 +1,4 @@
-package com.help.authserver.domain.user.entity;
+package com.help.authserver.domain.user.entity.constellation;
 
 import java.util.UUID;
 
