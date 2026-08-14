@@ -74,8 +74,7 @@ public class ConfigDBDataSourceConfig {
 		return builder
 			.dataSource(dataSource)
 			.packages(
-				"com.help.authserver.domain.user.entity",
-				"com.help.backend.domain"
+				"com.help.authserver.domain.user.entity.config"
 			)
 			.persistenceUnit("configDB")
 			.properties(properties)
