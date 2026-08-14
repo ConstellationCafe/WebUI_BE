@@ -4,8 +4,8 @@ import com.help.authserver.domain.user.dto.discord.DiscordGuildDto;
 import com.help.authserver.domain.user.dto.response.LoginCheckResponseDto;
 import com.help.authserver.domain.user.dto.user.CurrentUserDto;
 import com.help.authserver.domain.user.dto.user.DiscordUserDto;
-import com.help.authserver.domain.user.entity.DiscordUser;
-import com.help.authserver.domain.user.entity.ErpSubscriber;
+import com.help.authserver.domain.user.entity.constellation.DiscordUser;
+import com.help.authserver.domain.user.entity.config.ErpSubscriber;
 import com.help.authserver.domain.user.entity.SessionInfo;
 import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
 import com.help.authserver.domain.user.repository.config.ERPSubscriberRepository;
@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import com.help.global.jwt.CustomUser;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,10 +27,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import com.help.global.jwt.JwtUtil;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.web.client.HttpClientErrorException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class DiscordAuthService implements UserDetailsService  {
     private final JwtUtil jwtUtil;
@@ -121,8 +125,7 @@ public class DiscordAuthService implements UserDetailsService  {
                 .orElseThrow(() -> new CustomException(ErrorCode.SESSION_EXPIRED));
         String discordAccessToken = sessionInfo.getDiscordAccessToken();
         try {
-            // Discord API 성공
-            DiscordUserDto userDto = loginAPI.getUserInfo(discordAccessToken);
+            DiscordUserDto userDto = getUserInfoWithRetry(discordAccessToken, username);
             List<String> registeredGuildIds = erpSubscriberRepository
                     .findByGuildIdIn(
                             userDto.guilds()
@@ -133,16 +136,18 @@ public class DiscordAuthService implements UserDetailsService  {
                     .stream()
                     .map(ErpSubscriber::getGuildId)
                     .toList();
-
             List<DiscordGuildDto> guilds = userDto.guilds()
                     .stream()
                     .filter(guild -> registeredGuildIds.contains(guild.id()))
                     .toList();
-
             return ApiResponse.success(guilds);
-
         } catch (Exception e) {
-            // Discord API 실패 → DB의 guild_id만 반환
+            log.error(
+                    "Discord guild 조회 실패 - username={}, message={}",
+                    username,
+                    e.getMessage(),
+                    e
+            );
             List<DiscordGuildDto> guilds = erpSubscriberRepository
                     .findByDiscordId(username)
                     .stream()
@@ -153,8 +158,67 @@ public class DiscordAuthService implements UserDetailsService  {
                             0
                     ))
                     .toList();
-
             return ApiResponse.success(guilds);
+        }
+    }
+
+    private DiscordUserDto getUserInfoWithRetry(
+            String discordAccessToken,
+            String username
+    ) {
+        final int maxRetries = 1;
+        for (int attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                return loginAPI.getUserInfo(discordAccessToken);
+            } catch (HttpClientErrorException.TooManyRequests e) {
+                if (attempt >= maxRetries) {
+                    log.error(
+                            "Discord API Rate Limit 재시도 실패 - username={}, attempts={}",
+                            username,
+                            attempt + 1
+                    );
+                    throw e;
+                }
+                double retryAfter = extractRetryAfter(e);
+                log.warn(
+                        "Discord API Rate Limit 발생 - username={}, retryAfter={}초, 재시도={}/{}",
+                        username,
+                        retryAfter,
+                        attempt + 1,
+                        maxRetries
+                );
+                sleep(retryAfter);
+            }
+        }
+        throw new IllegalStateException("Discord API 요청 실패");
+    }
+
+    private double extractRetryAfter(
+            HttpClientErrorException.TooManyRequests e
+    ) {
+        try {
+            JsonNode json = new ObjectMapper()
+                    .readTree(e.getResponseBodyAsString());
+            return json.path("retry_after").asDouble(1.0);
+        } catch (Exception parseException) {
+            log.warn(
+                    "Discord 429 응답에서 retry_after 파싱 실패. 기본값 1초 사용",
+                    parseException
+            );
+            return 1.0;
+        }
+    }
+
+    private void sleep(double seconds) {
+        try {
+            long millis = (long) Math.ceil(seconds * 1000);
+            Thread.sleep(millis);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(
+                    "Discord API 재시도 대기 중 인터럽트 발생",
+                    e
+            );
         }
     }
 
