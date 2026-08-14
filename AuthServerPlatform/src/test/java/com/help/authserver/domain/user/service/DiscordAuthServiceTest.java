@@ -3,7 +3,7 @@
 //import com.help.authserver.api.LoginAPI;
 //import com.help.authserver.domain.user.dto.response.LoginResponseDto;
 //import com.help.authserver.domain.user.dto.user.DiscordUserDto;
-//import com.help.authserver.domain.user.entity.DiscordUser;
+//import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 //import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
 //import com.help.global.common.response.ApiResponse;
 //import com.help.global.jwt.CustomUser;

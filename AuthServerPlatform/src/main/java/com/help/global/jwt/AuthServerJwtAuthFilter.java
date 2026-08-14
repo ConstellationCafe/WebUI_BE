@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import com.help.authserver.domain.user.entity.DiscordUser;
-import com.help.authserver.domain.user.entity.User;
+import com.help.authserver.domain.user.entity.constellation.DiscordUser;
+import com.help.authserver.domain.user.entity.constellation.User;
 import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
 import com.help.authserver.domain.user.repository.SessionRepository;
 import org.springframework.lang.NonNull;

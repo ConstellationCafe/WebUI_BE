@@ -1,7 +1,7 @@
 package com.help.global.jwt;
 
-//import com.help.authserver.domain.user.entity.EmailUser;
-import com.help.authserver.domain.user.entity.DiscordUser;
+//import com.help.authserver.domain.user.entity.constellation.EmailUser;
+import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
 //import com.help.authserver.domain.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;

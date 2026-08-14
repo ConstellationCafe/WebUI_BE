@@ -12,7 +12,7 @@
 //import com.help.authserver.domain.user.dto.request.PasswordChangeRequestDto;
 //import com.help.authserver.domain.user.dto.request.ProfileUpdateRequestDto;
 //import com.help.authserver.domain.user.dto.response.ProfileResponseDto;
-//import com.help.authserver.domain.user.entity.User;
+//import com.help.authserver.domain.user.entity.constellation.User;
 //import com.help.authserver.domain.user.service.UserService;
 //import com.help.authserver.global.common.response.ApiResponse;
 //import com.help.authserver.global.jwt.CustomUser;

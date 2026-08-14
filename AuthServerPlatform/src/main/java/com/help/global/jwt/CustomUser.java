@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-import com.help.authserver.domain.user.entity.UserRole;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -32,7 +31,7 @@ public class CustomUser extends User {
 	}
 
 	// User 인터페이스로부터 생성
-	public static CustomUser from(final com.help.authserver.domain.user.entity.User user) {
+	public static CustomUser from(final com.help.authserver.domain.user.entity.constellation.User user) {
 		final List<GrantedAuthority> authorities = new ArrayList<>();
 		authorities.add(new SimpleGrantedAuthority(user.getRole().getRoleName()));
 		final CustomUser customUser = new CustomUser(

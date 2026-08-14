@@ -78,7 +78,7 @@ public class ConstellationDBDataSourceConfig {
 		return builder
 			.dataSource(dataSource)
 			.packages(
-				"com.help.authserver.domain.user.entity",
+				"com.help.authserver.domain.user.entity.constellation",
 				"com.help.backend.domain"
 			)
 			.persistenceUnit("constellation")

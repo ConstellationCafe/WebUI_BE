@@ -12,7 +12,7 @@
 //import java.util.ArrayList;
 //import java.util.List;
 //
-//import com.help.authserver.domain.user.entity.DiscordUser;
+//import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 //import com.help.backend.domain.learning.dto.request.repository.LearningDto;
 //import com.help.backend.domain.learning.service.LearningService;
 //import com.help.global.common.response.ApiResponse;
