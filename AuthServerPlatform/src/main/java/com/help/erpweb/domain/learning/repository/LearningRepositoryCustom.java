@@ -1,0 +1,8 @@
+package com.help.erpweb.domain.learning.repository;
+
+public interface LearningRepositoryCustom {
+    String callLearningProcedure(String cardType,
+                                 String membershipID,
+                                 String lnKey,
+                                 String lnValue);
+}

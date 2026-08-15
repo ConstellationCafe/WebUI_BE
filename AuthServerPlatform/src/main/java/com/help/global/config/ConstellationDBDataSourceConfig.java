@@ -27,7 +27,7 @@ import java.util.Map;
 @EnableJpaRepositories(
 	basePackages = {
 		"com.help.authserver.domain.user.repository.constellation",
-		"com.help.backend.domain"
+		"com.help.erpweb.domain"
 	},
 	entityManagerFactoryRef = "constellationEntityManagerFactory",
 	transactionManagerRef = "constellationTransactionManager"
