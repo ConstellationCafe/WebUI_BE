@@ -7,6 +7,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -19,6 +21,7 @@ public class ModuleConfig {
     @EmbeddedId
     private ModuleConfigId id;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "config", columnDefinition = "json")
     private JsonNode config;
 
