@@ -26,6 +26,7 @@ import java.util.Map;
 @EnableJpaRepositories(
 	basePackages = {
 		"com.help.authserver.domain.user.repository.config",
+		"com.help.erpweb.domain.config.repository"
 	},
 	entityManagerFactoryRef = "configDBEntityManagerFactory",
 	transactionManagerRef = "configDBTransactionManager"
@@ -74,7 +75,8 @@ public class ConfigDBDataSourceConfig {
 		return builder
 			.dataSource(dataSource)
 			.packages(
-				"com.help.authserver.domain.user.entity.config"
+				"com.help.authserver.domain.user.entity.config",
+				"com.help.erpweb.domain.config.entity"
 			)
 			.persistenceUnit("configDB")
 			.properties(properties)

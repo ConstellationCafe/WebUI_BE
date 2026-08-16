@@ -27,7 +27,13 @@ import java.util.Map;
 @EnableJpaRepositories(
 	basePackages = {
 		"com.help.authserver.domain.user.repository.constellation",
-		"com.help.erpweb.domain"
+		"com.help.erpweb.domain.academy.repository",
+		"com.help.erpweb.domain.content.repository",
+		"com.help.erpweb.domain.learning.repository",
+		"com.help.erpweb.domain.membership.repository",
+		"com.help.erpweb.domain.menu.repository",
+		"com.help.erpweb.domain.metadata.repository",
+		"com.help.erpweb.domain.music.repository"
 	},
 	entityManagerFactoryRef = "constellationEntityManagerFactory",
 	transactionManagerRef = "constellationTransactionManager"
@@ -79,7 +85,13 @@ public class ConstellationDBDataSourceConfig {
 			.dataSource(dataSource)
 			.packages(
 				"com.help.authserver.domain.user.entity.constellation",
-				"com.help.backend.domain"
+				"com.help.erpweb.domain.academy.entity",
+				"com.help.erpweb.domain.content.entity",
+				"com.help.erpweb.domain.learning.entity",
+				"com.help.erpweb.domain.membership.entity",
+				"com.help.erpweb.domain.menu.entity",
+				"com.help.erpweb.domain.metadata.entity",
+				"com.help.erpweb.domain.music.entity"
 			)
 			.persistenceUnit("constellation")
 			.properties(properties)
