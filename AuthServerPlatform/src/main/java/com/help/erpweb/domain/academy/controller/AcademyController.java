@@ -52,7 +52,7 @@ public class AcademyController {
 
     @GetMapping("/guild/{guildId}/config")
     public ApiResponse<?> getAcademyConfig(
-            @PathVariable Long guildId
+            @PathVariable String guildId
     ) {
 
         return ApiResponse.success(

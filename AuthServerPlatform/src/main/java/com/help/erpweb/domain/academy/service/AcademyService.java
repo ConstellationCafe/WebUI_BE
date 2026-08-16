@@ -90,7 +90,7 @@ public class AcademyService {
      * academy 설정을 가져온다.
      */
     public JsonNode getAcademyConfig(
-            Long guildId
+            String guildId
     ) {
         ErpSubscriber subscriber = erpSubscriberRepository
                 .findByGuildId(guildId)
