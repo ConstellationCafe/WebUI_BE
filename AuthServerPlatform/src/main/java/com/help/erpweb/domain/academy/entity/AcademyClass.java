@@ -15,7 +15,10 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @NoArgsConstructor
-@Table(name = "Class")
+@Table(
+        name = "Class",
+        schema = "Academy"
+)
 public class AcademyClass {
 
     @Id

@@ -45,7 +45,6 @@ public class AcademyController {
     public ApiResponse<?> getMySk(
             CustomUser user
     ) {
-
         return ApiResponse.success(
                 academyService.findUserSk(user)
         );

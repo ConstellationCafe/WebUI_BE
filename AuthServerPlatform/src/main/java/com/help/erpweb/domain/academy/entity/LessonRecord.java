@@ -17,9 +17,11 @@ import java.time.LocalDateTime;
 @Getter
 @Entity
 @NoArgsConstructor
-@Table(name = "lesson_record")
+@Table(
+        name = "LessonRecord",
+        schema = "Academy"
+)
 public class LessonRecord {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

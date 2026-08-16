@@ -17,7 +17,10 @@ import java.time.LocalDate;
 @Getter
 @Entity
 @NoArgsConstructor
-@Table(name = "Teachers")
+@Table(
+        name = "Teachers",
+        schema = "Academy"
+)
 public class Teacher {
 
     @Id

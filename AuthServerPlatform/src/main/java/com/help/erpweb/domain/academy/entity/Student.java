@@ -17,9 +17,11 @@ import java.time.LocalDate;
 @Getter
 @Entity
 @NoArgsConstructor
-@Table(name = "Students")
+@Table(
+        name = "Students",
+        schema = "Academy"
+)
 public class Student {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "s_id")

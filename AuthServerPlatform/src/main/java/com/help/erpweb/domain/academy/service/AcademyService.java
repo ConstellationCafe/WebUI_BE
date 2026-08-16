@@ -5,7 +5,6 @@ import com.help.authserver.domain.user.entity.config.ErpSubscriber;
 import com.help.erpweb.domain.config.entity.ModuleConfig;
 import com.help.authserver.domain.user.repository.config.ERPSubscriberRepository;
 import com.help.erpweb.domain.config.repository.ModuleConfigRepository;
-import com.help.authserver.domain.user.repository.constellation.ConstellationUserQueryRepository;
 import com.help.erpweb.domain.academy.dto.AcademyResponse;
 import com.help.erpweb.domain.academy.dto.ClassResponse;
 import com.help.erpweb.domain.academy.dto.TeacherResponse;
@@ -14,6 +13,7 @@ import com.help.erpweb.domain.academy.entity.Teacher;
 import com.help.erpweb.domain.academy.repository.AcademyClassRepository;
 import com.help.erpweb.domain.academy.repository.AcademyRepository;
 import com.help.erpweb.domain.academy.repository.TeacherRepository;
+import com.help.erpweb.domain.membership.repository.MembershipRepository;
 import com.help.global.jwt.CustomUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,20 +25,16 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AcademyService {
-
     private static final String MODULE_ID = "network_operations";
 
     private final AcademyRepository academyRepository;
     private final AcademyClassRepository academyClassRepository;
     private final TeacherRepository teacherRepository;
-
     private final ModuleConfigRepository moduleConfigRepository;
     private final ERPSubscriberRepository erpSubscriberRepository;
-
-    private final ConstellationUserQueryRepository constellationUserQueryRepository;
+    private final MembershipRepository membershipRepository;
 
     public List<AcademyResponse> getAcademies() {
-
         return academyRepository.findAll()
                 .stream()
                 .map(academy ->
@@ -53,7 +49,6 @@ public class AcademyService {
     public List<ClassResponse> getClasses(
             Integer academyId
     ) {
-
         return academyClassRepository
                 .findByAcademy_Id(academyId)
                 .stream()
@@ -69,7 +64,6 @@ public class AcademyService {
     public List<TeacherResponse> getTeachers(
             Integer academyId
     ) {
-
         return teacherRepository
                 .findByAcademyClass_Academy_Id(academyId)
                 .stream()
@@ -88,9 +82,7 @@ public class AcademyService {
     public String findUserSk(
             CustomUser user
     ) {
-
-        return constellationUserQueryRepository
-                .findSkByDiscordId(user.getUsername());
+        return membershipRepository.findSkByDiscordId(user.getUsername());
     }
 
     /**
@@ -100,7 +92,6 @@ public class AcademyService {
     public JsonNode getAcademyConfig(
             Long guildId
     ) {
-
         ErpSubscriber subscriber = erpSubscriberRepository
                 .findByGuildId(guildId)
                 .orElseThrow(() ->
@@ -132,7 +123,6 @@ public class AcademyService {
     private TeacherResponse toTeacherResponse(
             Teacher teacher
     ) {
-
         AcademyClass academyClass =
                 teacher.getAcademyClass();
 
