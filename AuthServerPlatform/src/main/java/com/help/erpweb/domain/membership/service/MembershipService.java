@@ -2,9 +2,9 @@ package com.help.erpweb.domain.membership.service;
 
 import com.help.erpweb.domain.membership.dto.request.repository.PointLogDto;
 import com.help.erpweb.domain.membership.repository.MembershipRepository;
+import com.help.erpweb.domain.membership.repository.PointRepository;
 import com.help.erpweb.domain.metadata.response.ColumnMetaDto;
 import com.help.global.common.response.ApiResponse;
-import com.help.global.data.MembershipID;
 import com.help.global.jwt.CustomUser;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -20,6 +20,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class MembershipService {
+    private final PointRepository pointRepository;
     private final MembershipRepository membershipRepository;
 
     @PersistenceContext
@@ -27,15 +28,10 @@ public class MembershipService {
 
     public ApiResponse<?> getPointLog(CustomUser user) {
         String discordId = user.getUsername();
+        String sk = membershipRepository.findSkByDiscordId(discordId);
 
-        String sk = (String) entityManager
-                .createNativeQuery("SELECT Constellation_Network.search_sk(:cardType, :membershipId)")
-                .setParameter("cardType", MembershipID.discord.name())
-                .setParameter("membershipId", discordId)
-                .getSingleResult();
-
-        List<ColumnMetaDto> metadata = membershipRepository.findColumnMetas(
-                membershipRepository.schemaName,  membershipRepository.tableName)
+        List<ColumnMetaDto> metadata = pointRepository.findColumnMetas(
+                pointRepository.schemaName,  pointRepository.tableName)
                 .stream()
                 .map(v -> ColumnMetaDto.builder()
                         .colName(v.getColName())
@@ -44,7 +40,7 @@ public class MembershipService {
                         .build())
                 .toList();
 
-        List<PointLogDto> membershipList = membershipRepository.findBySk(sk)
+        List<PointLogDto> membershipList = pointRepository.findBySk(sk)
                 .stream()
                 .map(entity -> PointLogDto.builder()
                         .amount(entity.getAmount().toString())
