@@ -62,6 +62,8 @@ public class DiscordUser implements User {
     @Override
     public String getUsername() { return discordID; }
 
+    public String getNickname() { return username; }
+
     @Override
     public UserRole getRole() {
         boolean isAdmin = roles.stream()
