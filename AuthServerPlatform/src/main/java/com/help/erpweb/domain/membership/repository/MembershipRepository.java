@@ -7,16 +7,27 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public class MembershipRepository {
-        @PersistenceContext(unitName = "constellation")
-        private EntityManager entityManager;
+    @PersistenceContext(unitName = "constellation")
+    private EntityManager entityManager;
 
-        public String findSkByDiscordId(String discordId) {
-            return (String) entityManager
-                    .createNativeQuery(
-                            "SELECT Constellation_Network.search_sk(:cardType, :membershipId)"
-                    )
-                    .setParameter("cardType", MembershipID.discord.name())
-                    .setParameter("membershipId", discordId)
-                    .getSingleResult();
+    public String findSkByDiscordId(String discordId) {
+        return (String) entityManager
+                .createNativeQuery(
+                        "SELECT Constellation_Network.search_sk(:cardType, :membershipId)"
+                )
+                .setParameter("cardType", MembershipID.discord.name())
+                .setParameter("membershipId", discordId)
+                .getSingleResult();
+    }
+
+    public String findDiscordIdBySk(String sk) {
+        return (String) entityManager
+                .createNativeQuery("""
+                SELECT discordID
+                FROM Constellation_Network.Users
+                WHERE sk = :sk
+                """)
+                .setParameter("sk", sk)
+                .getSingleResult();
     }
 }
