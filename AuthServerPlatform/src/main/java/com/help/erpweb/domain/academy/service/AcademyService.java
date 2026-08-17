@@ -1,13 +1,16 @@
 package com.help.erpweb.domain.academy.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+// FIXME : AuthServer 패키지에서 ERPWeb 패키지로 이동 필요
 import com.help.authserver.domain.user.entity.config.ErpSubscriber;
-import com.help.erpweb.domain.config.entity.ModuleConfig;
+import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 import com.help.authserver.domain.user.repository.config.ERPSubscriberRepository;
+import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
+import com.help.erpweb.domain.academy.dto.*;
+import com.help.erpweb.domain.academy.entity.Student;
+import com.help.erpweb.domain.academy.repository.StudentRepository;
+import com.help.erpweb.domain.config.entity.ModuleConfig;
 import com.help.erpweb.domain.config.repository.ModuleConfigRepository;
-import com.help.erpweb.domain.academy.dto.AcademyResponse;
-import com.help.erpweb.domain.academy.dto.ClassResponse;
-import com.help.erpweb.domain.academy.dto.TeacherResponse;
 import com.help.erpweb.domain.academy.entity.AcademyClass;
 import com.help.erpweb.domain.academy.entity.Teacher;
 import com.help.erpweb.domain.academy.repository.AcademyClassRepository;
@@ -20,6 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -30,9 +35,11 @@ public class AcademyService {
     private final AcademyRepository academyRepository;
     private final AcademyClassRepository academyClassRepository;
     private final TeacherRepository teacherRepository;
+    private final StudentRepository studentRepository;
     private final ModuleConfigRepository moduleConfigRepository;
     private final ERPSubscriberRepository erpSubscriberRepository;
     private final MembershipRepository membershipRepository;
+    private final DiscordUserRepository discordUserRepository;
 
     public List<AcademyResponse> getAcademies() {
         return academyRepository.findAll()
@@ -55,10 +62,19 @@ public class AcademyService {
                 .map(academyClass ->
                         new ClassResponse(
                                 academyClass.getId(),
-                                academyClass.getClassNumber()
+                                academyClass.getClassNumber(),
+                                academyClass.getState()
                         )
                 )
                 .toList();
+    }
+
+    public List<SubjectResponse> getSubjects(Integer academyId) {
+        return List.of(
+                new SubjectResponse(1, "로테이션"),
+                new SubjectResponse(2, "언리미티드"),
+                new SubjectResponse(3, "스타터")
+        );
     }
 
     public List<TeacherResponse> getTeachers(
@@ -68,6 +84,19 @@ public class AcademyService {
                 .findByAcademyClass_Academy_Id(academyId)
                 .stream()
                 .map(this::toTeacherResponse)
+                .flatMap(Optional::stream)
+                .toList();
+    }
+
+    public List<StudentResponse> getStudents(
+            Integer academyId,
+            Integer classId
+    ) {
+        return studentRepository
+                .findByAcademyIdAndClassId(academyId, classId)
+                .stream()
+                .map(this::toStudentResponse)
+                .flatMap(Optional::stream)
                 .toList();
     }
 
@@ -120,28 +149,82 @@ public class AcademyService {
                 .path("academy");
     }
 
-    private TeacherResponse toTeacherResponse(
+    private Optional<TeacherResponse> toTeacherResponse(
             Teacher teacher
     ) {
         AcademyClass academyClass =
                 teacher.getAcademyClass();
 
-        /*
-         * Teacher 테이블에는 이름이 없기 때문에
-         * 여기서는 일단 SK를 반환하지 않고 id만 사용.
-         *
-         * 실제 이름은 Constellation_Network.Users를
-         * SK 기준으로 조회해서 넣어야 한다.
-         */
-        return new TeacherResponse(
-                teacher.getId(),
-                teacher.getSk(),
-                academyClass != null
-                        ? academyClass.getId()
-                        : null,
-                academyClass != null
-                        ? academyClass.getClassNumber()
-                        : null
+        String discordId = null;
+        String username = null;
+        if (teacher.getSk() != null) {
+            try {
+                discordId = membershipRepository
+                                    .findDiscordIdBySk(teacher.getSk());
+                username = discordUserRepository
+                        .findByDiscordID(discordId)
+                        .map(DiscordUser::getNickname)
+                        .orElse(null);
+
+            } catch (Exception e) {
+                discordId = teacher.getSk();
+            }
+        }
+        if (username == null) {
+            return Optional.empty();
+        }
+        return Optional.of(
+                new TeacherResponse(
+                        discordId,
+                        username,
+                        academyClass != null
+                                ? academyClass.getId()
+                                : null,
+                        academyClass != null
+                                ? academyClass.getClassNumber()
+                                : null
+                )
+        );
+    }
+
+    private Optional<StudentResponse> toStudentResponse(
+            Student student
+    ) {
+        AcademyClass academyClass =
+                student.getAcademyClass();
+
+        String discordId = null;
+        String username = null;
+        if (student.getSk() != null) {
+            try {
+                discordId = membershipRepository
+                        .findDiscordIdBySk(student.getSk());
+                username = discordUserRepository
+                        .findByDiscordID(discordId)
+                        .map(DiscordUser::getNickname)
+                        .orElse(null);
+
+            } catch (Exception e) {
+                discordId = student.getSk();
+            }
+        }
+        if (username == null) {
+            return Optional.empty();
+        }
+        return Optional.of(
+                new StudentResponse(
+                    discordId,
+                    username,
+                    academyClass != null
+                            ? academyClass.getAcademy().getId()
+                            : null,
+                    academyClass != null
+                            ? academyClass.getId()
+                            : null,
+                    academyClass != null
+                            ? academyClass.getClassNumber()
+                            : null
+                )
         );
     }
 }
