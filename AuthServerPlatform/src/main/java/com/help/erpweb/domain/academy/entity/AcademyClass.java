@@ -17,7 +17,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Table(
         name = "Class",
-        schema = "Academy"
+        catalog = "Academy"
 )
 public class AcademyClass {
 

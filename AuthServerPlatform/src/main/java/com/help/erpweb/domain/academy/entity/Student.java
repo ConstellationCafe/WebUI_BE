@@ -19,7 +19,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Table(
         name = "Students",
-        schema = "Academy"
+        catalog = "Academy"
 )
 public class Student {
     @Id
