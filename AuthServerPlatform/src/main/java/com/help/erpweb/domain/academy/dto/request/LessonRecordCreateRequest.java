@@ -5,7 +5,7 @@ import java.util.List;
 
 public record LessonRecordCreateRequest(
         Integer academyId,
-        Integer classId,
+        Integer className,
         String subject,
         LocalDateTime educationDate,
         Integer educationDuration,

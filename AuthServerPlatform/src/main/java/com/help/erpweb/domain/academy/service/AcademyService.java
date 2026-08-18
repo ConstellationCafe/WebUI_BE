@@ -123,11 +123,14 @@ public class AcademyService {
     ) {
         AcademyClass academyClass =
                 academyClassRepository
-                        .findById(request.classId())
+                        .findByAcademy_IdAndClassNumber(
+                                request.academyId(),
+                                request.className()
+                        )
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
-                                        "존재하지 않는 분반입니다. classId="
-                                                + request.classId()
+                                        "존재하지 않는 분반입니다. className="
+                                                + request.className()
                                 )
                         );
 
