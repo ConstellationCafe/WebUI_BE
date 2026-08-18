@@ -1,64 +1,77 @@
 package com.help.erpweb.domain.academy.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Entity
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
         name = "LessonRecord",
         catalog = "Academy"
 )
 public class LessonRecord {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "lr_id")
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "academy_id", nullable = false)
-    private Academy academy;
+    @Column(name = "a_id", nullable = false)
+    private Integer academyId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "class_id", nullable = false)
-    private AcademyClass academyClass;
+    @Column(name = "class_name", nullable = false, length = 100)
+    private String className;
 
-    @Column(nullable = false, length = 100)
+    @Column(name = "subject", nullable = false, length = 100)
     private String subject;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "main_teacher_id", nullable = false)
-    private Teacher mainTeacher;
+    @Column(name = "education_date", nullable = false)
+    private LocalDateTime educationDate;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "education_duration", nullable = false)
+    private Integer educationDuration;
+
+    @Column(name = "main_teacher_id", nullable = false)
+    private String mainTeacherId;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "co_teacher_ids", columnDefinition = "json")
+    private JsonNode coTeacherIds;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "member_ids", columnDefinition = "json")
+    private JsonNode memberIds;
+
+    @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
-
     public LessonRecord(
-            Academy academy,
-            AcademyClass academyClass,
+            Integer academyId,
+            String className,
             String subject,
-            Teacher mainTeacher,
+            LocalDateTime educationDate,
+            Integer educationDuration,
+            String mainTeacherId,
+            JsonNode coTeacherIds,
+            JsonNode memberIds,
             String description
     ) {
-        this.academy = academy;
-        this.academyClass = academyClass;
+        this.academyId = academyId;
+        this.className = className;
         this.subject = subject;
-        this.mainTeacher = mainTeacher;
+        this.educationDate = educationDate;
+        this.educationDuration = educationDuration;
+        this.mainTeacherId = mainTeacherId;
+        this.coTeacherIds = coTeacherIds;
+        this.memberIds = memberIds;
         this.description = description;
-        this.createdAt = LocalDateTime.now();
     }
 }
