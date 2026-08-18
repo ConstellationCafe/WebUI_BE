@@ -1,4 +1,4 @@
-package com.help.erpweb.domain.academy.dto.response;
+package com.help.erpweb.domain.academy.dto.request;
 
 import java.util.List;
 

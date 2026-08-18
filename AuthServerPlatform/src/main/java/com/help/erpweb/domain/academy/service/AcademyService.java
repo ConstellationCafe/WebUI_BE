@@ -9,13 +9,13 @@ import com.help.authserver.domain.user.repository.config.ERPSubscriberRepository
 import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
 import com.help.erpweb.domain.academy.dto.request.LessonRecordCreateRequest;
 import com.help.erpweb.domain.academy.dto.response.*;
+import com.help.erpweb.domain.academy.entity.AcademyClass;
 import com.help.erpweb.domain.academy.entity.LessonRecord;
 import com.help.erpweb.domain.academy.entity.Student;
+import com.help.erpweb.domain.academy.entity.Teacher;
 import com.help.erpweb.domain.academy.repository.*;
 import com.help.erpweb.domain.config.entity.ModuleConfig;
 import com.help.erpweb.domain.config.repository.ModuleConfigRepository;
-import com.help.erpweb.domain.academy.entity.AcademyClass;
-import com.help.erpweb.domain.academy.entity.Teacher;
 import com.help.erpweb.domain.membership.repository.MembershipRepository;
 import com.help.global.jwt.CustomUser;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AcademyService {
-    private static final String MODULE_ID = "network_operations";
+
+    private static final String MODULE_ID =
+            "network_operations";
 
     private final AcademyRepository academyRepository;
     private final AcademyClassRepository academyClassRepository;
@@ -70,11 +72,22 @@ public class AcademyService {
                 .toList();
     }
 
-    public List<SubjectResponse> getSubjects(Integer academyId) {
+    public List<SubjectResponse> getSubjects(
+            Integer academyId
+    ) {
         return List.of(
-                new SubjectResponse(1, "로테이션"),
-                new SubjectResponse(2, "언리미티드"),
-                new SubjectResponse(3, "스타터")
+                new SubjectResponse(
+                        1,
+                        "로테이션"
+                ),
+                new SubjectResponse(
+                        2,
+                        "언리미티드"
+                ),
+                new SubjectResponse(
+                        3,
+                        "스타터"
+                )
         );
     }
 
@@ -94,7 +107,10 @@ public class AcademyService {
             Integer classId
     ) {
         return studentRepository
-                .findByAcademyIdAndClassId(academyId, classId)
+                .findByAcademyIdAndClassId(
+                        academyId,
+                        classId
+                )
                 .stream()
                 .map(this::toStudentResponse)
                 .flatMap(Optional::stream)
@@ -105,15 +121,42 @@ public class AcademyService {
     public void createLessonRecord(
             LessonRecordCreateRequest request
     ) {
+        AcademyClass academyClass =
+                academyClassRepository
+                        .findById(request.classId())
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "존재하지 않는 분반입니다. classId="
+                                                + request.classId()
+                                )
+                        );
+
+        String subjectName =
+                switch (request.subject()) {
+                    case "1" -> "로테이션";
+                    case "2" -> "언리미티드";
+                    case "3" -> "스타터";
+                    default -> throw new IllegalArgumentException(
+                            "존재하지 않는 과목입니다. subject="
+                                    + request.subject()
+                    );
+                };
+
         LessonRecord lessonRecord = new LessonRecord(
                 request.academyId(),
-                request.className(),
-                request.subject(),
+                String.valueOf(
+                        academyClass.getClassNumber()
+                ),
+                subjectName,
                 request.educationDate(),
                 request.educationDuration(),
                 request.mainTeacherId(),
-                objectMapper.valueToTree(request.coTeacherIds()),
-                objectMapper.valueToTree(request.memberIds()),
+                objectMapper.valueToTree(
+                        request.coTeacherIds()
+                ),
+                objectMapper.valueToTree(
+                        request.memberIds()
+                ),
                 request.description()
         );
 
@@ -131,7 +174,10 @@ public class AcademyService {
     public String findUserSk(
             CustomUser user
     ) {
-        return membershipRepository.findSkByDiscordId(user.getUsername());
+        return membershipRepository
+                .findSkByDiscordId(
+                        user.getUsername()
+                );
     }
 
     /**
@@ -141,13 +187,15 @@ public class AcademyService {
     public JsonNode getAcademyConfig(
             String guildId
     ) {
-        ErpSubscriber subscriber = erpSubscriberRepository
-                .findByGuildId(guildId)
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "등록된 guild가 아닙니다. guildId=" + guildId
-                        )
-                );
+        ErpSubscriber subscriber =
+                erpSubscriberRepository
+                        .findByGuildId(guildId)
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "등록된 guild가 아닙니다. guildId="
+                                                + guildId
+                                )
+                        );
 
         ModuleConfig moduleConfig =
                 moduleConfigRepository
@@ -161,7 +209,8 @@ public class AcademyService {
                                 )
                         );
 
-        JsonNode config = moduleConfig.getConfig();
+        JsonNode config =
+                moduleConfig.getConfig();
 
         return config
                 .path("config")
@@ -177,22 +226,30 @@ public class AcademyService {
 
         String discordId = null;
         String username = null;
+
         if (teacher.getSk() != null) {
             try {
-                discordId = membershipRepository
-                                    .findDiscordIdBySk(teacher.getSk());
-                username = discordUserRepository
-                        .findByDiscordID(discordId)
-                        .map(DiscordUser::getNickname)
-                        .orElse(null);
+                discordId =
+                        membershipRepository
+                                .findDiscordIdBySk(
+                                        teacher.getSk()
+                                );
+
+                username =
+                        discordUserRepository
+                                .findByDiscordID(discordId)
+                                .map(DiscordUser::getNickname)
+                                .orElse(null);
 
             } catch (Exception e) {
                 discordId = teacher.getSk();
             }
         }
+
         if (username == null) {
             return Optional.empty();
         }
+
         return Optional.of(
                 new TeacherResponse(
                         discordId,
@@ -215,35 +272,45 @@ public class AcademyService {
 
         String discordId = null;
         String username = null;
+
         if (student.getSk() != null) {
             try {
-                discordId = membershipRepository
-                        .findDiscordIdBySk(student.getSk());
-                username = discordUserRepository
-                        .findByDiscordID(discordId)
-                        .map(DiscordUser::getNickname)
-                        .orElse(null);
+                discordId =
+                        membershipRepository
+                                .findDiscordIdBySk(
+                                        student.getSk()
+                                );
+
+                username =
+                        discordUserRepository
+                                .findByDiscordID(discordId)
+                                .map(DiscordUser::getNickname)
+                                .orElse(null);
 
             } catch (Exception e) {
                 discordId = student.getSk();
             }
         }
+
         if (username == null) {
             return Optional.empty();
         }
+
         return Optional.of(
                 new StudentResponse(
-                    discordId,
-                    username,
-                    academyClass != null
-                            ? academyClass.getAcademy().getId()
-                            : null,
-                    academyClass != null
-                            ? academyClass.getId()
-                            : null,
-                    academyClass != null
-                            ? academyClass.getClassNumber()
-                            : null
+                        discordId,
+                        username,
+                        academyClass != null
+                                ? academyClass
+                                .getAcademy()
+                                .getId()
+                                : null,
+                        academyClass != null
+                                ? academyClass.getId()
+                                : null,
+                        academyClass != null
+                                ? academyClass.getClassNumber()
+                                : null
                 )
         );
     }

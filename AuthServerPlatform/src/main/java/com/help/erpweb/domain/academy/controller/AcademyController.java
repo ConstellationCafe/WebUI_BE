@@ -69,6 +69,7 @@ public class AcademyController {
     public ApiResponse<?> lessonRecord(
             @RequestBody LessonRecordCreateRequest request
     ) {
+        log.info("[POST] /academy/record");
         academyService.createLessonRecord(request);
         return ApiResponse.success(null);
     }
