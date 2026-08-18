@@ -1,4 +1,4 @@
-package com.help.erpweb.domain.academy.dto;
+package com.help.erpweb.domain.academy.dto.response;
 
 
 public record SubjectResponse (
