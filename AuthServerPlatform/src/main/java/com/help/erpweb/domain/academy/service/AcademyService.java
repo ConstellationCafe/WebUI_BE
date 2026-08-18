@@ -2,20 +2,20 @@ package com.help.erpweb.domain.academy.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 // FIXME : AuthServer 패키지에서 ERPWeb 패키지로 이동 필요
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.help.authserver.domain.user.entity.config.ErpSubscriber;
 import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 import com.help.authserver.domain.user.repository.config.ERPSubscriberRepository;
 import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
-import com.help.erpweb.domain.academy.dto.*;
+import com.help.erpweb.domain.academy.dto.request.LessonRecordCreateRequest;
+import com.help.erpweb.domain.academy.dto.response.*;
+import com.help.erpweb.domain.academy.entity.LessonRecord;
 import com.help.erpweb.domain.academy.entity.Student;
-import com.help.erpweb.domain.academy.repository.StudentRepository;
+import com.help.erpweb.domain.academy.repository.*;
 import com.help.erpweb.domain.config.entity.ModuleConfig;
 import com.help.erpweb.domain.config.repository.ModuleConfigRepository;
 import com.help.erpweb.domain.academy.entity.AcademyClass;
 import com.help.erpweb.domain.academy.entity.Teacher;
-import com.help.erpweb.domain.academy.repository.AcademyClassRepository;
-import com.help.erpweb.domain.academy.repository.AcademyRepository;
-import com.help.erpweb.domain.academy.repository.TeacherRepository;
 import com.help.erpweb.domain.membership.repository.MembershipRepository;
 import com.help.global.jwt.CustomUser;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -40,6 +39,8 @@ public class AcademyService {
     private final ERPSubscriberRepository erpSubscriberRepository;
     private final MembershipRepository membershipRepository;
     private final DiscordUserRepository discordUserRepository;
+    private final LessonRecordRepository lessonRecordRepository;
+    private final ObjectMapper objectMapper;
 
     public List<AcademyResponse> getAcademies() {
         return academyRepository.findAll()
@@ -98,6 +99,25 @@ public class AcademyService {
                 .map(this::toStudentResponse)
                 .flatMap(Optional::stream)
                 .toList();
+    }
+
+    @Transactional
+    public void createLessonRecord(
+            LessonRecordCreateRequest request
+    ) {
+        LessonRecord lessonRecord = new LessonRecord(
+                request.academyId(),
+                request.className(),
+                request.subject(),
+                request.educationDate(),
+                request.educationDuration(),
+                request.mainTeacherId(),
+                objectMapper.valueToTree(request.coTeacherIds()),
+                objectMapper.valueToTree(request.memberIds()),
+                request.description()
+        );
+
+        lessonRecordRepository.save(lessonRecord);
     }
 
     /**

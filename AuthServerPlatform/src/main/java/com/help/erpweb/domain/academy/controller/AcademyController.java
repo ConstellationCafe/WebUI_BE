@@ -1,5 +1,6 @@
 package com.help.erpweb.domain.academy.controller;
 
+import com.help.erpweb.domain.academy.dto.request.LessonRecordCreateRequest;
 import com.help.erpweb.domain.academy.service.AcademyService;
 import com.help.global.common.response.ApiResponse;
 import com.help.global.jwt.CustomUser;
@@ -64,23 +65,31 @@ public class AcademyController {
         );
     }
 
-    @GetMapping("/me/sk")
-    public ApiResponse<?> getMySk(
-            CustomUser user
+    @PostMapping("/lesson-record")
+    public ApiResponse<?> lessonRecord(
+            @RequestBody LessonRecordCreateRequest request
     ) {
-        log.info("[GET] /academy/me/sk");
-        return ApiResponse.success(
-                academyService.findUserSk(user)
-        );
+        academyService.createLessonRecord(request);
+        return ApiResponse.success(null);
     }
 
-    @GetMapping("/guild/{guildId}/config")
-    public ApiResponse<?> getAcademyConfig(
-            @PathVariable String guildId
-    ) {
-        log.info("[GET] /academy/guild/{guildId}/config");
-        return ApiResponse.success(
-                academyService.getAcademyConfig(guildId)
-        );
-    }
+//    @GetMapping("/me/sk")
+//    public ApiResponse<?> getMySk(
+//            CustomUser user
+//    ) {
+//        log.info("[GET] /academy/me/sk");
+//        return ApiResponse.success(
+//                academyService.findUserSk(user)
+//        );
+//    }
+//
+//    @GetMapping("/guild/{guildId}/config")
+//    public ApiResponse<?> getAcademyConfig(
+//            @PathVariable String guildId
+//    ) {
+//        log.info("[GET] /academy/guild/{guildId}/config");
+//        return ApiResponse.success(
+//                academyService.getAcademyConfig(guildId)
+//        );
+//    }
 }
