@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/academy")
 public class AcademyController {
-
     private final AcademyService academyService;
 
     @GetMapping
@@ -65,13 +64,22 @@ public class AcademyController {
         );
     }
 
-    @PostMapping("/lesson-record")
-    public ApiResponse<?> lessonRecord(
-            @RequestBody LessonRecordCreateRequest request
+    @GetMapping("/student-status/options")
+    public ApiResponse<?> getStudentStatusOptions(
+            @RequestParam(required = false) Integer academyId,
+            @RequestParam(required = false) Integer classId
     ) {
-        log.info("[POST] /academy/record");
-        academyService.createLessonRecord(request);
-        return ApiResponse.success(null);
+        log.info(
+                "[GET] /academy/student-status/options academyId={}, classId={}",
+                academyId,
+                classId
+        );
+        return ApiResponse.success(
+                academyService.getStudentStatusOptions(
+                        academyId,
+                        classId
+                )
+        );
     }
 
 //    @GetMapping("/me/sk")

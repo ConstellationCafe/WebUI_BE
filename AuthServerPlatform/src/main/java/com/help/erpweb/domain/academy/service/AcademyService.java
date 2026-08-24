@@ -2,15 +2,12 @@ package com.help.erpweb.domain.academy.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 // FIXME : AuthServer 패키지에서 ERPWeb 패키지로 이동 필요
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.help.authserver.domain.user.entity.config.ErpSubscriber;
 import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 import com.help.authserver.domain.user.repository.config.ERPSubscriberRepository;
 import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
-import com.help.erpweb.domain.academy.dto.request.LessonRecordCreateRequest;
 import com.help.erpweb.domain.academy.dto.response.*;
 import com.help.erpweb.domain.academy.entity.AcademyClass;
-import com.help.erpweb.domain.academy.entity.LessonRecord;
 import com.help.erpweb.domain.academy.entity.Student;
 import com.help.erpweb.domain.academy.entity.Teacher;
 import com.help.erpweb.domain.academy.repository.*;
@@ -29,10 +26,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AcademyService {
-
-    private static final String MODULE_ID =
-            "network_operations";
-
+    private static final String MODULE_ID =  "network_operations";
     private final AcademyRepository academyRepository;
     private final AcademyClassRepository academyClassRepository;
     private final TeacherRepository teacherRepository;
@@ -41,8 +35,6 @@ public class AcademyService {
     private final ERPSubscriberRepository erpSubscriberRepository;
     private final MembershipRepository membershipRepository;
     private final DiscordUserRepository discordUserRepository;
-    private final LessonRecordRepository lessonRecordRepository;
-    private final ObjectMapper objectMapper;
 
     public List<AcademyResponse> getAcademies() {
         return academyRepository.findAll()
@@ -117,53 +109,99 @@ public class AcademyService {
                 .toList();
     }
 
-    @Transactional
-    public void createLessonRecord(
-            LessonRecordCreateRequest request
+    public StudentStatusResponse getStudentStatusOptions(
+            Integer academyId,
+            Integer classId
     ) {
-        AcademyClass academyClass =
-                academyClassRepository
-                        .findByAcademy_IdAndClassNumber(
-                                request.academyId(),
-                                request.className()
-                        )
-                        .orElseThrow(() ->
-                                new IllegalArgumentException(
-                                        "존재하지 않는 분반입니다. className="
-                                                + request.className()
+        List<AcademyOptionResponse> academies =
+                academyRepository.findAll()
+                        .stream()
+                        .map(academy ->
+                                new AcademyOptionResponse(
+                                        academy.getId(),
+                                        academy.getName()
                                 )
-                        );
+                        )
+                        .toList();
 
-        String subjectName =
-                switch (request.subject()) {
-                    case "1" -> "로테이션";
-                    case "2" -> "언리미티드";
-                    case "3" -> "스타터";
-                    default -> throw new IllegalArgumentException(
-                            "존재하지 않는 과목입니다. subject="
-                                    + request.subject()
-                    );
-                };
+        List<ClassOptionResponse> classes =
+                academyId == null
+                        ? List.of()
+                        : academyClassRepository
+                        .findByAcademy_Id(academyId)
+                        .stream()
+                        .map(academyClass ->
+                                new ClassOptionResponse(
+                                        academyClass.getId(),
+                                        String.valueOf(academyClass.getClassNumber()),
+                                        academyClass.getState()
+                                )
+                        )
+                        .toList();
 
-        LessonRecord lessonRecord = new LessonRecord(
-                request.academyId(),
-                String.valueOf(
-                        academyClass.getClassNumber()
-                ),
-                subjectName,
-                request.educationDate(),
-                request.educationDuration(),
-                request.mainTeacherId(),
-                objectMapper.valueToTree(
-                        request.coTeacherIds()
-                ),
-                objectMapper.valueToTree(
-                        request.memberIds()
-                ),
-                request.description()
+        List<StudentOptionResponse> students =
+                academyId == null || classId == null
+                        ? List.of()
+                        : studentRepository
+                        .findByAcademyIdAndClassId(
+                                academyId,
+                                classId
+                        )
+                        .stream()
+                        .map(this::toStudentOptionResponse)
+                        .flatMap(Optional::stream)
+                        .toList();
+
+        List<SubjectOptionResponse> subjects =
+                List.of(
+                        new SubjectOptionResponse(1, "로테이션"),
+                        new SubjectOptionResponse(2, "언리미티드"),
+                        new SubjectOptionResponse(3, "스타터")
+                );
+
+        return new StudentStatusResponse(
+                academies,
+                classes,
+                students,
+                subjects
         );
+    }
 
-        lessonRecordRepository.save(lessonRecord);
+    private Optional<StudentOptionResponse> toStudentOptionResponse(
+            Student student
+    ) {
+        if (student.getSk() == null) {
+            return Optional.empty();
+        }
+
+        String discordId;
+
+        try {
+            discordId =
+                    membershipRepository.findDiscordIdBySk(
+                            student.getSk()
+                    );
+        } catch (Exception e) {
+            discordId = student.getSk();
+        }
+
+        String username =
+                discordUserRepository
+                        .findByDiscordID(discordId)
+                        .map(DiscordUser::getNickname)
+                        .orElse(null);
+
+        if (username == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(
+                new StudentOptionResponse(
+                        student.getSk(),
+                        discordId,
+                        username
+                )
+        );
     }
 
     /**
@@ -255,6 +293,7 @@ public class AcademyService {
 
         return Optional.of(
                 new TeacherResponse(
+                        teacher.getSk(),
                         discordId,
                         username,
                         academyClass != null
@@ -301,6 +340,7 @@ public class AcademyService {
 
         return Optional.of(
                 new StudentResponse(
+                        student.getSk(),
                         discordId,
                         username,
                         academyClass != null

@@ -1,8 +1,11 @@
 package com.help.erpweb.domain.academy.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
+import com.help.erpweb.domain.academy.dto.request.LessonRecordCreateRequest;
 import com.help.erpweb.domain.academy.dto.response.LessonRecordSummaryResponse;
+import com.help.erpweb.domain.academy.entity.LessonRecord;
 import com.help.erpweb.domain.academy.entity.AcademyClass;
 import com.help.erpweb.domain.academy.repository.AcademyClassRepository;
 import com.help.erpweb.domain.academy.repository.LessonRecordRepository;
@@ -18,11 +21,12 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class LessonRecordService {
-
     private final LessonRecordRepository lessonRecordRepository;
     private final AcademyClassRepository academyClassRepository;
     private final MembershipRepository membershipRepository;
     private final DiscordUserRepository discordUserRepository;
+
+    private final ObjectMapper objectMapper;
 
     public List<LessonRecordSummaryResponse> getLessonRecords(
             LocalDate date,
@@ -61,6 +65,59 @@ public class LessonRecordService {
                 .stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    @Transactional
+    public void createLessonRecord(
+            LessonRecordCreateRequest request
+    ) {
+        Integer classNumber;
+        try {
+            classNumber = Integer.valueOf(
+                    request.className()
+            );
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(
+                    "올바르지 않은 분반입니다. className="
+                            + request.className()
+            );
+        }
+
+        AcademyClass academyClass =
+                academyClassRepository
+                        .findByAcademy_IdAndClassNumber(
+                                request.academyId(),
+                                classNumber
+                        )
+                        .orElseThrow(() ->
+                                new IllegalArgumentException(
+                                        "존재하지 않는 분반입니다. academyId="
+                                                + request.academyId()
+                                                + ", className="
+                                                + request.className()
+                                )
+                        );
+
+        String subjectName = request.subject();
+
+        LessonRecord lessonRecord = new LessonRecord(
+                request.academyId(),
+                String.valueOf(
+                        academyClass.getClassNumber()
+                ),
+                subjectName,
+                request.educationDate(),
+                request.educationDuration(),
+                request.mainTeacherId(),
+                objectMapper.valueToTree(
+                        request.coTeacherIds()
+                ),
+                objectMapper.valueToTree(
+                        request.memberIds()
+                ),
+                request.description()
+        );
+        lessonRecordRepository.save(lessonRecord);
     }
 
     private String convertSubjectIdToName(String subjectId) {

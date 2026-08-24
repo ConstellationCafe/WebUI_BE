@@ -1,13 +1,12 @@
 package com.help.erpweb.domain.academy.controller;
 
+import com.help.erpweb.domain.academy.dto.request.LessonRecordCreateRequest;
 import com.help.erpweb.domain.academy.dto.response.LessonRecordSummaryResponse;
 import com.help.erpweb.domain.academy.service.LessonRecordService;
+import com.help.global.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -41,7 +40,7 @@ public class LessonRecordController {
             Integer classId
     ) {
         log.info(
-                "[GET] /academy/lesson-records " +
+                "[GET] /api/academy/lesson-records " +
                         "academyId={}, classId={}, date={}, time={}, subject={}, teacherId={}",
                 academyId,
                 classId,
@@ -59,5 +58,23 @@ public class LessonRecordController {
                 academyId,
                 classId
         );
+    }
+
+    @PostMapping("/lesson-record")
+    public ApiResponse<?> lessonRecord(
+            @RequestBody LessonRecordCreateRequest request
+    ) {
+        log.info(
+                "[POST] /api/academy/lesson-record " +
+                        "academyId={}, className={}, subject={}, educationDate={}",
+                request.academyId(),
+                request.className(),
+                request.subject(),
+                request.educationDate()
+        );
+
+        lessonRecordService.createLessonRecord(request);
+
+        return ApiResponse.success(null);
     }
 }

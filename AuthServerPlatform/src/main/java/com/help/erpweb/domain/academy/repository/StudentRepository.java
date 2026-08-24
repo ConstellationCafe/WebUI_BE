@@ -23,6 +23,20 @@ public interface StudentRepository
             @Param("classId") Integer classId
     );
 
+    @Query("""
+    SELECT DISTINCT s.state
+    FROM Student s
+    JOIN s.academyClass c
+    JOIN c.academy a
+    WHERE (:academyId IS NULL OR a.id = :academyId)
+      AND (:classId IS NULL OR c.id = :classId)
+    ORDER BY s.state
+""")
+    List<String> findDistinctStates(
+            @Param("academyId") Integer academyId,
+            @Param("classId") Integer classId
+    );
+
     List<Student> findByAcademyClass_Academy_Id(
             Integer academyId
     );
