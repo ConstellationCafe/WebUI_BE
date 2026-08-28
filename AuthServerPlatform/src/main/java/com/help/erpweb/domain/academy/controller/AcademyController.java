@@ -1,9 +1,7 @@
 package com.help.erpweb.domain.academy.controller;
 
-import com.help.erpweb.domain.academy.dto.request.LessonRecordCreateRequest;
 import com.help.erpweb.domain.academy.service.AcademyService;
 import com.help.global.common.response.ApiResponse;
-import com.help.global.jwt.CustomUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -13,11 +11,13 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/academy")
 public class AcademyController {
+
     private final AcademyService academyService;
 
     @GetMapping
     public ApiResponse<?> getAcademies() {
-        log.info("[GET] /academy");
+        log.info("[GET] /api/academy");
+
         return ApiResponse.success(
                 academyService.getAcademies()
         );
@@ -27,7 +27,11 @@ public class AcademyController {
     public ApiResponse<?> getClasses(
             @PathVariable Integer academyId
     ) {
-        log.info("[GET] /academy/classes");
+        log.info(
+                "[GET] /api/academy/{}/classes",
+                academyId
+        );
+
         return ApiResponse.success(
                 academyService.getClasses(academyId)
         );
@@ -37,7 +41,11 @@ public class AcademyController {
     public ApiResponse<?> getSubjects(
             @PathVariable Integer academyId
     ) {
-        log.info("[GET] /academy/subjects");
+        log.info(
+                "[GET] /api/academy/{}/subjects",
+                academyId
+        );
+
         return ApiResponse.success(
                 academyService.getSubjects(academyId)
         );
@@ -47,7 +55,11 @@ public class AcademyController {
     public ApiResponse<?> getTeachers(
             @PathVariable Integer academyId
     ) {
-        log.info("[GET] /academy/{academyId}/teachers");
+        log.info(
+                "[GET] /api/academy/{}/teachers",
+                academyId
+        );
+
         return ApiResponse.success(
                 academyService.getTeachers(academyId)
         );
@@ -58,47 +70,17 @@ public class AcademyController {
             @PathVariable Integer academyId,
             @PathVariable Integer classId
     ) {
-        log.info("[GET] /academy/{academyId}/classes/{classId}/students");
-        return ApiResponse.success(
-                academyService.getStudents(academyId, classId)
-        );
-    }
-
-    @GetMapping("/student-status/options")
-    public ApiResponse<?> getStudentStatusOptions(
-            @RequestParam(required = false) Integer academyId,
-            @RequestParam(required = false) Integer classId
-    ) {
         log.info(
-                "[GET] /academy/student-status/options academyId={}, classId={}",
+                "[GET] /api/academy/{}/classes/{}/students",
                 academyId,
                 classId
         );
+
         return ApiResponse.success(
-                academyService.getStudentStatusOptions(
+                academyService.getStudents(
                         academyId,
                         classId
                 )
         );
     }
-
-//    @GetMapping("/me/sk")
-//    public ApiResponse<?> getMySk(
-//            CustomUser user
-//    ) {
-//        log.info("[GET] /academy/me/sk");
-//        return ApiResponse.success(
-//                academyService.findUserSk(user)
-//        );
-//    }
-//
-//    @GetMapping("/guild/{guildId}/config")
-//    public ApiResponse<?> getAcademyConfig(
-//            @PathVariable String guildId
-//    ) {
-//        log.info("[GET] /academy/guild/{guildId}/config");
-//        return ApiResponse.success(
-//                academyService.getAcademyConfig(guildId)
-//        );
-//    }
 }

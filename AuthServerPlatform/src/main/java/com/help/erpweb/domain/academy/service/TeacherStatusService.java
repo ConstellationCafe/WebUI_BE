@@ -9,16 +9,15 @@ import com.help.erpweb.domain.academy.dto.response.OptionResponse;
 import com.help.erpweb.domain.academy.dto.response.StatusClassResponse;
 import com.help.erpweb.domain.academy.dto.response.StatusItemResponse;
 import com.help.erpweb.domain.academy.dto.response.StatusPaginationResponse;
-import com.help.erpweb.domain.academy.dto.response.StudentResponse;
-import com.help.erpweb.domain.academy.dto.response.StudentStatusListResponse;
-import com.help.erpweb.domain.academy.dto.response.StudentStatusResponse;
-import com.help.erpweb.domain.academy.dto.response.StudentStatusSummaryResponse;
-import com.help.erpweb.domain.academy.dto.response.SubjectOptionResponse;
+import com.help.erpweb.domain.academy.dto.response.TeacherResponse;
+import com.help.erpweb.domain.academy.dto.response.TeacherStatusListResponse;
+import com.help.erpweb.domain.academy.dto.response.TeacherStatusResponse;
+import com.help.erpweb.domain.academy.dto.response.TeacherStatusSummaryResponse;
 import com.help.erpweb.domain.academy.entity.AcademyClass;
-import com.help.erpweb.domain.academy.entity.Student;
+import com.help.erpweb.domain.academy.entity.Teacher;
 import com.help.erpweb.domain.academy.repository.AcademyClassRepository;
 import com.help.erpweb.domain.academy.repository.AcademyRepository;
-import com.help.erpweb.domain.academy.repository.StudentRepository;
+import com.help.erpweb.domain.academy.repository.TeacherRepository;
 import com.help.erpweb.domain.membership.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,20 +32,19 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class StudentStatusService {
+public class TeacherStatusService {
 
     private static final String DB_STATUS_ENROLLED = "재적";
-    private static final String DB_STATUS_GRADUATED = "졸업";
-    private static final String DB_STATUS_EXPELLED = "퇴학";
-    private static final String DB_STATUS_WITHDRAWN = "자퇴";
+    private static final String DB_STATUS_RETIRED = "은퇴";
+    private static final String DB_STATUS_DISCIPLINARY = "징계";
 
     private final AcademyRepository academyRepository;
     private final AcademyClassRepository academyClassRepository;
-    private final StudentRepository studentRepository;
+    private final TeacherRepository teacherRepository;
     private final MembershipRepository membershipRepository;
     private final DiscordUserRepository discordUserRepository;
 
-    public StudentStatusResponse getStatusOptions(
+    public TeacherStatusResponse getStatusOptions(
             Integer academyId,
             Integer classId
     ) {
@@ -78,44 +76,42 @@ public class StudentStatusService {
                         )
                         .toList();
 
-        List<OptionResponse> students =
-                academyId == null || classId == null
-                        ? List.of()
-                        : studentRepository
-                        .findByAcademyIdAndClassId(
-                                academyId,
-                                classId
-                        )
-                        .stream()
-                        .map(this::toOptionResponse)
-                        .flatMap(Optional::stream)
-                        .toList();
+        List<OptionResponse> teachers;
 
-        List<SubjectOptionResponse> subjects =
-                List.of(
-                        new SubjectOptionResponse(
-                                1,
-                                "로테이션"
-                        ),
-                        new SubjectOptionResponse(
-                                2,
-                                "언리미티드"
-                        ),
-                        new SubjectOptionResponse(
-                                3,
-                                "스타터"
-                        )
-                );
+        if (academyId == null) {
+            teachers = List.of();
 
-        return new StudentStatusResponse(
+        } else if (classId != null) {
+            teachers =
+                    teacherRepository
+                            .findByAcademyClass_Id(
+                                    classId
+                            )
+                            .stream()
+                            .map(this::toOptionResponse)
+                            .flatMap(Optional::stream)
+                            .toList();
+
+        } else {
+            teachers =
+                    teacherRepository
+                            .findByAcademyClass_Academy_Id(
+                                    academyId
+                            )
+                            .stream()
+                            .map(this::toOptionResponse)
+                            .flatMap(Optional::stream)
+                            .toList();
+        }
+
+        return new TeacherStatusResponse(
                 academies,
                 classes,
-                students,
-                subjects
+                teachers
         );
     }
 
-    public StudentStatusListResponse getStudentStatuses(
+    public TeacherStatusListResponse getTeacherStatuses(
             Integer academyId,
             Integer classId,
             String academyMemberId,
@@ -133,7 +129,7 @@ public class StudentStatusService {
                 normalize(academyMemberId);
 
         String normalizedStatus =
-                toStudentDbStatus(
+                toTeacherDbStatus(
                         normalize(status)
                 );
 
@@ -143,8 +139,8 @@ public class StudentStatusService {
                         normalizedSize
                 );
 
-        Page<Student> studentPage =
-                studentRepository.findStatusPage(
+        Page<Teacher> teacherPage =
+                teacherRepository.findStatusPage(
                         academyId,
                         classId,
                         normalizedMemberId,
@@ -152,15 +148,15 @@ public class StudentStatusService {
                         pageable
                 );
 
-        List<StatusItemResponse<StudentResponse>> items =
-                studentPage
+        List<StatusItemResponse<TeacherResponse>> items =
+                teacherPage
                         .getContent()
                         .stream()
                         .map(this::toStatusItemResponse)
                         .flatMap(Optional::stream)
                         .toList();
 
-        StudentStatusSummaryResponse summary =
+        TeacherStatusSummaryResponse summary =
                 createSummary(
                         academyId,
                         classId,
@@ -171,24 +167,24 @@ public class StudentStatusService {
                 new StatusPaginationResponse(
                         normalizedPage,
                         normalizedSize,
-                        studentPage.getTotalPages(),
-                        studentPage.getTotalElements()
+                        teacherPage.getTotalPages(),
+                        teacherPage.getTotalElements()
                 );
 
-        return new StudentStatusListResponse(
+        return new TeacherStatusListResponse(
                 items,
                 summary,
                 pagination
         );
     }
 
-    private StudentStatusSummaryResponse createSummary(
+    private TeacherStatusSummaryResponse createSummary(
             Integer academyId,
             Integer classId,
             String academyMemberId
     ) {
         long totalCount =
-                studentRepository.countByStatusCondition(
+                teacherRepository.countByStatusCondition(
                         academyId,
                         classId,
                         academyMemberId,
@@ -196,59 +192,50 @@ public class StudentStatusService {
                 );
 
         long enrolledCount =
-                studentRepository.countByStatusCondition(
+                teacherRepository.countByStatusCondition(
                         academyId,
                         classId,
                         academyMemberId,
                         DB_STATUS_ENROLLED
                 );
 
-        long graduationCount =
-                studentRepository.countByStatusCondition(
+        long retirementCount =
+                teacherRepository.countByStatusCondition(
                         academyId,
                         classId,
                         academyMemberId,
-                        DB_STATUS_GRADUATED
+                        DB_STATUS_RETIRED
                 );
 
-        long expulsionCount =
-                studentRepository.countByStatusCondition(
+        long disciplinaryCount =
+                teacherRepository.countByStatusCondition(
                         academyId,
                         classId,
                         academyMemberId,
-                        DB_STATUS_EXPELLED
+                        DB_STATUS_DISCIPLINARY
                 );
 
-        long withdrawalCount =
-                studentRepository.countByStatusCondition(
-                        academyId,
-                        classId,
-                        academyMemberId,
-                        DB_STATUS_WITHDRAWN
-                );
-
-        return new StudentStatusSummaryResponse(
+        return new TeacherStatusSummaryResponse(
                 totalCount,
                 enrolledCount,
-                graduationCount,
-                expulsionCount,
-                withdrawalCount
+                retirementCount,
+                disciplinaryCount
         );
     }
 
-    private Optional<StatusItemResponse<StudentResponse>>
+    private Optional<StatusItemResponse<TeacherResponse>>
     toStatusItemResponse(
-            Student student
+            Teacher teacher
     ) {
-        Optional<StudentResponse> member =
-                toStudentResponse(student);
+        Optional<TeacherResponse> member =
+                toTeacherResponse(teacher);
 
         if (member.isEmpty()) {
             return Optional.empty();
         }
 
         AcademyClass academyClass =
-                student.getAcademyClass();
+                teacher.getAcademyClass();
 
         if (academyClass == null ||
                 academyClass.getAcademy() == null) {
@@ -279,25 +266,25 @@ public class StudentStatusService {
                         member.get(),
                         academy,
                         classResponse,
-                        toStudentApiStatus(
-                                student.getState()
+                        toTeacherApiStatus(
+                                teacher.getState()
                         ),
-                        student.getCreateAt(),
+                        teacher.getCreateAt(),
                         null
                 )
         );
     }
 
     private Optional<OptionResponse> toOptionResponse(
-            Student student
+            Teacher teacher
     ) {
-        if (student.getSk() == null) {
+        if (teacher.getSk() == null) {
             return Optional.empty();
         }
 
         String discordId =
                 resolveDiscordId(
-                        student.getSk()
+                        teacher.getSk()
                 );
 
         String username =
@@ -311,23 +298,23 @@ public class StudentStatusService {
 
         return Optional.of(
                 new OptionResponse(
-                        student.getSk(),
+                        teacher.getSk(),
                         discordId,
                         username
                 )
         );
     }
 
-    private Optional<StudentResponse> toStudentResponse(
-            Student student
+    private Optional<TeacherResponse> toTeacherResponse(
+            Teacher teacher
     ) {
-        if (student.getSk() == null) {
+        if (teacher.getSk() == null) {
             return Optional.empty();
         }
 
         String discordId =
                 resolveDiscordId(
-                        student.getSk()
+                        teacher.getSk()
                 );
 
         String username =
@@ -340,19 +327,13 @@ public class StudentStatusService {
         }
 
         AcademyClass academyClass =
-                student.getAcademyClass();
+                teacher.getAcademyClass();
 
         return Optional.of(
-                new StudentResponse(
-                        student.getSk(),
+                new TeacherResponse(
+                        teacher.getSk(),
                         discordId,
                         username,
-                        academyClass != null &&
-                                academyClass.getAcademy() != null
-                                ? academyClass
-                                .getAcademy()
-                                .getId()
-                                : null,
                         academyClass != null
                                 ? academyClass.getId()
                                 : null,
@@ -363,7 +344,7 @@ public class StudentStatusService {
         );
     }
 
-    private String toStudentDbStatus(
+    private String toTeacherDbStatus(
             String status
     ) {
         if (status == null) {
@@ -374,29 +355,26 @@ public class StudentStatusService {
             case "ENROLLED" ->
                     DB_STATUS_ENROLLED;
 
-            case "GRADUATED" ->
-                    DB_STATUS_GRADUATED;
+            case "RETIRED" ->
+                    DB_STATUS_RETIRED;
 
-            case "EXPELLED" ->
-                    DB_STATUS_EXPELLED;
-
-            case "WITHDRAWN" ->
-                    DB_STATUS_WITHDRAWN;
+            case "DISCIPLINARY" ->
+                    DB_STATUS_DISCIPLINARY;
 
             default ->
                     throw new IllegalArgumentException(
-                            "지원하지 않는 학생 상태입니다: "
+                            "지원하지 않는 교사 상태입니다: "
                                     + status
                     );
         };
     }
 
-    private String toStudentApiStatus(
+    private String toTeacherApiStatus(
             String state
     ) {
         if (state == null) {
             throw new IllegalArgumentException(
-                    "학생 상태가 null입니다."
+                    "교사 상태가 null입니다."
             );
         }
 
@@ -404,18 +382,15 @@ public class StudentStatusService {
             case DB_STATUS_ENROLLED ->
                     "ENROLLED";
 
-            case DB_STATUS_GRADUATED ->
-                    "GRADUATED";
+            case DB_STATUS_RETIRED ->
+                    "RETIRED";
 
-            case DB_STATUS_EXPELLED ->
-                    "EXPELLED";
-
-            case DB_STATUS_WITHDRAWN ->
-                    "WITHDRAWN";
+            case DB_STATUS_DISCIPLINARY ->
+                    "DISCIPLINARY";
 
             default ->
                     throw new IllegalArgumentException(
-                            "지원하지 않는 학생 DB 상태입니다: "
+                            "지원하지 않는 교사 DB 상태입니다: "
                                     + state
                     );
         };

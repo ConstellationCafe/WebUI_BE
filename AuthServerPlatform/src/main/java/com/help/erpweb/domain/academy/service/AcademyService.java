@@ -139,7 +139,7 @@ public class AcademyService {
                         )
                         .toList();
 
-        List<StudentOptionResponse> students =
+        List<OptionResponse> students =
                 academyId == null || classId == null
                         ? List.of()
                         : studentRepository
@@ -148,7 +148,7 @@ public class AcademyService {
                                 classId
                         )
                         .stream()
-                        .map(this::toStudentOptionResponse)
+                        .map(this::toOptionResponse)
                         .flatMap(Optional::stream)
                         .toList();
 
@@ -167,7 +167,7 @@ public class AcademyService {
         );
     }
 
-    private Optional<StudentOptionResponse> toStudentOptionResponse(
+    private Optional<OptionResponse> toOptionResponse(
             Student student
     ) {
         if (student.getSk() == null) {
@@ -196,7 +196,7 @@ public class AcademyService {
         }
 
         return Optional.of(
-                new StudentOptionResponse(
+                new OptionResponse(
                         student.getSk(),
                         discordId,
                         username

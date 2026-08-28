@@ -5,8 +5,6 @@ public record StudentStatusSummaryResponse(
         long enrolledCount,
         long graduationCount,
         long expulsionCount,
-        long withdrawalCount,
-        long retirementCount,
-        long disciplinaryCount
+        long withdrawalCount
 ) {
 }

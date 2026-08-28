@@ -2,13 +2,13 @@ package com.help.erpweb.domain.academy.dto.response;
 
 import java.util.List;
 
-public record StudentStatusListResponse(
-        List<StatusItemResponse<StudentResponse>> items,
-        StudentStatusSummaryResponse summary,
+public record TeacherStatusListResponse(
+        List<StatusItemResponse<TeacherResponse>> items,
+        TeacherStatusSummaryResponse summary,
         StatusPaginationResponse pagination
 ) {
 
-    public StudentStatusListResponse {
+    public TeacherStatusListResponse {
 
         items = items != null
                 ? items
@@ -16,8 +16,7 @@ public record StudentStatusListResponse(
 
         summary = summary != null
                 ? summary
-                : new StudentStatusSummaryResponse(
-                0,
+                : new TeacherStatusSummaryResponse(
                 0,
                 0,
                 0,

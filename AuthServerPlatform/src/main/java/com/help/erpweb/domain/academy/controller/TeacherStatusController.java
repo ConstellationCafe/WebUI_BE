@@ -1,6 +1,6 @@
 package com.help.erpweb.domain.academy.controller;
 
-import com.help.erpweb.domain.academy.service.StudentStatusService;
+import com.help.erpweb.domain.academy.service.TeacherStatusService;
 import com.help.global.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,20 +9,22 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/academy/student-status")
-public class StudentStatusController {
-    private final StudentStatusService studentStatusService;
+@RequestMapping("/api/academy/teacher-status")
+public class TeacherStatusController {
+
+    private final TeacherStatusService teacherStatusService;
+
     /**
-     * 학생 상태 처리 화면의 선택 옵션 조회
+     * 교사 상태 처리 화면의 선택 옵션 조회
      *
      * academyId == null
      *   -> 학원 목록 조회
      *
-     * academyId != null, classId == null
-     *   -> 분반 / 교과목 조회
+     * academyId != null
+     *   -> 해당 학원의 분반 / 교사 조회
      *
-     * academyId != null, classId != null
-     *   -> 해당 분반 학생 조회
+     * classId가 전달되는 경우
+     *   -> 해당 분반 기준 교사 필터링에 사용할 수 있음
      */
     @GetMapping("/options")
     public ApiResponse<?> getStatusOptions(
@@ -30,13 +32,13 @@ public class StudentStatusController {
             @RequestParam(required = false) Integer classId
     ) {
         log.info(
-                "[GET] /api/academy/student-status/options academyId={}, classId={}",
+                "[GET] /api/academy/teacher-status/options academyId={}, classId={}",
                 academyId,
                 classId
         );
 
         return ApiResponse.success(
-                studentStatusService.getStatusOptions(
+                teacherStatusService.getStatusOptions(
                         academyId,
                         classId
                 )
@@ -44,15 +46,10 @@ public class StudentStatusController {
     }
 
     /**
-     * 학생 상태 이력 조회
-     *
-     * 모든 조건은 선택 사항이다.
-     *
-     * academyMemberId는 기존 studentId 대신
-     * 학생/교사 상태 조회 API에서 공통으로 사용하는 이름이다.
+     * 교사 상태 이력 조회
      */
     @GetMapping
-    public ApiResponse<?> getStudentStatuses(
+    public ApiResponse<?> getTeacherStatuses(
             @RequestParam(required = false) Integer academyId,
             @RequestParam(required = false) Integer classId,
             @RequestParam(required = false) String academyMemberId,
@@ -61,7 +58,7 @@ public class StudentStatusController {
             @RequestParam(defaultValue = "20") int size
     ) {
         log.info(
-                "[GET] /api/academy/student-status " +
+                "[GET] /api/academy/teacher-status " +
                         "academyId={}, classId={}, academyMemberId={}, status={}, page={}, size={}",
                 academyId,
                 classId,
@@ -72,7 +69,7 @@ public class StudentStatusController {
         );
 
         return ApiResponse.success(
-                studentStatusService.getStudentStatuses(
+                teacherStatusService.getTeacherStatuses(
                         academyId,
                         classId,
                         academyMemberId,

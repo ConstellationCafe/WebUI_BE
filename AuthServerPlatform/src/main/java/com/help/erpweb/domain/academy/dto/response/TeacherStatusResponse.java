@@ -2,14 +2,13 @@ package com.help.erpweb.domain.academy.dto.response;
 
 import java.util.List;
 
-public record StudentStatusResponse(
+public record TeacherStatusResponse(
         List<AcademyOptionResponse> academies,
         List<ClassOptionResponse> classes,
-        List<OptionResponse> students,
-        List<SubjectOptionResponse> subjects
+        List<OptionResponse> teachers
 ) {
 
-    public StudentStatusResponse {
+    public TeacherStatusResponse {
 
         academies = academies != null
                 ? academies
@@ -19,12 +18,8 @@ public record StudentStatusResponse(
                 ? classes
                 : List.of();
 
-        students = students != null
-                ? students
-                : List.of();
-
-        subjects = subjects != null
-                ? subjects
+        teachers = teachers != null
+                ? teachers
                 : List.of();
     }
 }
