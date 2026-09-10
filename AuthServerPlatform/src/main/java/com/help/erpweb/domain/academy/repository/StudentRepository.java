@@ -27,6 +27,19 @@ public interface StudentRepository
     );
 
     @Query("""
+        SELECT s
+        FROM Student s
+        JOIN FETCH s.academyClass c
+        JOIN FETCH c.academy a
+        WHERE a.id = :academyId
+          AND c.id = :classId
+    """)
+    List<Student> findByAcademyIdAndClassIdWithClass(
+            @Param("academyId") Integer academyId,
+            @Param("classId") Integer classId
+    );
+
+    @Query("""
         SELECT DISTINCT s.state
         FROM Student s
         JOIN s.academyClass c

@@ -4,7 +4,9 @@ import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface DiscordUserRepository extends JpaRepository<DiscordUser, String> {
@@ -14,4 +16,14 @@ public interface DiscordUserRepository extends JpaRepository<DiscordUser, String
            "WHERE u.discordID = :discordID " +
            "AND u.state = '재적'")
     Optional<DiscordUser> findByDiscordID(String discordID);
+
+    @Query("""
+        SELECT u
+        FROM DiscordUser u
+        WHERE u.discordID IN :discordIDs
+          AND u.state = '재적'
+    """)
+    List<DiscordUser> findActiveByDiscordIDIn(
+            @Param("discordIDs") List<String> discordIDs
+    );
 }

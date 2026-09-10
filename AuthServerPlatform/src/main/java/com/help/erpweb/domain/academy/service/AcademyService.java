@@ -20,7 +20,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -86,10 +90,44 @@ public class AcademyService {
     public List<TeacherResponse> getTeachers(
             Integer academyId
     ) {
-        return teacherRepository
-                .findByAcademyClass_Academy_Id(academyId)
+        // teachers
+        List<Teacher> teachers = teacherRepository
+                        .findByAcademyIdWithClass(academyId);
+        // discordIdBySk
+        List<String> sks = teachers.stream()
+                        .map(Teacher::getSk)
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .toList();
+        Map<String, String> discordIdBySk = membershipRepository
+                        .findDiscordIdsBySk(sks);
+        // discordUserById
+        List<String> discordIds = discordIdBySk
+                        .values()
+                        .stream()
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .toList();
+        Map<String, DiscordUser> discordUserById = discordUserRepository
+                        .findActiveByDiscordIDIn(discordIds)
+                        .stream()
+                        .collect(
+                                Collectors.toMap(
+                                        DiscordUser::getDiscordID,
+                                        Function.identity(),
+                                        (existing, replacement) -> existing
+                                )
+                        );
+        // List<TeacherResponse>
+        return teachers
                 .stream()
-                .map(this::toTeacherResponse)
+                .map(teacher ->
+                        toTeacherResponse(
+                                teacher,
+                                discordIdBySk,
+                                discordUserById
+                        )
+                )
                 .flatMap(Optional::stream)
                 .toList();
     }
@@ -98,13 +136,44 @@ public class AcademyService {
             Integer academyId,
             Integer classId
     ) {
-        return studentRepository
-                .findByAcademyIdAndClassId(
-                        academyId,
-                        classId
+        // students
+        List<Student> students = studentRepository
+                        .findByAcademyIdAndClassIdWithClass(
+                                academyId,
+                                classId
+                        );
+        // discordIdBySk
+        List<String> sks = students.stream()
+                        .map(Student::getSk)
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .toList();
+        Map<String, String> discordIdBySk = membershipRepository
+                        .findDiscordIdsBySk(sks);
+        // discordUserById
+        List<String> discordIds = discordIdBySk.values()
+                        .stream()
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .toList();
+        Map<String, DiscordUser> discordUserById = discordUserRepository
+                        .findActiveByDiscordIDIn(discordIds)
+                        .stream()
+                        .collect(
+                                Collectors.toMap(
+                                        DiscordUser::getDiscordID,
+                                        Function.identity()
+                                )
+                        );
+        // List<StudentResponse>
+        return students.stream()
+                .map(student ->
+                        toStudentResponse(
+                                student,
+                                discordIdBySk,
+                                discordUserById
+                        )
                 )
-                .stream()
-                .map(this::toStudentResponse)
                 .flatMap(Optional::stream)
                 .toList();
     }
@@ -260,42 +329,34 @@ public class AcademyService {
     }
 
     private Optional<TeacherResponse> toTeacherResponse(
-            Teacher teacher
+            Teacher teacher,
+            Map<String, String> discordIdBySk,
+            Map<String, DiscordUser> discordUserById
     ) {
-        AcademyClass academyClass =
-                teacher.getAcademyClass();
-
-        String discordId = null;
-        String username = null;
-
-        if (teacher.getSk() != null) {
-            try {
-                discordId =
-                        membershipRepository
-                                .findDiscordIdBySk(
-                                        teacher.getSk()
-                                );
-
-                username =
-                        discordUserRepository
-                                .findByDiscordID(discordId)
-                                .map(DiscordUser::getNickname)
-                                .orElse(null);
-
-            } catch (Exception e) {
-                discordId = teacher.getSk();
-            }
-        }
-
-        if (username == null) {
+        if (teacher.getSk() == null) {
             return Optional.empty();
         }
 
+        String discordId = discordIdBySk.get(
+                teacher.getSk()
+        );
+        if (discordId == null) {
+            return Optional.empty();
+        }
+
+        DiscordUser discordUser = discordUserById.get(
+                discordId
+        );
+        if (discordUser == null || discordUser.getNickname() == null) {
+            return Optional.empty();
+        }
+
+        AcademyClass academyClass = teacher.getAcademyClass();
         return Optional.of(
                 new TeacherResponse(
                         teacher.getSk(),
                         discordId,
-                        username,
+                        discordUser.getNickname(),
                         academyClass != null
                                 ? academyClass.getId()
                                 : null,
@@ -307,50 +368,38 @@ public class AcademyService {
     }
 
     private Optional<StudentResponse> toStudentResponse(
-            Student student
+            Student student,
+            Map<String, String> discordIdBySk,
+            Map<String, DiscordUser> discordUserById
     ) {
-        AcademyClass academyClass =
-                student.getAcademyClass();
-
-        String discordId = null;
-        String username = null;
-
-        if (student.getSk() != null) {
-            try {
-                discordId =
-                        membershipRepository
-                                .findDiscordIdBySk(
-                                        student.getSk()
-                                );
-
-                username =
-                        discordUserRepository
-                                .findByDiscordID(discordId)
-                                .map(DiscordUser::getNickname)
-                                .orElse(null);
-
-            } catch (Exception e) {
-                discordId = student.getSk();
-            }
-        }
-
-        if (username == null) {
+        if (student.getSk() == null) {
             return Optional.empty();
         }
 
+        String discordId = discordIdBySk.get(student.getSk());
+        if (discordId == null) {
+            return Optional.empty();
+        }
+
+        DiscordUser discordUser = discordUserById.get(discordId);
+        if (discordUser == null || discordUser.getNickname() == null) {
+            return Optional.empty();
+        }
+
+        AcademyClass academyClass = student.getAcademyClass();
         return Optional.of(
                 new StudentResponse(
                         student.getSk(),
                         discordId,
-                        username,
+                        discordUser.getNickname(),
                         academyClass != null
-                                ? academyClass
-                                .getAcademy()
-                                .getId()
+                                ? academyClass.getAcademy().getId()
                                 : null,
+
                         academyClass != null
                                 ? academyClass.getId()
                                 : null,
+
                         academyClass != null
                                 ? academyClass.getClassNumber()
                                 : null

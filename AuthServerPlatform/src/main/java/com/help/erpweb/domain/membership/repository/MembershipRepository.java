@@ -5,6 +5,10 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @Repository
 public class MembershipRepository {
     @PersistenceContext(unitName = "constellation")
@@ -29,5 +33,36 @@ public class MembershipRepository {
                 """)
                 .setParameter("sk", sk)
                 .getSingleResult();
+    }
+
+    public Map<String, String> findDiscordIdsBySk(
+            List<String> sks
+    ) {
+        if (sks == null || sks.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Object[]> results = entityManager
+                .createNativeQuery(
+                    """
+                        SELECT sk, discordID
+                        FROM Constellation_Network.Users
+                        WHERE sk IN (:sks)
+                    """
+                )
+                .setParameter("sks", sks)
+                .getResultList();
+
+        Map<String, String> result = new HashMap<>();
+        for (Object[] row : results) {
+            if (row[0] == null || row[1] == null) {
+                continue;
+            }
+            result.put(
+                    row[0].toString(),
+                    row[1].toString()
+            );
+        }
+        return result;
     }
 }

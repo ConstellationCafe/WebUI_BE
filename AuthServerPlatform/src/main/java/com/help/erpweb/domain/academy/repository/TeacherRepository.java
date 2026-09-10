@@ -10,11 +10,20 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface TeacherRepository
-        extends JpaRepository<Teacher, Integer> {
-
+public interface TeacherRepository extends JpaRepository<Teacher, Integer> {
     List<Teacher> findByAcademyClass_Academy_Id(
             Integer academyId
+    );
+
+    @Query("""
+        SELECT t
+        FROM Teacher t
+        JOIN FETCH t.academyClass c
+        JOIN c.academy a
+        WHERE a.id = :academyId
+    """)
+    List<Teacher> findByAcademyIdWithClass(
+            @Param("academyId") Integer academyId
     );
 
     List<Teacher> findByAcademyClass_Id(
