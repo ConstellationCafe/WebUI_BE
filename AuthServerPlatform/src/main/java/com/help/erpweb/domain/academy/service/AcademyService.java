@@ -6,23 +6,21 @@ import com.help.authserver.domain.user.entity.config.ErpSubscriber;
 import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 import com.help.authserver.domain.user.repository.config.ERPSubscriberRepository;
 import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
+import com.help.erpweb.domain.academy.authorization.AcademyAuthorization;
 import com.help.erpweb.domain.academy.dto.response.*;
-import com.help.erpweb.domain.academy.entity.AcademyClass;
-import com.help.erpweb.domain.academy.entity.Student;
-import com.help.erpweb.domain.academy.entity.Teacher;
+import com.help.erpweb.domain.academy.entity.*;
 import com.help.erpweb.domain.academy.repository.*;
 import com.help.erpweb.domain.config.entity.ModuleConfig;
 import com.help.erpweb.domain.config.repository.ModuleConfigRepository;
 import com.help.erpweb.domain.membership.repository.MembershipRepository;
 import com.help.global.jwt.CustomUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -39,6 +37,60 @@ public class AcademyService {
     private final ERPSubscriberRepository erpSubscriberRepository;
     private final MembershipRepository membershipRepository;
     private final DiscordUserRepository discordUserRepository;
+    private final AcademyMemberRepository academyMemberRepository;
+    // Authorization
+    private final AcademyAuthorization academyAuthorization;
+
+    public AcademyPermissionResponse getMyPermissions(
+            Authentication authentication
+    ) {
+        // isAdmin
+        boolean isAdmin = academyAuthorization
+                .hasGlobalAccess(authentication);
+        // academies
+        String discordId = authentication.getName();
+        List<AcademyMember> members = academyMemberRepository
+                .findAllByDiscordId(discordId);
+        Map<String, List<AcademyMember>> grouped = members
+                .stream()
+                .collect(
+                        Collectors.groupingBy(
+                                member ->
+                                        member.getAcademyId()
+                                                + ":"
+                                                + member.getRoleName()
+                        )
+                );
+        List<AcademyPermissionItemResponse> academies = grouped
+                .values()
+                .stream()
+                .map(group -> {
+                    AcademyMember first = group.get(0);
+                    List<Integer> classIds = group
+                            .stream()
+                            .map(AcademyMember::getClassId)
+                            .filter(Objects::nonNull)
+                            .distinct()
+                            .sorted()
+                            .toList();
+                    return new AcademyPermissionItemResponse(
+                            first.getAcademyId(),
+                            first.getRoleName(),
+                            classIds
+                    );
+                })
+                .sorted(
+                        Comparator.comparing(
+                                AcademyPermissionItemResponse::academyId
+                        )
+                )
+                .toList();
+
+        return new AcademyPermissionResponse(
+                isAdmin,
+                academies
+        );
+    }
 
     public List<AcademyResponse> getAcademies() {
         return academyRepository.findAll()
@@ -71,20 +123,31 @@ public class AcademyService {
     public List<SubjectResponse> getSubjects(
             Integer academyId
     ) {
-        return List.of(
-                new SubjectResponse(
-                        1,
-                        "로테이션"
-                ),
-                new SubjectResponse(
-                        2,
-                        "언리미티드"
-                ),
-                new SubjectResponse(
-                        3,
-                        "스타터"
-                )
-        );
+        // 달빛은 로테이션만 수업
+        if (academyId == 1) {
+            return List.of(
+                    new SubjectResponse(
+                            1,
+                            "로테이션"
+                    )
+            );
+        // 별빛은 모두 수업
+        } else {
+            return List.of(
+                    new SubjectResponse(
+                            1,
+                            "로테이션"
+                    ),
+                    new SubjectResponse(
+                            2,
+                            "언리미티드"
+                    ),
+                    new SubjectResponse(
+                            3,
+                            "스타터"
+                    )
+            );
+        }
     }
 
     public List<TeacherResponse> getTeachers(

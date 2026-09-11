@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/academy/teacher-status")
 public class TeacherStatusController {
-
     private final TeacherStatusService teacherStatusService;
 
     /**

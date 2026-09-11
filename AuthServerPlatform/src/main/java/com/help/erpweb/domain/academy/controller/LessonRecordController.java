@@ -6,6 +6,8 @@ import com.help.erpweb.domain.academy.service.LessonRecordService;
 import com.help.global.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -16,41 +18,26 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/academy")
 public class LessonRecordController {
-
     private final LessonRecordService lessonRecordService;
 
+    @PreAuthorize("@academyAuth.isTeacherOrAbove(authentication)")
     @GetMapping("/lesson-records")
     public List<LessonRecordSummaryResponse> getLessonRecords(
-            @RequestParam(required = false)
-            LocalDate date,
-
-            @RequestParam(required = false)
-            String time,
-
-            @RequestParam(required = false)
-            String subject,
-
-            @RequestParam(required = false)
-            String teacherId,
-
-            @RequestParam(required = false)
-            Integer academyId,
-
-            @RequestParam(required = false)
-            Integer classId
+            Authentication authentication,
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) String time,
+            @RequestParam(required = false) String subject,
+            @RequestParam(required = false) String teacherId,
+            @RequestParam(required = false) Integer academyId,
+            @RequestParam(required = false) Integer classId
     ) {
         log.info(
                 "[GET] /api/academy/lesson-records " +
                         "academyId={}, classId={}, date={}, time={}, subject={}, teacherId={}",
-                academyId,
-                classId,
-                date,
-                time,
-                subject,
-                teacherId
+                academyId, classId, date, time, subject, teacherId
         );
-
         return lessonRecordService.getLessonRecords(
+                authentication,
                 date,
                 time,
                 subject,
@@ -60,6 +47,7 @@ public class LessonRecordController {
         );
     }
 
+    @PreAuthorize("@academyAuth.isTeacherOrAbove(authentication)")
     @PostMapping("/lesson-record")
     public ApiResponse<?> lessonRecord(
             @RequestBody LessonRecordCreateRequest request
@@ -72,9 +60,7 @@ public class LessonRecordController {
                 request.subject(),
                 request.educationDate()
         );
-
         lessonRecordService.createLessonRecord(request);
-
         return ApiResponse.success(null);
     }
 }

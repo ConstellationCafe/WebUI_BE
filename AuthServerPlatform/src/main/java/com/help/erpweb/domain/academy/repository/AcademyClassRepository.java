@@ -15,4 +15,9 @@ public interface AcademyClassRepository
             Integer academyId,
             Integer classNumber
     );
+
+    List<AcademyClass> findAllByAcademy_IdAndIdIn(
+            Integer academyId,
+            List<Integer> classIds
+    );
 }

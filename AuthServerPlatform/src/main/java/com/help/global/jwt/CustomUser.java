@@ -33,7 +33,13 @@ public class CustomUser extends User {
 	// User 인터페이스로부터 생성
 	public static CustomUser from(final com.help.authserver.domain.user.entity.constellation.User user) {
 		final List<GrantedAuthority> authorities = new ArrayList<>();
-		authorities.add(new SimpleGrantedAuthority(user.getRole().getRoleName()));
+		authorities.add(
+				new SimpleGrantedAuthority(
+						user
+						.getRole()  // UserRole
+						.getRoleName()  // String
+				)
+		);
 		final CustomUser customUser = new CustomUser(
 			user.getUsername(),
 			user.getPassword(),
