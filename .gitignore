@@ -4,6 +4,8 @@ gradle
 gradlew
 gradlew.bat
 .env
+*.ipynb
+.ipynb_checkpoints
 localhost+2.pem
 localhost+2-key.pem
 build/

@@ -1,7 +1,0 @@
-package com.help.backend.domain.menu.repository;
-
-public interface MenuRepositoryCustom {
-    String callMenuProcedure(String cardType,
-                             String membershipID,
-                             String mnValue);
-}

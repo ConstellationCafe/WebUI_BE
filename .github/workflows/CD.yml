@@ -1,5 +1,4 @@
 name: WebUI_BE_CD
-
 on:
   push:
     branches: ["main"]
@@ -25,6 +24,27 @@ jobs:
 
       - name: Deploy with docker compose (SSH)
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          # DB
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_CONFIG_URL: ${{ secrets.DB_CONFIG_URL }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          # Discord
+          DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
+          DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+          DISCORD_REDIRECT_URI: ${{ secrets.DISCORD_REDIRECT_URI }}
+          DISCORD_TOKEN_URI: ${{ secrets.DISCORD_TOKEN_URI }}
+          DISCORD_USER_URI: ${{ secrets.DISCORD_USER_URI }}
+          DISCORD_GUILDS_URI: ${{ secrets.DISCORD_GUILDS_URI }}
+          # FE
+          FRONT_REDIRECT_URI: ${{ secrets.FRONT_REDIRECT_URI }}
+          REGISTER_URI: ${{ secrets.REGISTER_URI }}
+          # Spring
+          SPRING_DATA_REDIS_HOST: redis
+          SPRING_PROFILES_ACTIVE: ${{ secrets.SPRING_PROFILES_ACTIVE }}
+          # Jwt
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
@@ -32,32 +52,24 @@ jobs:
           port: ${{ secrets.SERVER_PORT }}
           script_stop: true
           command_timeout: 30m
+          envs: >-
+            DB_URL,
+            DB_CONFIG_URL,
+            DB_USER,
+            DB_PASSWORD,
+            DISCORD_CLIENT_ID,
+            DISCORD_CLIENT_SECRET,
+            DISCORD_REDIRECT_URI,
+            DISCORD_TOKEN_URI,
+            DISCORD_USER_URI,
+            DISCORD_GUILDS_URI,
+            FRONT_REDIRECT_URI,
+            REGISTER_URI,
+            JWT_SECRET,
+            SPRING_DATA_REDIS_HOST,
+            SPRING_PROFILES_ACTIVE
           script: |
             set -euo pipefail
             cd /home/elaina/dockers/WebUI_BE/service
-
-            # docker-compose.yml의 ${...} 치환용 .env 생성/갱신
-            cat > .env << 'EOF'
-            DB_URL=${{ secrets.DB_URL }}
-            DB_USER=${{ secrets.DB_USER }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-
-            DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
-            DISCORD_CLIENT_SECRET=${{ secrets.DISCORD_CLIENT_SECRET }}
-            DISCORD_REDIRECT_URI=${{ secrets.DISCORD_REDIRECT_URI }}
-            DISCORD_TOKEN_URI=${{ secrets.DISCORD_TOKEN_URI }}
-            DISCORD_USER_URI=${{ secrets.DISCORD_USER_URI }}
-
-            FRONT_REDIRECT_URI=${{ secrets.FRONT_REDIRECT_URI }}
-            REGISTER_URI=${{ secrets.REGISTER_URI }}
-
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            SPRING_PROFILES_ACTIVE=${{ secrets.SPRING_PROFILES_ACTIVE }}
-            EOF
-            chmod 600 .env
-
-            # compose v2 기준 명령
             docker compose down
             docker compose up -d --build
-
-            docker compose ps

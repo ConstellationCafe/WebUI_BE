@@ -34,9 +34,6 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
     @Value("${discord.guilds-uri}")
     private String guildsUri;
 
-    @Value("${discord.guild-info-uri}")
-    private String guildInfoUri;
-
     @Value("${discord.redirect-uri}")
     private String redirectUri;
 
