@@ -6,6 +6,7 @@ public record StudentResponse(
         String name,
         Integer academyId,
         Integer classId,
-        Integer classNumber
+        Integer classNumber,
+        String state
 ) {
 }
