@@ -442,7 +442,7 @@ public class StudentStatusService {
             String discordId
     ) {
         return discordUserRepository
-                .findByDiscordID(discordId)
+                .findAllByDiscordID(discordId)
                 .map(DiscordUser::getNickname)
                 .orElse(null);
     }

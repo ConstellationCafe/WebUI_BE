@@ -399,27 +399,30 @@ public class TeacherStatusService {
     private String resolveDiscordId(
             String sk
     ) {
-        try {
-            String discordId =
-                    membershipRepository
-                            .findDiscordIdBySk(sk);
+        String discordId =
+                membershipRepository
+                        .findDiscordIdBySk(sk);
 
-            return discordId != null
-                    ? discordId
-                    : sk;
-
-        } catch (Exception e) {
-            return sk;
+        if (discordId == null) {
+            throw new IllegalStateException(
+                    "discordId를 찾을 수 없습니다. sk=" + sk
+            );
         }
+        return discordId;
     }
 
     private String resolveUsername(
             String discordId
     ) {
         return discordUserRepository
-                .findByDiscordID(discordId)
+                .findAllByDiscordID(discordId)
                 .map(DiscordUser::getNickname)
-                .orElse(null);
+                .orElseThrow(() ->
+                        new IllegalStateException(
+                                "DiscordUser를 찾을 수 없습니다. discordId="
+                                        + discordId
+                        )
+                );
     }
 
     private String normalize(
