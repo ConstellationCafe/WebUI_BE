@@ -17,6 +17,12 @@ public interface DiscordUserRepository extends JpaRepository<DiscordUser, String
            "AND u.state = '재적'")
     Optional<DiscordUser> findByDiscordID(String discordID);
 
+    @EntityGraph(attributePaths="roles")
+    @Query("SELECT u " +
+            "FROM DiscordUser u " +
+            "WHERE u.discordID = :discordID ")
+    Optional<DiscordUser> findAllByDiscordID(String discordID);
+
     @Query("""
         SELECT u
         FROM DiscordUser u

@@ -199,7 +199,7 @@ public class LessonRecordService {
 
             return discordUserRepository
                     .findByDiscordID(discordId)
-                    .map(DiscordUser::getUsername)
+                    .map(DiscordUser::getNickname)
                     .orElse(null);
 
         } catch (Exception e) {
