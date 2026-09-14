@@ -6,8 +6,13 @@ server:
 #    certificate-private-key: classpath:certs/localhost+2-key.pem
 spring:
   datasource:
-    primary:
+    constellation:
       url: ${DB_URL}
+      username: ${DB_USER}
+      password: ${DB_PASSWORD}
+      driver-class-name: com.mysql.cj.jdbc.Driver
+    config_db:
+      url: ${DB_CONFIG_URL}
       username: ${DB_USER}
       password: ${DB_PASSWORD}
       driver-class-name: com.mysql.cj.jdbc.Driver
@@ -27,7 +32,7 @@ spring:
         ddl-auto: none
   data:
     redis:
-      host: 192.168.0.14
+      host: redis
       port: 6379
       timeout: 60000
 #  mail:
@@ -53,9 +58,9 @@ discord:
   token-uri: ${DISCORD_TOKEN_URI}
   user-uri: ${DISCORD_USER_URI}
   guilds-uri: ${DISCORD_GUILDS_URI}
+  guild-info-uri: ${DISCORD_GUILD_INFO_URI}
   redirect-uri: ${DISCORD_REDIRECT_URI}
 front:
   redirect-uri: ${FRONT_REDIRECT_URI}
 jwt:
   secret: ${JWT_SECRET}
-
