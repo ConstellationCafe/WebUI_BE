@@ -63,16 +63,17 @@ public class AcademyController {
     }
 
     @PreAuthorize("@academyAuth.isMember(authentication, #academyId)")
-    @GetMapping("/{academyId}/teachers")
+    @GetMapping("/{academyId}/classes/{classId}/teachers")
     public ApiResponse<?> getTeachers(
-            @PathVariable Integer academyId
+            @PathVariable Integer academyId,
+            @PathVariable Integer classId
     ) {
         log.info(
                 "[GET] /api/academy/{}/teachers",
                 academyId
         );
         return ApiResponse.success(
-                academyService.getTeachers(academyId)
+                academyService.getTeachers(academyId, classId)
         );
     }
 
