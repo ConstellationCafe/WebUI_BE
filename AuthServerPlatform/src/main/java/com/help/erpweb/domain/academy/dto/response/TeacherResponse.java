@@ -5,6 +5,7 @@ public record TeacherResponse(
         String discordID,
         String name,
         Integer classId,
-        Integer classNumber
+        Integer classNumber,
+        String state
 ) {
 }

@@ -425,7 +425,8 @@ public class AcademyService {
                                 : null,
                         academyClass != null
                                 ? academyClass.getClassNumber()
-                                : null
+                                : null,
+                        teacher.getState()
                 )
         );
     }
@@ -465,7 +466,8 @@ public class AcademyService {
 
                         academyClass != null
                                 ? academyClass.getClassNumber()
-                                : null
+                                : null,
+                        student.getState()
                 )
         );
     }
