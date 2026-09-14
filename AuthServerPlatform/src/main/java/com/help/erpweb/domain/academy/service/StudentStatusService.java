@@ -358,7 +358,8 @@ public class StudentStatusService {
                                 : null,
                         academyClass != null
                                 ? academyClass.getClassNumber()
-                                : null
+                                : null,
+                        student.getState()
                 )
         );
     }
