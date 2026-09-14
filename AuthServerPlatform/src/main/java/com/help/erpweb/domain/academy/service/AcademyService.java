@@ -151,11 +151,12 @@ public class AcademyService {
     }
 
     public List<TeacherResponse> getTeachers(
-            Integer academyId
+            Integer academyId,
+            Integer classId
     ) {
         // teachers
         List<Teacher> teachers = teacherRepository
-                        .findByAcademyIdWithClass(academyId);
+                        .findByAcademyIdWithClass(academyId, classId);
         // discordIdBySk
         List<String> sks = teachers.stream()
                         .map(Teacher::getSk)

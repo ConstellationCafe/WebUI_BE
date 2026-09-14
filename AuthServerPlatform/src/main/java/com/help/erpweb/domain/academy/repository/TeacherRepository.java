@@ -21,9 +21,11 @@ public interface TeacherRepository extends JpaRepository<Teacher, Integer> {
         JOIN FETCH t.academyClass c
         JOIN c.academy a
         WHERE a.id = :academyId
+          AND c.id = :classId
     """)
     List<Teacher> findByAcademyIdWithClass(
-            @Param("academyId") Integer academyId
+            @Param("academyId") Integer academyId,
+            @Param("classId") Integer classId
     );
 
     List<Teacher> findByAcademyClass_Id(
