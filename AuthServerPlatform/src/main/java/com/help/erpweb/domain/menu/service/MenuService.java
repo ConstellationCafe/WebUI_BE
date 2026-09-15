@@ -1,5 +1,9 @@
 package com.help.erpweb.domain.menu.service;
 
+import com.help.erpweb.domain.content.dto.request.repository.ContentDto;
+import com.help.erpweb.domain.content.entity.ContentEntity;
+import com.help.erpweb.domain.content.repository.ContentRepository;
+import com.help.erpweb.domain.menu.entity.MenuEntity;
 import com.help.erpweb.domain.metadata.response.ColumnMetaDto;
 import com.help.erpweb.domain.menu.dto.request.repository.MenuDto;
 import com.help.erpweb.domain.menu.repository.MenuRepository;
@@ -11,12 +15,11 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,36 +30,92 @@ public class MenuService {
     @PersistenceContext
     private final EntityManager entityManager;
 
-    public ApiResponse<?> getMenuList(CustomUser user) {
-        String discordId = user.getUsername();
+    public ApiResponse<?> getMenuList(
+            String discordId,
+            int page,
+            int size,
+            String searchColumn,
+            String searchValue,
+            String sortColumn,
+            String sortDirection
+    ) {
+        int normalizedPage = Math.max(page, 1);
+        int normalizedSize = Math.max(size, 1);
 
         String sk = (String) entityManager
-                .createNativeQuery("SELECT Constellation_Network.search_sk(:cardType, :membershipId)")
-                .setParameter("cardType", MembershipID.discord.name())
-                .setParameter("membershipId", discordId)
+                .createNativeQuery("""
+                SELECT Constellation_Network.search_sk(
+                    :cardType,
+                    :membershipId
+                )
+                """)
+                .setParameter(
+                        "cardType",
+                        MembershipID.discord.name()
+                )
+                .setParameter(
+                        "membershipId",
+                        discordId
+                )
                 .getSingleResult();
+        /*
+         * metadata 조회
+         */
+        List<ColumnMetaDto> metadata =
+                menuRepository.findColumnMetas(
+                                MenuRepository.schemaName,
+                                MenuRepository.tableName
+                        )
+                        .stream()
+                        .map(v ->
+                                ColumnMetaDto.builder()
+                                        .colName(v.getColName())
+                                        .isPrimary(v.getIsPrimary())
+                                        .isNullable(v.getIsNullable())
+                                        .build()
+                        )
+                        .toList();
+        /*
+         * metadata → 허용 컬럼
+         */
+        Set<String> allowedColumns =
+                metadata.stream()
+                        .map(ColumnMetaDto::getColName)
+                        .collect(Collectors.toSet());
 
-        List<ColumnMetaDto> metadata = menuRepository.findColumnMetas(
-                menuRepository.schemaName,  menuRepository.tableName)
-                .stream()
-                .map(v -> ColumnMetaDto.builder()
-                        .colName(v.getColName())
-                        .isPrimary(v.getIsPrimary())
-                        .isNullable(v.getIsNullable())
-                        .build())
-                .toList();
-
-        List<MenuDto> menuList = menuRepository.findByRecommender(sk)
-                .stream()
-                .map(entity -> MenuDto.builder()
-                        .mnValue(entity.getMnValue())
-//                        .recommender(entity.getRecommender())
-                        .build())
-                .toList();
+        Page<MenuEntity> menuPage =
+                menuRepository.findPage(
+                        sk,
+                        // API page는 1-based
+                        // Repository는 0-based
+                        normalizedPage - 1,
+                        normalizedSize,
+                        searchColumn,
+                        searchValue,
+                        sortColumn,
+                        sortDirection,
+                        allowedColumns
+                );
+        List<MenuDto> menuList =
+                menuPage
+                        .getContent()
+                        .stream()
+                        .map(entity ->
+                                MenuDto.builder()
+                                        .mnValue(entity.getMnValue())
+                                        .recommender(entity.getRecommender())
+                                        .build()
+                        )
+                        .toList();
 
         Map<String, Object> body = new HashMap<>();
         body.put("metadata", metadata);
         body.put("entities", menuList);
+        body.put("page", normalizedPage);
+        body.put("size", normalizedSize);
+        body.put("totalElements", menuPage.getTotalElements());
+        body.put("totalPages", menuPage.getTotalPages());
+        body.put("hasNext", menuPage.hasNext());
         return ApiResponse.success(body);
     }
 

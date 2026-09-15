@@ -1,5 +1,7 @@
 package com.help.erpweb.domain.learning.service;
 
+import com.help.erpweb.domain.content.repository.ContentRepository;
+import com.help.erpweb.domain.learning.entity.LearningEntity;
 import com.help.erpweb.domain.metadata.response.ColumnMetaDto;
 import com.help.global.common.response.ApiResponse;
 import com.help.global.data.MembershipID;
@@ -11,12 +13,11 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,37 +28,93 @@ public class LearningService {
     @PersistenceContext
     private final EntityManager entityManager;
 
-    public ApiResponse<?> getLearningList(CustomUser user) {
-        String discordId = user.getUsername();
+    public ApiResponse<?> getLearningList(
+            String discordId,
+            int page,
+            int size,
+            String searchColumn,
+            String searchValue,
+            String sortColumn,
+            String sortDirection
+    ) {
+        int normalizedPage = Math.max(page, 1);
+        int normalizedSize = Math.max(size, 1);
 
         String sk = (String) entityManager
-                .createNativeQuery("SELECT Constellation_Network.search_sk(:cardType, :membershipId)")
-                .setParameter("cardType", MembershipID.discord.name())
-                .setParameter("membershipId", discordId)
+                .createNativeQuery("""
+                SELECT Constellation_Network.search_sk(
+                    :cardType,
+                    :membershipId
+                )
+                """)
+                .setParameter(
+                        "cardType",
+                        MembershipID.discord.name()
+                )
+                .setParameter(
+                        "membershipId",
+                        discordId
+                )
                 .getSingleResult();
+        /*
+         * metadata 조회
+         */
+        List<ColumnMetaDto> metadata =
+                learningRepository.findColumnMetas(
+                                LearningRepository.schemaName,
+                                LearningRepository.tableName
+                        )
+                        .stream()
+                        .map(v ->
+                                ColumnMetaDto.builder()
+                                        .colName(v.getColName())
+                                        .isPrimary(v.getIsPrimary())
+                                        .isNullable(v.getIsNullable())
+                                        .build()
+                        )
+                        .toList();
+        /*
+         * metadata → 허용 컬럼
+         */
+        Set<String> allowedColumns =
+                metadata.stream()
+                        .map(ColumnMetaDto::getColName)
+                        .collect(Collectors.toSet());
 
-        List<ColumnMetaDto> metadata = learningRepository.findColumnMetas(
-                learningRepository.schemaName,  learningRepository.tableName)
-                .stream()
-                .map(v -> ColumnMetaDto.builder()
-                        .colName(v.getColName())
-                        .isPrimary(v.getIsPrimary())
-                        .isNullable(v.getIsNullable())
-                        .build())
-                .toList();
-
-        List<LearningDto> learningList = learningRepository.findByTeacher(sk)
-                .stream()
-                .map(entity -> LearningDto.builder()
-                        .lnKey(entity.getLnKey())
-                        .lnValue(entity.getLnValue())
-//                        .teacher(entity.getTeacher())
-                        .build())
-                .toList();
+        Page<LearningEntity> learningPage =
+                learningRepository.findPage(
+                        sk,
+                        // API page는 1-based
+                        // Repository는 0-based
+                        normalizedPage - 1,
+                        normalizedSize,
+                        searchColumn,
+                        searchValue,
+                        sortColumn,
+                        sortDirection,
+                        allowedColumns
+                );
+        List<LearningDto> contentList =
+                learningPage
+                        .getContent()
+                        .stream()
+                        .map(entity ->
+                                LearningDto.builder()
+                                        .lnKey(entity.getLnKey())
+                                        .lnValue(entity.getLnValue())
+                                        .teacher(entity.getTeacher())
+                                        .build()
+                        )
+                        .toList();
 
         Map<String, Object> body = new HashMap<>();
         body.put("metadata", metadata);
-        body.put("entities", learningList);
+        body.put("entities", contentList);
+        body.put("page", normalizedPage);
+        body.put("size", normalizedSize);
+        body.put("totalElements", learningPage.getTotalElements());
+        body.put("totalPages", learningPage.getTotalPages());
+        body.put("hasNext", learningPage.hasNext());
         return ApiResponse.success(body);
     }
 

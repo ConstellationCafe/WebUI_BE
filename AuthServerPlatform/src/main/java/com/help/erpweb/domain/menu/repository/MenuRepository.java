@@ -15,10 +15,6 @@ public interface MenuRepository extends JpaRepository<MenuEntity, Long>, GlobalR
     String schemaName = "ChatBot";
     String tableName = "RecommendMenu";
 
-    @Query(value = "SELECT * FROM ChatBot.RecommendMenu WHERE recommender = :recommender",
-            nativeQuery = true)
-    List<MenuEntity> findByRecommender(String recommender);
-
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         DELETE FROM ChatBot.RecommendMenu

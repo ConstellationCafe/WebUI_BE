@@ -14,6 +14,6 @@ public class ContentDto {
     @NotBlank(message = "cnValue는 필수입니다.")
     private String cnValue;
 
-//    @NotBlank(message = "recommender는 필수입니다.")
-//    private String recommender;
+    @NotBlank(message = "recommender는 필수입니다.")
+    private String recommender;
 }

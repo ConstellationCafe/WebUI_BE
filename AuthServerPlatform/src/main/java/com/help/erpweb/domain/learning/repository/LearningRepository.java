@@ -15,10 +15,6 @@ public interface LearningRepository extends JpaRepository<LearningEntity, Long>,
     String schemaName = "ChatBot";
     String tableName = "Learning";
 
-    @Query(value = "SELECT * FROM ChatBot.Learning WHERE teacher = :teacher",
-            nativeQuery = true)
-    List<LearningEntity> findByTeacher(String teacher);
-
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         DELETE FROM ChatBot.Learning

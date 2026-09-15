@@ -1,7 +1,11 @@
 package com.help.erpweb.domain.music.service;
 
+import com.help.erpweb.domain.content.dto.request.repository.ContentDto;
+import com.help.erpweb.domain.content.entity.ContentEntity;
+import com.help.erpweb.domain.content.repository.ContentRepository;
 import com.help.erpweb.domain.metadata.response.ColumnMetaDto;
 import com.help.erpweb.domain.music.dto.request.repository.MusicDto;
+import com.help.erpweb.domain.music.entity.MusicEntity;
 import com.help.erpweb.domain.music.repository.MusicRepository;
 import com.help.global.common.response.ApiResponse;
 import com.help.global.data.MembershipID;
@@ -11,12 +15,11 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -27,36 +30,92 @@ public class MusicService {
     @PersistenceContext
     private final EntityManager entityManager;
 
-    public ApiResponse<?> getMusicList(CustomUser user) {
-        String discordId = user.getUsername();
+    public ApiResponse<?> getMusicList(
+            String discordId,
+            int page,
+            int size,
+            String searchColumn,
+            String searchValue,
+            String sortColumn,
+            String sortDirection
+    ) {
+        int normalizedPage = Math.max(page, 1);
+        int normalizedSize = Math.max(size, 1);
 
         String sk = (String) entityManager
-                .createNativeQuery("SELECT Constellation_Network.search_sk(:cardType, :membershipId)")
-                .setParameter("cardType", MembershipID.discord.name())
-                .setParameter("membershipId", discordId)
+                .createNativeQuery("""
+                SELECT Constellation_Network.search_sk(
+                    :cardType,
+                    :membershipId
+                )
+                """)
+                .setParameter(
+                        "cardType",
+                        MembershipID.discord.name()
+                )
+                .setParameter(
+                        "membershipId",
+                        discordId
+                )
                 .getSingleResult();
+        /*
+         * metadata 조회
+         */
+        List<ColumnMetaDto> metadata =
+                musicRepository.findColumnMetas(
+                                MusicRepository.schemaName,
+                                MusicRepository.tableName
+                        )
+                        .stream()
+                        .map(v ->
+                                ColumnMetaDto.builder()
+                                        .colName(v.getColName())
+                                        .isPrimary(v.getIsPrimary())
+                                        .isNullable(v.getIsNullable())
+                                        .build()
+                        )
+                        .toList();
+        /*
+         * metadata → 허용 컬럼
+         */
+        Set<String> allowedColumns =
+                metadata.stream()
+                        .map(ColumnMetaDto::getColName)
+                        .collect(Collectors.toSet());
 
-        List<ColumnMetaDto> metadata = musicRepository.findColumnMetas(
-                MusicRepository.schemaName,  MusicRepository.tableName)
-                .stream()
-                .map(v -> ColumnMetaDto.builder()
-                        .colName(v.getColName())
-                        .isPrimary(v.getIsPrimary())
-                        .isNullable(v.getIsNullable())
-                        .build())
-                .toList();
-
-        List<MusicDto> MusicList = musicRepository.findByRecommender(sk)
-                .stream()
-                .map(entity -> MusicDto.builder()
-                        .videoId(entity.getVideoId())
-//                        .recommender(entity.getRecommender())
-                        .build())
-                .toList();
+        Page<MusicEntity> musicPage =
+                musicRepository.findPage(
+                        sk,
+                        // API page는 1-based
+                        // Repository는 0-based
+                        normalizedPage - 1,
+                        normalizedSize,
+                        searchColumn,
+                        searchValue,
+                        sortColumn,
+                        sortDirection,
+                        allowedColumns
+                );
+        List<MusicDto> musicList =
+                musicPage
+                        .getContent()
+                        .stream()
+                        .map(entity ->
+                                MusicDto.builder()
+                                        .videoId(entity.getVideoId())
+                                        .recommender(entity.getRecommender())
+                                        .build()
+                        )
+                        .toList();
 
         Map<String, Object> body = new HashMap<>();
         body.put("metadata", metadata);
-        body.put("entities", MusicList);
+        body.put("entities", musicList);
+        body.put("page", normalizedPage);
+        body.put("size", normalizedSize);
+        body.put("totalElements", musicPage.getTotalElements());
+        body.put("totalPages", musicPage.getTotalPages());
+        body.put("hasNext", musicPage.hasNext());
         return ApiResponse.success(body);
     }
 

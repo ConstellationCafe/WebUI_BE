@@ -14,6 +14,6 @@ public class LearningDto {
     @NotBlank(message = "ln_value는 필수입니다.")
     private String lnValue;
 
-//    @NotBlank(message = "teacher는 필수입니다.")
-//    private String teacher;
+    @NotBlank(message = "teacher는 필수입니다.")
+    private String teacher;
 }

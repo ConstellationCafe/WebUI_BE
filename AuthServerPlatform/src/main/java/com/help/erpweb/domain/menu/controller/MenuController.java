@@ -20,8 +20,23 @@ public class MenuController {
     private final MenuService menuService;
 
     @GetMapping("/list")
-    public ApiResponse<?> getMenuList(@AuthenticationPrincipal CustomUser user) {
-        return menuService.getMenuList(user);
+    public ApiResponse<?> getMenuList(
+            @AuthenticationPrincipal CustomUser user,
+            // Pagination
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            // Search
+            @RequestParam(required = false) String searchColumn,
+            @RequestParam(required = false) String searchValue,
+            // Sort
+            @RequestParam(required = false) String sortColumn,
+            @RequestParam(defaultValue = "DESC") String sortDirection
+    ) {
+        String discordId = user.getUsername();
+        return menuService.getMenuList(
+                discordId, page, size,
+                searchColumn, searchValue, sortColumn, sortDirection
+        );
     }
 
     @PostMapping("/save_all")

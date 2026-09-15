@@ -15,10 +15,6 @@ public interface MusicRepository extends JpaRepository<MusicEntity, Long>, Globa
     String schemaName = "ChatBot";
     String tableName = "RecommendMusic";
 
-    @Query(value = "SELECT * FROM ChatBot.RecommendMusic WHERE recommender = :recommender",
-            nativeQuery = true)
-    List<MusicEntity> findByRecommender(String recommender);
-
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         DELETE FROM ChatBot.RecommendMusic
