@@ -16,4 +16,6 @@ public class LearningDto {
 
     @NotBlank(message = "teacher는 필수입니다.")
     private String teacher;
+
+    private String teacherDiscordId;
 }

@@ -1,7 +1,6 @@
 package com.help.erpweb.domain.learning.service;
 
-import com.help.erpweb.domain.content.repository.ContentRepository;
-import com.help.erpweb.domain.learning.entity.LearningEntity;
+import com.help.erpweb.domain.learning.projection.LearningProjection;
 import com.help.erpweb.domain.metadata.response.ColumnMetaDto;
 import com.help.global.authorization.Authorization;
 import com.help.global.common.response.ApiResponse;
@@ -88,7 +87,7 @@ public class LearningService {
                         .map(ColumnMetaDto::getColName)
                         .collect(Collectors.toSet());
 
-        Page<LearningEntity> learningPage =
+        Page<LearningProjection> learningPage =
                 learningRepository.findPage(
                         teacher,
                         // API page는 1-based
@@ -110,6 +109,7 @@ public class LearningService {
                                         .lnKey(entity.getLnKey())
                                         .lnValue(entity.getLnValue())
                                         .teacher(entity.getTeacher())
+                                        .teacherDiscordId(entity.getTeacherDiscordId())
                                         .build()
                         )
                         .toList();

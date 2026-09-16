@@ -1,7 +1,6 @@
 package com.help.erpweb.domain.learning.repository;
 
-import com.help.erpweb.domain.content.entity.ContentEntity;
-import com.help.erpweb.domain.learning.entity.LearningEntity;
+import com.help.erpweb.domain.learning.projection.LearningProjection;
 import org.springframework.data.domain.Page;
 
 import java.util.Set;
@@ -12,8 +11,8 @@ public interface LearningRepositoryCustom {
                                  String lnKey,
                                  String lnValue);
 
-    Page<LearningEntity> findPage(
-            String recommender,
+    Page<LearningProjection> findPage(
+            String teacher,
             int page,
             int size,
             String searchColumn,

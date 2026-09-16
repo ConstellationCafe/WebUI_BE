@@ -1,6 +1,6 @@
 package com.help.erpweb.domain.learning.repository;
 
-import com.help.erpweb.domain.learning.entity.LearningEntity;
+import com.help.erpweb.domain.learning.projection.LearningProjection;
 import jakarta.persistence.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -85,7 +85,7 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
     }
 
     @Override
-    public Page<LearningEntity> findPage(
+    public Page<LearningProjection> findPage(
             String teacher,
             int page,
             int size,
@@ -105,7 +105,6 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
                 sortColumn != null
                         && !sortColumn.isBlank();
 
-        // 동적 컬럼명 whitelist 검증
         if (hasSearch && !allowedColumns.contains(searchColumn)) {
             throw new IllegalArgumentException(
                     "검색할 수 없는 컬럼입니다: " + searchColumn
@@ -118,41 +117,52 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
             );
         }
 
-        boolean filterByRecommender = teacher != null
-                && !teacher.isBlank();
+        boolean filterByTeacher =
+                teacher != null
+                        && !teacher.isBlank();
+
         StringBuilder sql = new StringBuilder("""
-        SELECT *
-        FROM ChatBot.Learning
+        SELECT
+            l.ln_key,
+            l.ln_value,
+            l.teacher,
+            u.discordID
+        FROM ChatBot.Learning l
+        LEFT JOIN Constellation_Network.Users u
+            ON l.teacher = u.sk
         WHERE 1 = 1
         """);
+
         StringBuilder countSql = new StringBuilder("""
         SELECT COUNT(*)
-        FROM ChatBot.Learning
+        FROM ChatBot.Learning l
         WHERE 1 = 1
         """);
-        if (filterByRecommender) {
+
+        if (filterByTeacher) {
             sql.append(
-                    " AND teacher = :teacher"
+                    " AND l.teacher = :teacher"
             );
+
             countSql.append(
-                    " AND teacher = :teacher"
+                    " AND l.teacher = :teacher"
             );
         }
+
         if (hasSearch) {
             sql.append(
-                    " AND `"
+                    " AND l.`"
                             + searchColumn
                             + "` = :searchValue"
             );
 
             countSql.append(
-                    " AND `"
+                    " AND l.`"
                             + searchColumn
                             + "` = :searchValue"
             );
         }
 
-        // 정렬
         if (hasSort) {
             String direction =
                     "ASC".equalsIgnoreCase(sortDirection)
@@ -160,36 +170,39 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
                             : "DESC";
 
             sql.append(
-                    " ORDER BY `"
+                    " ORDER BY l.`"
                             + sortColumn
                             + "` "
                             + direction
             );
         } else {
-            /*
-             * Pagination 결과가 매 요청마다 흔들리지 않도록
-             * PK 기준 기본 정렬
-             */
-            sql.append(" ORDER BY `ln_key` ASC");
+            sql.append(
+                    " ORDER BY l.`ln_key` ASC"
+            );
         }
 
-        Query query = em.createNativeQuery(
-                sql.toString(),
-                LearningEntity.class
-        );
-        Query countQuery =em.createNativeQuery(
-                countSql.toString()
-        );
-        if (filterByRecommender) {
+        Query query =
+                em.createNativeQuery(
+                        sql.toString()
+                );
+
+        Query countQuery =
+                em.createNativeQuery(
+                        countSql.toString()
+                );
+
+        if (filterByTeacher) {
             query.setParameter(
                     "teacher",
                     teacher
             );
+
             countQuery.setParameter(
                     "teacher",
                     teacher
             );
         }
+
         if (hasSearch) {
             query.setParameter(
                     "searchValue",
@@ -202,7 +215,6 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
             );
         }
 
-        // page는 0-based
         query.setFirstResult(
                 page * size
         );
@@ -212,8 +224,20 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
         );
 
         @SuppressWarnings("unchecked")
-        List<LearningEntity> content =
+        List<Object[]> rows =
                 query.getResultList();
+
+        List<LearningProjection> content =
+                rows.stream()
+                        .map(row ->
+                                new LearningProjection(
+                                        (String) row[0],
+                                        (String) row[1],
+                                        (String) row[2],
+                                        (String) row[3]
+                                )
+                        )
+                        .toList();
 
         Number total =
                 (Number) countQuery.getSingleResult();
