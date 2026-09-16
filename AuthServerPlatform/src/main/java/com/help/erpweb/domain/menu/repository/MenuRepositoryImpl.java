@@ -70,16 +70,26 @@ public class MenuRepositoryImpl implements MenuRepositoryCustom {
                     "정렬할 수 없는 컬럼입니다: " + sortColumn
             );
         }
+        boolean filterByRecommender = recommender != null
+                && !recommender.isBlank();
         StringBuilder sql = new StringBuilder("""
             SELECT *
-            FROM ChatBot.RecommendContent
-            WHERE recommender = :recommender
+            FROM ChatBot.RecommendMenu
+            WHERE 1 = 1
         """);
         StringBuilder countSql = new StringBuilder("""
             SELECT COUNT(*)
-            FROM ChatBot.RecommendContent
-            WHERE recommender = :recommender
+            FROM ChatBot.RecommendMenu
+            WHERE 1 = 1
         """);
+        if (filterByRecommender) {
+            sql.append(
+                    " AND recommender = :recommender"
+            );
+            countSql.append(
+                    " AND recommender = :recommender"
+            );
+        }
         if (hasSearch) {
             sql.append(
                     " AND `"
@@ -113,14 +123,16 @@ public class MenuRepositoryImpl implements MenuRepositoryCustom {
                 em.createNativeQuery(
                         countSql.toString()
                 );
-        query.setParameter(
-                "recommender",
-                recommender
-        );
-        countQuery.setParameter(
-                "recommender",
-                recommender
-        );
+        if (filterByRecommender) {
+            query.setParameter(
+                    "recommender",
+                    recommender
+            );
+            countQuery.setParameter(
+                    "recommender",
+                    recommender
+            );
+        }
         if (hasSearch) {
             query.setParameter(
                     "searchValue",

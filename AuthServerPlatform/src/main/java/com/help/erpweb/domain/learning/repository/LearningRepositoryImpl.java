@@ -118,19 +118,26 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
             );
         }
 
+        boolean filterByRecommender = teacher != null
+                && !teacher.isBlank();
         StringBuilder sql = new StringBuilder("""
-            SELECT *
-            FROM ChatBot.Learning
-            WHERE teacher = :teacher
-            """);
-
+        SELECT *
+        FROM ChatBot.Learning
+        WHERE 1 = 1
+        """);
         StringBuilder countSql = new StringBuilder("""
-            SELECT COUNT(*)
-            FROM ChatBot.Learning
-            WHERE teacher = :teacher
-            """);
-
-        // 검색
+        SELECT COUNT(*)
+        FROM ChatBot.Learning
+        WHERE 1 = 1
+        """);
+        if (filterByRecommender) {
+            sql.append(
+                    " AND teacher = :teacher"
+            );
+            countSql.append(
+                    " AND teacher = :teacher"
+            );
+        }
         if (hasSearch) {
             sql.append(
                     " AND `"
@@ -166,27 +173,23 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
             sql.append(" ORDER BY `ln_key` ASC");
         }
 
-        Query query =
-                em.createNativeQuery(
-                        sql.toString(),
-                        LearningEntity.class
-                );
-
-        Query countQuery =
-                em.createNativeQuery(
-                        countSql.toString()
-                );
-
-        query.setParameter(
-                "teacher",
-                teacher
+        Query query = em.createNativeQuery(
+                sql.toString(),
+                LearningEntity.class
         );
-
-        countQuery.setParameter(
-                "teacher",
-                teacher
+        Query countQuery =em.createNativeQuery(
+                countSql.toString()
         );
-
+        if (filterByRecommender) {
+            query.setParameter(
+                    "teacher",
+                    teacher
+            );
+            countQuery.setParameter(
+                    "teacher",
+                    teacher
+            );
+        }
         if (hasSearch) {
             query.setParameter(
                     "searchValue",

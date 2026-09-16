@@ -69,16 +69,27 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
                     "정렬할 수 없는 컬럼입니다: " + sortColumn
             );
         }
+        boolean filterByRecommender = recommender != null
+                                      && !recommender.isBlank();
         StringBuilder sql = new StringBuilder("""
             SELECT *
-            FROM ChatBot.RecommendContent
-            WHERE recommender = :recommender
+            FROM ChatBot.Content
+            WHERE 1 = 1
         """);
         StringBuilder countSql = new StringBuilder("""
             SELECT COUNT(*)
-            FROM ChatBot.RecommendContent
-            WHERE recommender = :recommender
+            FROM ChatBot.Content
+            WHERE 1 = 1
         """);
+
+        if (filterByRecommender) {
+            sql.append(
+                    " AND recommender = :recommender"
+            );
+            countSql.append(
+                    " AND recommender = :recommender"
+            );
+        }
         if (hasSearch) {
             sql.append(
                     " AND `"
@@ -103,23 +114,23 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
                     + direction
             );
         }
-        Query query =
-                em.createNativeQuery(
-                        sql.toString(),
-                        ContentEntity.class
-                );
-        Query countQuery =
-                em.createNativeQuery(
-                        countSql.toString()
-                );
-        query.setParameter(
-                "recommender",
-                recommender
+        Query query = em.createNativeQuery(
+                sql.toString(),
+                ContentEntity.class
         );
-        countQuery.setParameter(
-                "recommender",
-                recommender
+        Query countQuery = em.createNativeQuery(
+                countSql.toString()
         );
+        if (filterByRecommender) {
+            query.setParameter(
+                    "recommender",
+                    recommender
+            );
+            countQuery.setParameter(
+                    "recommender",
+                    recommender
+            );
+        }
         if (hasSearch) {
             query.setParameter(
                     "searchValue",

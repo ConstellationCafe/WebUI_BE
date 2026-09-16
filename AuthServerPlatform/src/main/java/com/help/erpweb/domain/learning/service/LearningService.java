@@ -3,6 +3,7 @@ package com.help.erpweb.domain.learning.service;
 import com.help.erpweb.domain.content.repository.ContentRepository;
 import com.help.erpweb.domain.learning.entity.LearningEntity;
 import com.help.erpweb.domain.metadata.response.ColumnMetaDto;
+import com.help.global.authorization.Authorization;
 import com.help.global.common.response.ApiResponse;
 import com.help.global.data.MembershipID;
 import com.help.global.jwt.CustomUser;
@@ -24,12 +25,13 @@ import java.util.stream.Collectors;
 @Slf4j
 public class LearningService {
     private final LearningRepository learningRepository;
+    private final Authorization authorization;
 
     @PersistenceContext
     private final EntityManager entityManager;
 
     public ApiResponse<?> getLearningList(
-            String discordId,
+            CustomUser user,
             int page,
             int size,
             String searchColumn,
@@ -40,22 +42,27 @@ public class LearningService {
         int normalizedPage = Math.max(page, 1);
         int normalizedSize = Math.max(size, 1);
 
-        String sk = (String) entityManager
-                .createNativeQuery("""
-                SELECT Constellation_Network.search_sk(
-                    :cardType,
-                    :membershipId
-                )
-                """)
-                .setParameter(
-                        "cardType",
-                        MembershipID.discord.name()
-                )
-                .setParameter(
-                        "membershipId",
-                        discordId
-                )
-                .getSingleResult();
+        String teacher = null;
+        // 일반 사용자만 자신의 recommender를 구한다.
+        // 관리자는 null → Repository에서 전체 조회
+        if (!authorization.isAdmin(user)) {
+            teacher = (String) entityManager
+                    .createNativeQuery("""
+                    SELECT Constellation_Network.search_sk(
+                        :cardType,
+                        :membershipId
+                    )
+                    """)
+                    .setParameter(
+                            "cardType",
+                            MembershipID.discord.name()
+                    )
+                    .setParameter(
+                            "membershipId",
+                            user.getUsername()
+                    )
+                    .getSingleResult();
+        }
         /*
          * metadata 조회
          */
@@ -83,7 +90,7 @@ public class LearningService {
 
         Page<LearningEntity> learningPage =
                 learningRepository.findPage(
-                        sk,
+                        teacher,
                         // API page는 1-based
                         // Repository는 0-based
                         normalizedPage - 1,

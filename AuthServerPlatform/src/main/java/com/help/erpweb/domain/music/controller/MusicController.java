@@ -32,9 +32,8 @@ public class MusicController {
             @RequestParam(required = false) String sortColumn,
             @RequestParam(defaultValue = "DESC") String sortDirection
     ) {
-        String discordId = user.getUsername();
         return MusicService.getMusicList(
-                discordId, page, size,
+                user, page, size,
                 searchColumn, searchValue, sortColumn, sortDirection
         );
     }

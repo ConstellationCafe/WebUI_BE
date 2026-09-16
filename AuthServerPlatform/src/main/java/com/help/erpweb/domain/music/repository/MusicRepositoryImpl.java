@@ -107,22 +107,27 @@ public class MusicRepositoryImpl implements MusicRepositoryCustom {
                     "정렬할 수 없는 컬럼입니다: " + sortColumn
             );
         }
-
+        boolean filterByRecommender = recommender != null
+                && !recommender.isBlank();
         StringBuilder sql = new StringBuilder("""
             SELECT *
             FROM ChatBot.RecommendMusic
             WHERE recommender = :recommender
-            """);
-
+        """);
         StringBuilder countSql = new StringBuilder("""
             SELECT COUNT(*)
             FROM ChatBot.RecommendMusic
             WHERE recommender = :recommender
-            """);
+        """);
 
-        /*
-         * 검색
-         */
+        if (filterByRecommender) {
+            sql.append(
+                    " AND recommender = :recommender"
+            );
+            countSql.append(
+                    " AND recommender = :recommender"
+            );
+        }
         if (hasSearch) {
             sql.append(
                     " AND `"
@@ -159,27 +164,23 @@ public class MusicRepositoryImpl implements MusicRepositoryCustom {
             sql.append(" ORDER BY `video_id` ASC");
         }
 
-        Query query =
-                em.createNativeQuery(
-                        sql.toString(),
-                        MusicEntity.class
-                );
-
-        Query countQuery =
-                em.createNativeQuery(
-                        countSql.toString()
-                );
-
-        query.setParameter(
-                "recommender",
-                recommender
+        Query query = em.createNativeQuery(
+                sql.toString(),
+                MusicEntity.class
         );
-
-        countQuery.setParameter(
-                "recommender",
-                recommender
+        Query countQuery = em.createNativeQuery(
+                countSql.toString()
         );
-
+        if (filterByRecommender) {
+            query.setParameter(
+                    "recommender",
+                    recommender
+            );
+            countQuery.setParameter(
+                    "recommender",
+                    recommender
+            );
+        }
         if (hasSearch) {
             query.setParameter(
                     "searchValue",

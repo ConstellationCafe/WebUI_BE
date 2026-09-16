@@ -32,9 +32,8 @@ public class MenuController {
             @RequestParam(required = false) String sortColumn,
             @RequestParam(defaultValue = "DESC") String sortDirection
     ) {
-        String discordId = user.getUsername();
         return menuService.getMenuList(
-                discordId, page, size,
+                user, page, size,
                 searchColumn, searchValue, sortColumn, sortDirection
         );
     }
