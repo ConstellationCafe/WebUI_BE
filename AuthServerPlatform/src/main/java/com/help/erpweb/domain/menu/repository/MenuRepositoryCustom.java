@@ -1,6 +1,7 @@
 package com.help.erpweb.domain.menu.repository;
 
 import com.help.erpweb.domain.menu.entity.MenuEntity;
+import com.help.erpweb.domain.menu.projection.MenuProjection;
 import org.springframework.data.domain.Page;
 
 import java.util.Set;
@@ -10,7 +11,7 @@ public interface MenuRepositoryCustom {
                              String membershipID,
                              String mnValue);
 
-    Page<MenuEntity> findPage(
+    Page<MenuProjection> findPage(
             String recommender,
             int page,
             int size,

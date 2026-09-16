@@ -6,6 +6,7 @@ import com.help.erpweb.domain.content.repository.ContentRepository;
 import com.help.erpweb.domain.metadata.response.ColumnMetaDto;
 import com.help.erpweb.domain.music.dto.request.repository.MusicDto;
 import com.help.erpweb.domain.music.entity.MusicEntity;
+import com.help.erpweb.domain.music.projection.MusicProjection;
 import com.help.erpweb.domain.music.repository.MusicRepository;
 import com.help.global.authorization.Authorization;
 import com.help.global.common.response.ApiResponse;
@@ -90,7 +91,7 @@ public class MusicService {
                         .map(ColumnMetaDto::getColName)
                         .collect(Collectors.toSet());
 
-        Page<MusicEntity> musicPage =
+        Page<MusicProjection> musicPage =
                 musicRepository.findPage(
                         recommender,
                         // API page는 1-based
@@ -111,6 +112,9 @@ public class MusicService {
                                 MusicDto.builder()
                                         .videoId(entity.getVideoId())
                                         .recommender(entity.getRecommender())
+                                        .recommenderDiscordId(
+                                                entity.getRecommenderDiscordId()
+                                        )
                                         .build()
                         )
                         .toList();

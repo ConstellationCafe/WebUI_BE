@@ -16,7 +16,15 @@ public class MembershipController {
     private final MembershipService membershipService;
 
     @GetMapping("/point_log")
-    public ApiResponse<?> getPointLog(@AuthenticationPrincipal CustomUser user) {
-        return membershipService.getPointLog(user);
+    public ApiResponse<?> getPointLog(
+            @AuthenticationPrincipal CustomUser user,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return membershipService.getPointLog(
+                user,
+                page,
+                size
+        );
     }
 }

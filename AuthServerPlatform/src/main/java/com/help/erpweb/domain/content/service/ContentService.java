@@ -2,6 +2,7 @@ package com.help.erpweb.domain.content.service;
 
 import com.help.erpweb.domain.content.dto.request.repository.ContentDto;
 import com.help.erpweb.domain.content.entity.ContentEntity;
+import com.help.erpweb.domain.content.projection.ContentProjection;
 import com.help.erpweb.domain.content.repository.ContentRepository;
 import com.help.erpweb.domain.metadata.response.ColumnMetaDto;
 import com.help.global.authorization.Authorization;
@@ -87,7 +88,7 @@ public class ContentService {
                         .map(ColumnMetaDto::getColName)
                         .collect(Collectors.toSet());
 
-        Page<ContentEntity> contentPage =
+        Page<ContentProjection> contentPage =
                 contentRepository.findPage(
                         recommender,
                         normalizedPage - 1,
@@ -106,6 +107,9 @@ public class ContentService {
                                 ContentDto.builder()
                                         .cnValue(entity.getCnValue())
                                         .recommender(entity.getRecommender())
+                                        .recommenderDiscordId(
+                                                entity.getRecommenderDiscordId()
+                                        )
                                         .build()
                         )
                         .toList();

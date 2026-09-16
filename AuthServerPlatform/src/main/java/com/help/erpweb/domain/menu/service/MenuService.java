@@ -4,6 +4,7 @@ import com.help.erpweb.domain.content.dto.request.repository.ContentDto;
 import com.help.erpweb.domain.content.entity.ContentEntity;
 import com.help.erpweb.domain.content.repository.ContentRepository;
 import com.help.erpweb.domain.menu.entity.MenuEntity;
+import com.help.erpweb.domain.menu.projection.MenuProjection;
 import com.help.erpweb.domain.metadata.response.ColumnMetaDto;
 import com.help.erpweb.domain.menu.dto.request.repository.MenuDto;
 import com.help.erpweb.domain.menu.repository.MenuRepository;
@@ -90,7 +91,7 @@ public class MenuService {
                         .map(ColumnMetaDto::getColName)
                         .collect(Collectors.toSet());
 
-        Page<MenuEntity> menuPage =
+        Page<MenuProjection> menuPage =
                 menuRepository.findPage(
                         recommender,
                         // API page는 1-based
@@ -111,6 +112,9 @@ public class MenuService {
                                 MenuDto.builder()
                                         .mnValue(entity.getMnValue())
                                         .recommender(entity.getRecommender())
+                                        .recommenderDiscordId(
+                                                entity.getRecommenderDiscordId()
+                                        )
                                         .build()
                         )
                         .toList();

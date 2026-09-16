@@ -1,6 +1,7 @@
 package com.help.erpweb.domain.music.repository;
 
 import com.help.erpweb.domain.music.entity.MusicEntity;
+import com.help.erpweb.domain.music.projection.MusicProjection;
 import jakarta.persistence.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -73,7 +74,7 @@ public class MusicRepositoryImpl implements MusicRepositoryCustom {
     }
 
     @Override
-    public Page<MusicEntity> findPage(
+    public Page<MusicProjection> findPage(
             String recommender,
             int page,
             int size,
@@ -110,33 +111,37 @@ public class MusicRepositoryImpl implements MusicRepositoryCustom {
         boolean filterByRecommender = recommender != null
                 && !recommender.isBlank();
         StringBuilder sql = new StringBuilder("""
-            SELECT *
-            FROM ChatBot.RecommendMusic
-            WHERE recommender = :recommender
+            SELECT
+                m.video_id,
+                m.recommender,
+                u.discordID
+            FROM ChatBot.RecommendMusic m
+            LEFT JOIN Constellation_Network.Users u
+                ON m.recommender = u.sk
+            WHERE 1 = 1
         """);
         StringBuilder countSql = new StringBuilder("""
             SELECT COUNT(*)
-            FROM ChatBot.RecommendMusic
-            WHERE recommender = :recommender
+            FROM ChatBot.RecommendMusic m
+            WHERE 1 = 1
         """);
 
         if (filterByRecommender) {
             sql.append(
-                    " AND recommender = :recommender"
+                    " AND m.recommender = :recommender"
             );
             countSql.append(
-                    " AND recommender = :recommender"
+                    " AND m.recommender = :recommender"
             );
         }
         if (hasSearch) {
             sql.append(
-                    " AND `"
+                    " AND m.`"
                             + searchColumn
                             + "` = :searchValue"
             );
-
-            countSql.append(
-                    " AND `"
+            sql.append(
+                    " AND m.`"
                             + searchColumn
                             + "` = :searchValue"
             );
@@ -152,7 +157,7 @@ public class MusicRepositoryImpl implements MusicRepositoryCustom {
                             : "DESC";
 
             sql.append(
-                    " ORDER BY `"
+                    " ORDER BY m.`"
                             + sortColumn
                             + "` "
                             + direction
@@ -165,8 +170,7 @@ public class MusicRepositoryImpl implements MusicRepositoryCustom {
         }
 
         Query query = em.createNativeQuery(
-                sql.toString(),
-                MusicEntity.class
+                sql.toString()
         );
         Query countQuery = em.createNativeQuery(
                 countSql.toString()
@@ -203,8 +207,17 @@ public class MusicRepositoryImpl implements MusicRepositoryCustom {
         );
 
         @SuppressWarnings("unchecked")
-        List<MusicEntity> content =
-                query.getResultList();
+        List<Object[]> rows = query.getResultList();
+        List<MusicProjection> content =
+                rows.stream()
+                        .map(row ->
+                                new MusicProjection(
+                                        (String) row[0],
+                                        (String) row[1],
+                                        (String) row[2]
+                                )
+                        )
+                        .toList();
 
         Number total =
                 (Number) countQuery.getSingleResult();

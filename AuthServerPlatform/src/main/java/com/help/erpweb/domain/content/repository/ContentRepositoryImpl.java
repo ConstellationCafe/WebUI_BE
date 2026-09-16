@@ -1,6 +1,7 @@
 package com.help.erpweb.domain.content.repository;
 
 import com.help.erpweb.domain.content.entity.ContentEntity;
+import com.help.erpweb.domain.content.projection.ContentProjection;
 import jakarta.persistence.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -38,7 +39,7 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
     }
 
     @Override
-    public Page<ContentEntity> findPage(
+    public Page<ContentProjection> findPage(
             String recommender,
             int page,
             int size,
@@ -53,103 +54,115 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
                         && !searchColumn.isBlank()
                         && searchValue != null
                         && !searchValue.isBlank();
+
         boolean hasSort =
                 sortColumn != null
                         && !sortColumn.isBlank();
-        /*
-         * 컬럼 검증
-         */
+
         if (hasSearch && !allowedColumns.contains(searchColumn)) {
             throw new IllegalArgumentException(
                     "검색할 수 없는 컬럼입니다: " + searchColumn
             );
         }
+
         if (hasSort && !allowedColumns.contains(sortColumn)) {
             throw new IllegalArgumentException(
                     "정렬할 수 없는 컬럼입니다: " + sortColumn
             );
         }
-        boolean filterByRecommender = recommender != null
-                                      && !recommender.isBlank();
+
+        boolean filterByRecommender =
+                recommender != null
+                        && !recommender.isBlank();
+
         StringBuilder sql = new StringBuilder("""
-            SELECT *
-            FROM ChatBot.Content
+            SELECT
+                c.cn_value,
+                c.recommender,
+                u.discordID
+            FROM ChatBot.RecommendContent c
+            LEFT JOIN Constellation_Network.Users u
+                ON c.recommender = u.sk
             WHERE 1 = 1
         """);
+
         StringBuilder countSql = new StringBuilder("""
             SELECT COUNT(*)
-            FROM ChatBot.Content
+            FROM ChatBot.RecommendContent c
             WHERE 1 = 1
         """);
 
         if (filterByRecommender) {
-            sql.append(
-                    " AND recommender = :recommender"
-            );
-            countSql.append(
-                    " AND recommender = :recommender"
-            );
+            sql.append(" AND c.recommender = :recommender");
+            countSql.append(" AND c.recommender = :recommender");
         }
+
         if (hasSearch) {
             sql.append(
-                    " AND `"
-                    + searchColumn
-                    + "` = :searchValue"
+                    " AND c.`"
+                            + searchColumn
+                            + "` = :searchValue"
             );
+
             countSql.append(
-                    " AND `"
-                    + searchColumn
-                    + "` = :searchValue"
+                    " AND c.`"
+                            + searchColumn
+                            + "` = :searchValue"
             );
         }
+
         if (hasSort) {
             String direction =
                     "ASC".equalsIgnoreCase(sortDirection)
                             ? "ASC"
                             : "DESC";
+
             sql.append(
-                    " ORDER BY `"
-                    + sortColumn
-                    + "` "
-                    + direction
+                    " ORDER BY c.`"
+                            + sortColumn
+                            + "` "
+                            + direction
             );
+        } else {
+            sql.append(" ORDER BY c.`cn_value` ASC");
         }
-        Query query = em.createNativeQuery(
-                sql.toString(),
-                ContentEntity.class
-        );
-        Query countQuery = em.createNativeQuery(
-                countSql.toString()
-        );
+
+        Query query = em.createNativeQuery(sql.toString());
+        Query countQuery = em.createNativeQuery(countSql.toString());
+
         if (filterByRecommender) {
-            query.setParameter(
-                    "recommender",
-                    recommender
-            );
-            countQuery.setParameter(
-                    "recommender",
-                    recommender
-            );
+            query.setParameter("recommender", recommender);
+            countQuery.setParameter("recommender", recommender);
         }
+
         if (hasSearch) {
-            query.setParameter(
-                    "searchValue",
-                    searchValue
-            );
-            countQuery.setParameter(
-                    "searchValue",
-                    searchValue
-            );
+            query.setParameter("searchValue", searchValue);
+            countQuery.setParameter("searchValue", searchValue);
         }
-        // page는 0-based
+
         query.setFirstResult(page * size);
         query.setMaxResults(size);
 
         @SuppressWarnings("unchecked")
-        List<ContentEntity> content = query.getResultList();
-        Number total = (Number) countQuery.getSingleResult();
+        List<Object[]> rows = query.getResultList();
 
-        Pageable pageable = PageRequest.of(page, size);
+        List<ContentProjection> content =
+                rows.stream()
+                        .map(row ->
+                                new ContentProjection(
+                                        (String) row[0],
+                                        (String) row[1],
+                                        (String) row[2]
+                                )
+                        )
+                        .toList();
+
+        Number total =
+                (Number) countQuery.getSingleResult();
+
+        Pageable pageable =
+                PageRequest.of(page, size);
+
         return new PageImpl<>(
                 content,
                 pageable,

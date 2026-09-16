@@ -2,6 +2,7 @@ package com.help.erpweb.domain.menu.repository;
 
 import com.help.erpweb.domain.content.entity.ContentEntity;
 import com.help.erpweb.domain.menu.entity.MenuEntity;
+import com.help.erpweb.domain.menu.projection.MenuProjection;
 import jakarta.persistence.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -39,7 +40,7 @@ public class MenuRepositoryImpl implements MenuRepositoryCustom {
     }
 
     @Override
-    public Page<MenuEntity> findPage(
+    public Page<MenuProjection> findPage(
             String recommender,
             int page,
             int size,
@@ -73,31 +74,34 @@ public class MenuRepositoryImpl implements MenuRepositoryCustom {
         boolean filterByRecommender = recommender != null
                 && !recommender.isBlank();
         StringBuilder sql = new StringBuilder("""
-            SELECT *
-            FROM ChatBot.RecommendMenu
-            WHERE 1 = 1
+        SELECT
+            m.mn_value,
+            m.recommender,
+            u.discordID
+        FROM ChatBot.RecommendMenu m
+        LEFT JOIN Constellation_Network.Users u
+            ON m.recommender = u.sk
+        WHERE 1 = 1
         """);
         StringBuilder countSql = new StringBuilder("""
-            SELECT COUNT(*)
-            FROM ChatBot.RecommendMenu
-            WHERE 1 = 1
+        SELECT COUNT(*)
+        FROM ChatBot.RecommendMenu m
+        WHERE 1 = 1
         """);
         if (filterByRecommender) {
-            sql.append(
-                    " AND recommender = :recommender"
-            );
-            countSql.append(
-                    " AND recommender = :recommender"
-            );
+            sql.append(" AND m.recommender = :recommender");
+            countSql.append(" AND m.recommender = :recommender");
         }
+
         if (hasSearch) {
             sql.append(
-                    " AND `"
+                    " AND m.`"
                             + searchColumn
                             + "` = :searchValue"
             );
+
             countSql.append(
-                    " AND `"
+                    " AND m.`"
                             + searchColumn
                             + "` = :searchValue"
             );
@@ -108,7 +112,7 @@ public class MenuRepositoryImpl implements MenuRepositoryCustom {
                             ? "ASC"
                             : "DESC";
             sql.append(
-                    " ORDER BY `"
+                    " ORDER BY m.`"
                             + sortColumn
                             + "` "
                             + direction
@@ -116,8 +120,7 @@ public class MenuRepositoryImpl implements MenuRepositoryCustom {
         }
         Query query =
                 em.createNativeQuery(
-                        sql.toString(),
-                        MenuEntity.class
+                        sql.toString()
                 );
         Query countQuery =
                 em.createNativeQuery(
@@ -148,7 +151,17 @@ public class MenuRepositoryImpl implements MenuRepositoryCustom {
         query.setMaxResults(size);
 
         @SuppressWarnings("unchecked")
-        List<MenuEntity> content = query.getResultList();
+        List<Object[]> rows = query.getResultList();
+        List<MenuProjection> content =
+                rows.stream()
+                        .map(row ->
+                                new MenuProjection(
+                                        (String) row[0],
+                                        (String) row[1],
+                                        (String) row[2]
+                                )
+                        )
+                        .toList();
         Number total = (Number) countQuery.getSingleResult();
 
         Pageable pageable = PageRequest.of(page, size);

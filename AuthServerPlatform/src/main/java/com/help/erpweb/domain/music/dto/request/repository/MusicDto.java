@@ -14,4 +14,6 @@ public class MusicDto {
 
     @NotBlank(message = "recommender는 필수입니다.")
     private String recommender;
+
+    private String recommenderDiscordId;
 }

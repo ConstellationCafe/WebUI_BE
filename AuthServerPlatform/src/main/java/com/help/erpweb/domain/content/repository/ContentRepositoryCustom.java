@@ -1,6 +1,7 @@
 package com.help.erpweb.domain.content.repository;
 
 import com.help.erpweb.domain.content.entity.ContentEntity;
+import com.help.erpweb.domain.content.projection.ContentProjection;
 import org.springframework.data.domain.Page;
 
 import java.util.Set;
@@ -10,7 +11,7 @@ public interface ContentRepositoryCustom {
                                  String membershipID,
                                  String cnValue);
 
-    Page<ContentEntity> findPage(
+    Page<ContentProjection> findPage(
             String recommender,
             int page,
             int size,

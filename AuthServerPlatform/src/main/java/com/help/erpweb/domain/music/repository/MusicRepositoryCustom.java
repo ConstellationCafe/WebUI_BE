@@ -1,6 +1,7 @@
 package com.help.erpweb.domain.music.repository;
 
 import com.help.erpweb.domain.music.entity.MusicEntity;
+import com.help.erpweb.domain.music.projection.MusicProjection;
 import org.springframework.data.domain.Page;
 
 import java.util.Set;
@@ -10,7 +11,7 @@ public interface MusicRepositoryCustom {
                              String membershipID,
                              String videoId);
 
-    Page<MusicEntity> findPage(
+    Page<MusicProjection> findPage(
             String recommender,
             int page,
             int size,
