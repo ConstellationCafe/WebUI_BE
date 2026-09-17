@@ -8,5 +8,4 @@ import lombok.Getter;
 public class ContentProjection {
     private String cnValue;
     private String recommender;
-    private String recommenderDiscordId;
 }

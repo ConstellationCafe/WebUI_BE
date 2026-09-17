@@ -8,5 +8,4 @@ import lombok.Getter;
 public class MusicProjection {
     private String videoId;
     private String recommender;
-    private String recommenderDiscordId;
 }

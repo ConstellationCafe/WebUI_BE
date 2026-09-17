@@ -1,11 +1,7 @@
 package com.help.erpweb.domain.music.service;
 
-import com.help.erpweb.domain.content.dto.request.repository.ContentDto;
-import com.help.erpweb.domain.content.entity.ContentEntity;
-import com.help.erpweb.domain.content.repository.ContentRepository;
 import com.help.erpweb.domain.metadata.response.ColumnMetaDto;
 import com.help.erpweb.domain.music.dto.request.repository.MusicDto;
-import com.help.erpweb.domain.music.entity.MusicEntity;
 import com.help.erpweb.domain.music.projection.MusicProjection;
 import com.help.erpweb.domain.music.repository.MusicRepository;
 import com.help.global.authorization.Authorization;
@@ -20,13 +16,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class MusicService {
+
     private final MusicRepository musicRepository;
     private final Authorization authorization;
 
@@ -46,29 +47,14 @@ public class MusicService {
         int normalizedSize = Math.max(size, 1);
 
         String recommender = null;
-        // 일반 사용자만 자신의 recommender를 구한다.
-        // 관리자는 null → Repository에서 전체 조회
+
         if (!authorization.isAdmin(user)) {
-            recommender = (String) entityManager
-                    .createNativeQuery("""
-                    SELECT Constellation_Network.search_sk(
-                        :cardType,
-                        :membershipId
-                    )
-                    """)
-                    .setParameter(
-                            "cardType",
-                            MembershipID.discord.name()
-                    )
-                    .setParameter(
-                            "membershipId",
+            recommender =
+                    findSkByDiscordId(
                             user.getUsername()
-                    )
-                    .getSingleResult();
+                    );
         }
-        /*
-         * metadata 조회
-         */
+
         List<ColumnMetaDto> metadata =
                 musicRepository.findColumnMetas(
                                 MusicRepository.schemaName,
@@ -83,9 +69,7 @@ public class MusicService {
                                         .build()
                         )
                         .toList();
-        /*
-         * metadata → 허용 컬럼
-         */
+
         Set<String> allowedColumns =
                 metadata.stream()
                         .map(ColumnMetaDto::getColName)
@@ -94,8 +78,6 @@ public class MusicService {
         Page<MusicProjection> musicPage =
                 musicRepository.findPage(
                         recommender,
-                        // API page는 1-based
-                        // Repository는 0-based
                         normalizedPage - 1,
                         normalizedSize,
                         searchColumn,
@@ -104,70 +86,155 @@ public class MusicService {
                         sortDirection,
                         allowedColumns
                 );
+
         List<MusicDto> musicList =
-                musicPage
-                        .getContent()
+                musicPage.getContent()
                         .stream()
                         .map(entity ->
                                 MusicDto.builder()
-                                        .videoId(entity.getVideoId())
-                                        .recommender(entity.getRecommender())
-                                        .recommenderDiscordId(
-                                                entity.getRecommenderDiscordId()
+                                        .videoId(
+                                                entity.getVideoId()
+                                        )
+                                        .recommender(
+                                                entity.getRecommender()
                                         )
                                         .build()
                         )
                         .toList();
 
-        Map<String, Object> body = new HashMap<>();
+        Map<String, Object> body =
+                new HashMap<>();
+
         body.put("metadata", metadata);
         body.put("entities", musicList);
         body.put("page", normalizedPage);
         body.put("size", normalizedSize);
-        body.put("totalElements", musicPage.getTotalElements());
-        body.put("totalPages", musicPage.getTotalPages());
-        body.put("hasNext", musicPage.hasNext());
+        body.put(
+                "totalElements",
+                musicPage.getTotalElements()
+        );
+        body.put(
+                "totalPages",
+                musicPage.getTotalPages()
+        );
+        body.put(
+                "hasNext",
+                musicPage.hasNext()
+        );
+
         return ApiResponse.success(body);
     }
 
     @Transactional
-    public ApiResponse<?> saveAll(CustomUser user, List<MusicDto> musicList) {
-        if (musicList == null || musicList.isEmpty())
-            return ApiResponse.success("No data to save");
-
-        List<String> results = new ArrayList<>();
-        for (MusicDto dto : musicList) {
-            String result = musicRepository.callMusicProcedure(
-                    MembershipID.discord.name(),
-                    user.getUsername(),
-                    dto.getVideoId()
+    public ApiResponse<?> saveAll(
+            CustomUser user,
+            List<MusicDto> musicList
+    ) {
+        if (musicList == null
+                || musicList.isEmpty()) {
+            return ApiResponse.success(
+                    "No data to save"
             );
-            results.add(dto.getVideoId()+" 추천 결과 : "+result);
         }
+
+        List<String> results =
+                new ArrayList<>();
+
+        for (MusicDto dto : musicList) {
+            String result =
+                    musicRepository.callMusicProcedure(
+                            MembershipID.discord.name(),
+                            dto.getRecommender(),
+                            dto.getVideoId()
+                    );
+
+            results.add(
+                    dto.getVideoId()
+                            + " 추천 결과 : "
+                            + result
+            );
+        }
+
         return ApiResponse.success(results);
     }
 
     @Transactional
-    public ApiResponse<?> deleteAll(CustomUser user, List<MusicDto> musicList) {
-        if (musicList == null || musicList.isEmpty())
-            return ApiResponse.success("No data to delete");
+    public ApiResponse<?> deleteAll(
+            CustomUser user,
+            List<MusicDto> musicList
+    ) {
+        if (musicList == null
+                || musicList.isEmpty()) {
+            return ApiResponse.success(
+                    "No data to delete"
+            );
+        }
 
-        String discordId = user.getUsername();
-        String recommender = (String) entityManager
-                .createNativeQuery("SELECT Constellation_Network.search_sk(:cardType, :membershipId)")
-                .setParameter("cardType", MembershipID.discord.name())
-                .setParameter("membershipId", discordId)
-                .getSingleResult();
+        int delCount = 0;
 
-        // teacher가 모두 동일하다는 전제에서만 사용 가능
-        List<String> values = musicList.stream()
-                .map(MusicDto::getVideoId)
-                .distinct()
-                .toList();
+        Map<String, List<String>> valuesByRecommender =
+                musicList.stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        MusicDto::getRecommender,
+                                        Collectors.mapping(
+                                                MusicDto::getVideoId,
+                                                Collectors.toList()
+                                        )
+                                )
+                        );
 
-        int totalCount = values.toArray().length;
-        int delCount = musicRepository.deleteByMnValue(recommender, values);
-        String result = "총 "+totalCount+"행 중 "+delCount+"행 삭제됨";
+        for (Map.Entry<String, List<String>> entry
+                : valuesByRecommender.entrySet()) {
+
+            String recommenderSk =
+                    findSkByDiscordId(
+                            entry.getKey()
+                    );
+
+            List<String> values =
+                    entry.getValue()
+                            .stream()
+                            .distinct()
+                            .toList();
+
+            delCount +=
+                    musicRepository.deleteByMnValue(
+                            recommenderSk,
+                            values
+                    );
+        }
+
+        int totalCount = musicList.size();
+
+        String result =
+                "총 "
+                        + totalCount
+                        + "행 중 "
+                        + delCount
+                        + "행 삭제됨";
+
         return ApiResponse.success(result);
+    }
+
+    private String findSkByDiscordId(
+            String discordId
+    ) {
+        return (String) entityManager
+                .createNativeQuery("""
+                    SELECT Constellation_Network.search_sk(
+                        :cardType,
+                        :membershipId
+                    )
+                """)
+                .setParameter(
+                        "cardType",
+                        MembershipID.discord.name()
+                )
+                .setParameter(
+                        "membershipId",
+                        discordId
+                )
+                .getSingleResult();
     }
 }

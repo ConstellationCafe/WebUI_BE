@@ -8,11 +8,12 @@ import lombok.Getter;
 public class LearningProjection {
 
     private String lnKey;
+
     private String lnValue;
 
-    // 실제 DB 값
+    /*
+     * DB의 teacher(SK)를 JOIN하여 얻은 Discord ID.
+     * API에서는 이 값을 teacher로 사용한다.
+     */
     private String teacher;
-
-    // JOIN으로 조회한 화면 표시용 값
-    private String teacherDiscordId;
 }

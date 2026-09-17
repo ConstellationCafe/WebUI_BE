@@ -1,8 +1,11 @@
 package com.help.erpweb.domain.content.repository;
 
-import com.help.erpweb.domain.content.entity.ContentEntity;
 import com.help.erpweb.domain.content.projection.ContentProjection;
-import jakarta.persistence.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.ParameterMode;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
+import jakarta.persistence.StoredProcedureQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -14,20 +17,44 @@ import java.util.Set;
 
 @Repository
 public class ContentRepositoryImpl implements ContentRepositoryCustom {
+
     @PersistenceContext
     private EntityManager em;
 
     @Override
-    public String callContentProcedure(String cardType,
-                                       String membershipID,
-                                       String cnValue) {
+    public String callContentProcedure(
+            String cardType,
+            String membershipID,
+            String cnValue
+    ) {
+        StoredProcedureQuery sp =
+                em.createStoredProcedureQuery(
+                        "ChatBot.recommend_content"
+                );
 
-        StoredProcedureQuery sp = em.createStoredProcedureQuery("ChatBot.recommend_content");
+        sp.registerStoredProcedureParameter(
+                "card_type",
+                String.class,
+                ParameterMode.IN
+        );
 
-        sp.registerStoredProcedureParameter("card_type", String.class, ParameterMode.IN);
-        sp.registerStoredProcedureParameter("membershipID", String.class, ParameterMode.IN);
-        sp.registerStoredProcedureParameter("cn_value", String.class, ParameterMode.IN);
-        sp.registerStoredProcedureParameter("recommend_result", String.class, ParameterMode.OUT);
+        sp.registerStoredProcedureParameter(
+                "membershipID",
+                String.class,
+                ParameterMode.IN
+        );
+
+        sp.registerStoredProcedureParameter(
+                "cn_value",
+                String.class,
+                ParameterMode.IN
+        );
+
+        sp.registerStoredProcedureParameter(
+                "recommend_result",
+                String.class,
+                ParameterMode.OUT
+        );
 
         sp.setParameter("card_type", cardType);
         sp.setParameter("membershipID", membershipID);
@@ -35,7 +62,9 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
 
         sp.execute();
 
-        return (String) sp.getOutputParameterValue("recommend_result");
+        return (String) sp.getOutputParameterValue(
+                "recommend_result"
+        );
     }
 
     @Override
@@ -59,15 +88,19 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
                 sortColumn != null
                         && !sortColumn.isBlank();
 
-        if (hasSearch && !allowedColumns.contains(searchColumn)) {
+        if (hasSearch
+                && !allowedColumns.contains(searchColumn)) {
             throw new IllegalArgumentException(
-                    "검색할 수 없는 컬럼입니다: " + searchColumn
+                    "검색할 수 없는 컬럼입니다: "
+                            + searchColumn
             );
         }
 
-        if (hasSort && !allowedColumns.contains(sortColumn)) {
+        if (hasSort
+                && !allowedColumns.contains(sortColumn)) {
             throw new IllegalArgumentException(
-                    "정렬할 수 없는 컬럼입니다: " + sortColumn
+                    "정렬할 수 없는 컬럼입니다: "
+                            + sortColumn
             );
         }
 
@@ -78,7 +111,6 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
         StringBuilder sql = new StringBuilder("""
             SELECT
                 c.cn_value,
-                c.recommender,
                 u.discordID
             FROM ChatBot.RecommendContent c
             LEFT JOIN Constellation_Network.Users u
@@ -89,26 +121,43 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
         StringBuilder countSql = new StringBuilder("""
             SELECT COUNT(*)
             FROM ChatBot.RecommendContent c
+            LEFT JOIN Constellation_Network.Users u
+                ON c.recommender = u.sk
             WHERE 1 = 1
         """);
 
         if (filterByRecommender) {
-            sql.append(" AND c.recommender = :recommender");
-            countSql.append(" AND c.recommender = :recommender");
-        }
-
-        if (hasSearch) {
             sql.append(
-                    " AND c.`"
-                            + searchColumn
-                            + "` = :searchValue"
+                    " AND c.recommender = :recommender"
             );
 
             countSql.append(
-                    " AND c.`"
-                            + searchColumn
-                            + "` = :searchValue"
+                    " AND c.recommender = :recommender"
             );
+        }
+
+        if (hasSearch) {
+            if ("recommender".equals(searchColumn)) {
+                sql.append(
+                        " AND u.discordID = :searchValue"
+                );
+
+                countSql.append(
+                        " AND u.discordID = :searchValue"
+                );
+            } else {
+                sql.append(
+                        " AND c.`"
+                                + searchColumn
+                                + "` = :searchValue"
+                );
+
+                countSql.append(
+                        " AND c.`"
+                                + searchColumn
+                                + "` = :searchValue"
+                );
+            }
         }
 
         if (hasSort) {
@@ -117,42 +166,70 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
                             ? "ASC"
                             : "DESC";
 
-            sql.append(
-                    " ORDER BY c.`"
-                            + sortColumn
-                            + "` "
-                            + direction
-            );
+            if ("recommender".equals(sortColumn)) {
+                sql.append(
+                        " ORDER BY u.discordID "
+                                + direction
+                );
+            } else {
+                sql.append(
+                        " ORDER BY c.`"
+                                + sortColumn
+                                + "` "
+                                + direction
+                );
+            }
         } else {
-            sql.append(" ORDER BY c.`cn_value` ASC");
+            sql.append(
+                    " ORDER BY c.cn_value ASC"
+            );
         }
 
-        Query query = em.createNativeQuery(sql.toString());
-        Query countQuery = em.createNativeQuery(countSql.toString());
+        Query query =
+                em.createNativeQuery(sql.toString());
+
+        Query countQuery =
+                em.createNativeQuery(
+                        countSql.toString()
+                );
 
         if (filterByRecommender) {
-            query.setParameter("recommender", recommender);
-            countQuery.setParameter("recommender", recommender);
+            query.setParameter(
+                    "recommender",
+                    recommender
+            );
+
+            countQuery.setParameter(
+                    "recommender",
+                    recommender
+            );
         }
 
         if (hasSearch) {
-            query.setParameter("searchValue", searchValue);
-            countQuery.setParameter("searchValue", searchValue);
+            query.setParameter(
+                    "searchValue",
+                    searchValue
+            );
+
+            countQuery.setParameter(
+                    "searchValue",
+                    searchValue
+            );
         }
 
         query.setFirstResult(page * size);
         query.setMaxResults(size);
 
         @SuppressWarnings("unchecked")
-        List<Object[]> rows = query.getResultList();
+        List<Object[]> rows =
+                query.getResultList();
 
         List<ContentProjection> content =
                 rows.stream()
                         .map(row ->
                                 new ContentProjection(
                                         (String) row[0],
-                                        (String) row[1],
-                                        (String) row[2]
+                                        (String) row[1]
                                 )
                         )
                         .toList();

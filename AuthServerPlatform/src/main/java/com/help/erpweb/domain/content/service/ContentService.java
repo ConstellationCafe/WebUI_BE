@@ -1,7 +1,6 @@
 package com.help.erpweb.domain.content.service;
 
 import com.help.erpweb.domain.content.dto.request.repository.ContentDto;
-import com.help.erpweb.domain.content.entity.ContentEntity;
 import com.help.erpweb.domain.content.projection.ContentProjection;
 import com.help.erpweb.domain.content.repository.ContentRepository;
 import com.help.erpweb.domain.metadata.response.ColumnMetaDto;
@@ -17,13 +16,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ContentService {
+
     private final ContentRepository contentRepository;
     private final Authorization authorization;
 
@@ -43,29 +47,14 @@ public class ContentService {
         int normalizedSize = Math.max(size, 1);
 
         String recommender = null;
-        // 일반 사용자만 자신의 recommender를 구한다.
-        // 관리자는 null → Repository에서 전체 조회
+
         if (!authorization.isAdmin(user)) {
-            recommender = (String) entityManager
-                    .createNativeQuery("""
-                    SELECT Constellation_Network.search_sk(
-                        :cardType,
-                        :membershipId
-                    )
-                    """)
-                    .setParameter(
-                            "cardType",
-                            MembershipID.discord.name()
-                    )
-                    .setParameter(
-                            "membershipId",
+            recommender =
+                    findSkByDiscordId(
                             user.getUsername()
-                    )
-                    .getSingleResult();
+                    );
         }
-        /*
-         * metadata 조회
-         */
+
         List<ColumnMetaDto> metadata =
                 contentRepository.findColumnMetas(
                                 ContentRepository.schemaName,
@@ -80,9 +69,7 @@ public class ContentService {
                                         .build()
                         )
                         .toList();
-        /*
-         * metadata → 허용 컬럼
-         */
+
         Set<String> allowedColumns =
                 metadata.stream()
                         .map(ColumnMetaDto::getColName)
@@ -99,70 +86,161 @@ public class ContentService {
                         sortDirection,
                         allowedColumns
                 );
+
         List<ContentDto> contentList =
                 contentPage
                         .getContent()
                         .stream()
                         .map(entity ->
                                 ContentDto.builder()
-                                        .cnValue(entity.getCnValue())
-                                        .recommender(entity.getRecommender())
-                                        .recommenderDiscordId(
-                                                entity.getRecommenderDiscordId()
+                                        .cnValue(
+                                                entity.getCnValue()
+                                        )
+                                        // API의 recommender는 Discord ID
+                                        .recommender(
+                                                entity.getRecommender()
                                         )
                                         .build()
                         )
                         .toList();
 
-        Map<String, Object> body = new HashMap<>();
+        Map<String, Object> body =
+                new HashMap<>();
+
         body.put("metadata", metadata);
         body.put("entities", contentList);
         body.put("page", normalizedPage);
         body.put("size", normalizedSize);
-        body.put("totalElements", contentPage.getTotalElements());
-        body.put("totalPages", contentPage.getTotalPages());
-        body.put("hasNext", contentPage.hasNext());
+        body.put(
+                "totalElements",
+                contentPage.getTotalElements()
+        );
+        body.put(
+                "totalPages",
+                contentPage.getTotalPages()
+        );
+        body.put(
+                "hasNext",
+                contentPage.hasNext()
+        );
+
         return ApiResponse.success(body);
     }
 
     @Transactional
-    public ApiResponse<?> saveAll(CustomUser user, List<ContentDto> musicList) {
-        if (musicList == null || musicList.isEmpty())
-            return ApiResponse.success("No data to save");
-
-        List<String> results = new ArrayList<>();
-        for (ContentDto dto : musicList) {
-            String result = contentRepository.callContentProcedure(
-                    MembershipID.discord.name(),
-                    user.getUsername(),
-                    dto.getCnValue()
+    public ApiResponse<?> saveAll(
+            CustomUser user,
+            List<ContentDto> contentList
+    ) {
+        if (contentList == null
+                || contentList.isEmpty()) {
+            return ApiResponse.success(
+                    "No data to save"
             );
-            results.add(dto.getCnValue()+" 추천 결과 : "+result);
         }
+
+        List<String> results =
+                new ArrayList<>();
+
+        for (ContentDto dto : contentList) {
+            String result =
+                    contentRepository.callContentProcedure(
+                            MembershipID.discord.name(),
+
+                            // DTO recommender = Discord ID
+                            dto.getRecommender(),
+
+                            dto.getCnValue()
+                    );
+
+            results.add(
+                    dto.getCnValue()
+                            + " 추천 결과 : "
+                            + result
+            );
+        }
+
         return ApiResponse.success(results);
     }
 
     @Transactional
-    public ApiResponse<?> deleteAll(CustomUser user, List<ContentDto> musicList) {
-        if (musicList == null || musicList.isEmpty())
-            return ApiResponse.success("No data to delete");
+    public ApiResponse<?> deleteAll(
+            CustomUser user,
+            List<ContentDto> contentList
+    ) {
+        if (contentList == null
+                || contentList.isEmpty()) {
+            return ApiResponse.success(
+                    "No data to delete"
+            );
+        }
 
-        String discordId = user.getUsername();
-        String recommender = (String) entityManager
-                .createNativeQuery("SELECT Constellation_Network.search_sk(:cardType, :membershipId)")
-                .setParameter("cardType", MembershipID.discord.name())
-                .setParameter("membershipId", discordId)
-                .getSingleResult();
+        int delCount = 0;
 
-        // teacher가 모두 동일하다는 전제에서만 사용 가능
-        List<String> values = musicList.stream()
-                .map(ContentDto::getCnValue)
-                .distinct()
-                .toList();
+        Map<String, List<String>> valuesByRecommender =
+                contentList.stream()
+                        .collect(
+                                Collectors.groupingBy(
+                                        ContentDto::getRecommender,
+                                        Collectors.mapping(
+                                                ContentDto::getCnValue,
+                                                Collectors.toList()
+                                        )
+                                )
+                        );
 
-        int totalCount = values.toArray().length;
-        int delCount = contentRepository.deleteByMnValue(recommender, values);
-        String result = "총 "+totalCount+"행 중 "+delCount+"행 삭제됨";
+        for (Map.Entry<String, List<String>> entry
+                : valuesByRecommender.entrySet()) {
+
+            String recommenderSk =
+                    findSkByDiscordId(
+                            entry.getKey()
+                    );
+
+            List<String> values =
+                    entry.getValue()
+                            .stream()
+                            .distinct()
+                            .toList();
+
+            delCount +=
+                    contentRepository.deleteByMnValue(
+                            recommenderSk,
+                            values
+                    );
+        }
+
+        int totalCount =
+                contentList.size();
+
+        String result =
+                "총 "
+                        + totalCount
+                        + "행 중 "
+                        + delCount
+                        + "행 삭제됨";
+
         return ApiResponse.success(result);
+    }
+
+    private String findSkByDiscordId(
+            String discordId
+    ) {
+        return (String) entityManager
+                .createNativeQuery("""
+                    SELECT Constellation_Network.search_sk(
+                        :cardType,
+                        :membershipId
+                    )
+                """)
+                .setParameter(
+                        "cardType",
+                        MembershipID.discord.name()
+                )
+                .setParameter(
+                        "membershipId",
+                        discordId
+                )
+                .getSingleResult();
     }
 }

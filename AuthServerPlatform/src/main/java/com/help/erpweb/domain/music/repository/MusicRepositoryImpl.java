@@ -1,8 +1,11 @@
 package com.help.erpweb.domain.music.repository;
 
-import com.help.erpweb.domain.music.entity.MusicEntity;
 import com.help.erpweb.domain.music.projection.MusicProjection;
-import jakarta.persistence.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.ParameterMode;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
+import jakarta.persistence.StoredProcedureQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -13,7 +16,8 @@ import java.util.List;
 import java.util.Set;
 
 @Repository
-public class MusicRepositoryImpl implements MusicRepositoryCustom {
+public class MusicRepositoryImpl
+        implements MusicRepositoryCustom {
 
     @PersistenceContext
     private EntityManager em;
@@ -25,7 +29,9 @@ public class MusicRepositoryImpl implements MusicRepositoryCustom {
             String videoId
     ) {
         StoredProcedureQuery sp =
-                em.createStoredProcedureQuery("ChatBot.recommend_music");
+                em.createStoredProcedureQuery(
+                        "ChatBot.recommend_music"
+                );
 
         sp.registerStoredProcedureParameter(
                 "card_type",
@@ -51,20 +57,9 @@ public class MusicRepositoryImpl implements MusicRepositoryCustom {
                 ParameterMode.OUT
         );
 
-        sp.setParameter(
-                "card_type",
-                cardType
-        );
-
-        sp.setParameter(
-                "membershipID",
-                membershipID
-        );
-
-        sp.setParameter(
-                "video_id",
-                videoId
-        );
+        sp.setParameter("card_type", cardType);
+        sp.setParameter("membershipID", membershipID);
+        sp.setParameter("video_id", videoId);
 
         sp.execute();
 
@@ -94,35 +89,41 @@ public class MusicRepositoryImpl implements MusicRepositoryCustom {
                 sortColumn != null
                         && !sortColumn.isBlank();
 
-        /*
-         * 동적 컬럼명 whitelist 검증
-         */
-        if (hasSearch && !allowedColumns.contains(searchColumn)) {
+        if (hasSearch
+                && !allowedColumns.contains(searchColumn)) {
             throw new IllegalArgumentException(
-                    "검색할 수 없는 컬럼입니다: " + searchColumn
+                    "검색할 수 없는 컬럼입니다: "
+                            + searchColumn
             );
         }
 
-        if (hasSort && !allowedColumns.contains(sortColumn)) {
+        if (hasSort
+                && !allowedColumns.contains(sortColumn)) {
             throw new IllegalArgumentException(
-                    "정렬할 수 없는 컬럼입니다: " + sortColumn
+                    "정렬할 수 없는 컬럼입니다: "
+                            + sortColumn
             );
         }
-        boolean filterByRecommender = recommender != null
-                && !recommender.isBlank();
+
+        boolean filterByRecommender =
+                recommender != null
+                        && !recommender.isBlank();
+
         StringBuilder sql = new StringBuilder("""
             SELECT
                 m.video_id,
-                m.recommender,
                 u.discordID
             FROM ChatBot.RecommendMusic m
             LEFT JOIN Constellation_Network.Users u
                 ON m.recommender = u.sk
             WHERE 1 = 1
         """);
+
         StringBuilder countSql = new StringBuilder("""
             SELECT COUNT(*)
             FROM ChatBot.RecommendMusic m
+            LEFT JOIN Constellation_Network.Users u
+                ON m.recommender = u.sk
             WHERE 1 = 1
         """);
 
@@ -130,61 +131,81 @@ public class MusicRepositoryImpl implements MusicRepositoryCustom {
             sql.append(
                     " AND m.recommender = :recommender"
             );
+
             countSql.append(
                     " AND m.recommender = :recommender"
             );
         }
+
         if (hasSearch) {
-            sql.append(
-                    " AND m.`"
-                            + searchColumn
-                            + "` = :searchValue"
-            );
-            sql.append(
-                    " AND m.`"
-                            + searchColumn
-                            + "` = :searchValue"
-            );
+            if ("recommender".equals(searchColumn)) {
+                sql.append(
+                        " AND u.discordID = :searchValue"
+                );
+
+                countSql.append(
+                        " AND u.discordID = :searchValue"
+                );
+            } else {
+                sql.append(
+                        " AND m.`"
+                                + searchColumn
+                                + "` = :searchValue"
+                );
+
+                countSql.append(
+                        " AND m.`"
+                                + searchColumn
+                                + "` = :searchValue"
+                );
+            }
         }
 
-        /*
-         * 정렬
-         */
         if (hasSort) {
             String direction =
                     "ASC".equalsIgnoreCase(sortDirection)
                             ? "ASC"
                             : "DESC";
 
-            sql.append(
-                    " ORDER BY m.`"
-                            + sortColumn
-                            + "` "
-                            + direction
-            );
+            if ("recommender".equals(sortColumn)) {
+                sql.append(
+                        " ORDER BY u.discordID "
+                                + direction
+                );
+            } else {
+                sql.append(
+                        " ORDER BY m.`"
+                                + sortColumn
+                                + "` "
+                                + direction
+                );
+            }
         } else {
-            /*
-             * Pagination 결과 순서 고정
-             */
-            sql.append(" ORDER BY `video_id` ASC");
+            sql.append(
+                    " ORDER BY m.video_id ASC"
+            );
         }
 
-        Query query = em.createNativeQuery(
-                sql.toString()
-        );
-        Query countQuery = em.createNativeQuery(
-                countSql.toString()
-        );
+        Query query =
+                em.createNativeQuery(sql.toString());
+
+        Query countQuery =
+                em.createNativeQuery(
+                        countSql.toString()
+                );
+
         if (filterByRecommender) {
             query.setParameter(
                     "recommender",
                     recommender
             );
+
             countQuery.setParameter(
                     "recommender",
                     recommender
             );
         }
+
         if (hasSearch) {
             query.setParameter(
                     "searchValue",
@@ -197,24 +218,19 @@ public class MusicRepositoryImpl implements MusicRepositoryCustom {
             );
         }
 
-        // page는 0-based
-        query.setFirstResult(
-                page * size
-        );
-
-        query.setMaxResults(
-                size
-        );
+        query.setFirstResult(page * size);
+        query.setMaxResults(size);
 
         @SuppressWarnings("unchecked")
-        List<Object[]> rows = query.getResultList();
+        List<Object[]> rows =
+                query.getResultList();
+
         List<MusicProjection> content =
                 rows.stream()
                         .map(row ->
                                 new MusicProjection(
                                         (String) row[0],
-                                        (String) row[1],
-                                        (String) row[2]
+                                        (String) row[1]
                                 )
                         )
                         .toList();
@@ -223,10 +239,7 @@ public class MusicRepositoryImpl implements MusicRepositoryCustom {
                 (Number) countQuery.getSingleResult();
 
         Pageable pageable =
-                PageRequest.of(
-                        page,
-                        size
-                );
+                PageRequest.of(page, size);
 
         return new PageImpl<>(
                 content,

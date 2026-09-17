@@ -8,5 +8,4 @@ import lombok.Getter;
 public class MenuProjection {
     private String mnValue;
     private String recommender;
-    private String recommenderDiscordId;
 }
