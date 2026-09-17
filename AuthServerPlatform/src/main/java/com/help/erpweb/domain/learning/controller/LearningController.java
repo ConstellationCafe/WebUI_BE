@@ -20,8 +20,22 @@ public class LearningController {
     private final LearningService learningService;
 
     @GetMapping("/list")
-    public ApiResponse<?> getLearningList(@AuthenticationPrincipal CustomUser user) {
-        return learningService.getLearningList(user);
+    public ApiResponse<?> getLearningList(
+            @AuthenticationPrincipal CustomUser user,
+            // Pagination
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            // Search
+            @RequestParam(required = false) String searchColumn,
+            @RequestParam(required = false) String searchValue,
+            // Sort
+            @RequestParam(required = false) String sortColumn,
+            @RequestParam(defaultValue = "DESC") String sortDirection
+    ) {
+        return learningService.getLearningList(
+                user, page, size,
+                searchColumn, searchValue, sortColumn, sortDirection
+        );
     }
 
     @PostMapping("/save_all")

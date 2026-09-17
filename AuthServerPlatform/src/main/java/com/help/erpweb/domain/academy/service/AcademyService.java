@@ -202,7 +202,7 @@ public class AcademyService {
     ) {
         // students
         List<Student> students = studentRepository
-                        .findByAcademyIdAndClassIdWithClass(
+                        .findByAcademyIdAndClassId(
                                 academyId,
                                 classId
                         );

@@ -20,8 +20,22 @@ public class MusicController {
     private final MusicService MusicService;
 
     @GetMapping("/list")
-    public ApiResponse<?> getMusicList(@AuthenticationPrincipal CustomUser user) {
-        return MusicService.getMusicList(user);
+    public ApiResponse<?> getMusicList(
+            @AuthenticationPrincipal CustomUser user,
+            // Pagination
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            // Search
+            @RequestParam(required = false) String searchColumn,
+            @RequestParam(required = false) String searchValue,
+            // Sort
+            @RequestParam(required = false) String sortColumn,
+            @RequestParam(defaultValue = "DESC") String sortDirection
+    ) {
+        return MusicService.getMusicList(
+                user, page, size,
+                searchColumn, searchValue, sortColumn, sortDirection
+        );
     }
 
     @PostMapping("/save_all")

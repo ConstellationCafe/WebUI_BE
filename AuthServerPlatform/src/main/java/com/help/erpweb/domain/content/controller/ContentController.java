@@ -20,8 +20,22 @@ public class ContentController {
     private final ContentService ContentService;
 
     @GetMapping("/list")
-    public ApiResponse<?> getContentList(@AuthenticationPrincipal CustomUser user) {
-        return ContentService.getContentList(user);
+    public ApiResponse<?> getContentList(
+            @AuthenticationPrincipal CustomUser user,
+            // Pagination
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size,
+            // Search
+            @RequestParam(required = false) String searchColumn,
+            @RequestParam(required = false) String searchValue,
+            // Sort
+            @RequestParam(required = false) String sortColumn,
+            @RequestParam(defaultValue = "DESC") String sortDirection
+    ) {
+        return ContentService.getContentList(
+                user, page, size,
+                searchColumn, searchValue, sortColumn, sortDirection
+        );
     }
 
     @PostMapping("/save_all")

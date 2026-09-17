@@ -123,28 +123,17 @@ public class StudentStatusService {
             int page,
             int size
     ) {
-        int normalizedPage =
-                Math.max(page, 1);
+        int normalizedPage = Math.max(page, 1);
+        int normalizedSize = Math.max(size, 1);
 
-        int normalizedSize =
-                Math.max(size, 1);
+        String normalizedMemberId = normalize(academyMemberId);
+        String normalizedStatus = toStudentDbStatus(normalize(status));
 
-        String normalizedMemberId =
-                normalize(academyMemberId);
-
-        String normalizedStatus =
-                toStudentDbStatus(
-                        normalize(status)
-                );
-
-        Pageable pageable =
-                PageRequest.of(
+        Pageable pageable = PageRequest.of(
                         normalizedPage - 1,
                         normalizedSize
                 );
-
-        Page<Student> studentPage =
-                studentRepository.findStatusPage(
+        Page<Student> studentPage = studentRepository.findStatusPage(
                         academyId,
                         classId,
                         normalizedMemberId,

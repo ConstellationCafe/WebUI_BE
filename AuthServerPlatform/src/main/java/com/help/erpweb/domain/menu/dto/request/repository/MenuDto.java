@@ -14,6 +14,6 @@ public class MenuDto {
     @NotBlank(message = "mn_value는 필수입니다.")
     private String mnValue;
 
-//    @NotBlank(message = "recommender는 필수입니다.")
-//    private String recommender;
+    @NotBlank(message = "recommender는 필수입니다.")
+    private String recommender;
 }
