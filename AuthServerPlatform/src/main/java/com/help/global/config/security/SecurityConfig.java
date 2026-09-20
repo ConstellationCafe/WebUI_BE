@@ -79,6 +79,25 @@ public class SecurityConfig {
 	}
 
 	@Bean
+	@Order(3)
+	public SecurityFilterChain actuatorChain(HttpSecurity http) throws Exception {
+		http.securityMatcher("/actuator/**");
+		http.csrf(AbstractHttpConfigurer::disable);
+		http.sessionManagement(session ->
+			session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+		);
+		http.authorizeHttpRequests(auth -> auth
+			.requestMatchers(
+				"/actuator/health",
+				"/actuator/health/liveness",
+				"/actuator/health/readiness"
+			).permitAll()
+			.anyRequest().denyAll()
+		);
+		return http.build();
+	}
+
+	@Bean
 	PasswordEncoder passwordEncoder() {
 		return PasswordEncoderFactories.createDelegatingPasswordEncoder();
 	}

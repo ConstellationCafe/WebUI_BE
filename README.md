@@ -89,13 +89,13 @@ HTTP Controller -> request validation/DTO -> service/domain -> repository -> MyS
 
 ## 외부 연동과 복원력
 
-Discord, MySQL, Redis, SMTP가 외부 경계입니다. Redis command timeout은 production에서 5초입니다. Discord·SMTP·DB의 connection/read/overall timeout, retry 대상, backoff와 fallback의 실제 운영 기준은 아직 확정되지 않았습니다. 운영 배포 전 프로젝트 책임자가 값을 승인하고 구현·자동 테스트·runbook을 함께 갱신해야 합니다. Non-idempotent 요청은 보장 없이 자동 재시도하지 않습니다.
+Discord, MySQL, Redis, SMTP가 외부 경계입니다. Discord HTTP 연결 timeout은 3초, 응답 timeout은 5초이며, Redis command timeout은 production에서 5초입니다. Discord 요청은 side effect와 요청 thread 점유 위험 때문에 자동 재시도하지 않습니다. 사용자 정보 조회 실패는 503 API 오류로 변환하고, guild 조회 실패 시에는 저장된 guild 목록으로 대체합니다. SMTP·DB의 connection/read/overall timeout과 전체 요청 deadline은 아직 확정되지 않았으므로 운영 배포 전 프로젝트 책임자가 값을 승인하고 구현·자동 테스트·runbook을 함께 갱신해야 합니다.
 
 ## 관측성과 운영
 
 - liveness: `/actuator/health/liveness`
 - readiness: `/actuator/health/readiness`
-- Prometheus metrics: `/actuator/prometheus`
+- Prometheus metrics: `/actuator/prometheus` (외부 요청은 기본 거부하며 내부 수집 경로를 별도로 구성해야 함)
 - health 상세 정보는 외부 응답에 노출하지 않습니다.
 - 애플리케이션은 graceful shutdown을 사용하며 종료 단계 제한은 30초, Compose stop 유예는 40초입니다.
 

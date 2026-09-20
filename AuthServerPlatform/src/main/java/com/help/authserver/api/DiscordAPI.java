@@ -12,12 +12,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class DiscordAPI implements LoginAPI<DiscordUserDto> {
     @Value("${discord.client-id}")
     private String clientId;
@@ -37,7 +39,7 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
     @Value("${discord.redirect-uri}")
     private String redirectUri;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate restTemplate;
 
     public String exchangeCodeForToken(String code) {
         // Content-Type 헤더를 application/x-www-form-urlencoded 로 설정
@@ -59,11 +61,15 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
         );
 
         // access_token 추출 & 반환
-        if (response.getBody().get("access_token") != null) {
-            return (String) response.getBody().get("access_token");
-        } else {
-            throw new RuntimeException("Failed to retrieve access token from Discord");
+        Map<String, Object> responseBody = Optional.ofNullable(response.getBody())
+                .orElseThrow(() -> new IllegalStateException("Discord token response is empty"));
+
+        Object accessToken = responseBody.get("access_token");
+        if (accessToken instanceof String token && !token.isBlank()) {
+            return token;
         }
+
+        throw new IllegalStateException("Discord token response does not contain an access token");
     }
 
     @Override

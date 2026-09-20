@@ -59,7 +59,7 @@ public class BackEndJwtAuthFilter extends OncePerRequestFilter {
 			filterChain.doFilter(request, response);
 			return;
 		}
-		log.info("인증 필터 시작: [{}]{}", method, requestUri);
+		log.debug("인증 필터 시작: [{}]{}", method, requestUri);
 		checkAccessTokenAndAuthentication(request, response, filterChain);
 	}
 
@@ -99,7 +99,6 @@ public class BackEndJwtAuthFilter extends OncePerRequestFilter {
 			);
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-		log.info("Security Context에 '{}' 인증 정보를 저장", discordUser.getUsername());
-		log.info("isAuthenticated: {}", SecurityContextHolder.getContext().getAuthentication().isAuthenticated());
+		log.debug("인증 정보를 Security Context에 저장했습니다");
 	}
 }

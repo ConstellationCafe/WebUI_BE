@@ -19,6 +19,7 @@ public enum ErrorCode {
 	NOT_FOUND(404, "페이지를 찾을 수 없습니다"),
 
 	EMAIL_ALREADY_EXISTS(409, "이미 존재하는 이메일입니다"),
+	EXTERNAL_SERVICE_UNAVAILABLE(503, "외부 서비스에 일시적으로 연결할 수 없습니다"),
 
 	JSON_PARSING_FAILURE(500, "JSON 매핑에 실패했습니다"),
 	INTERNAL_SERVER_ERROR(500, "서버에서 오류가 발생했습니다");

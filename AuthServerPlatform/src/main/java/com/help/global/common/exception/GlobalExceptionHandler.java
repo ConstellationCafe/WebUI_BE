@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
 import jakarta.validation.ConstraintViolationException;
@@ -30,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GlobalExceptionHandler {
 	@ExceptionHandler(UsernameNotFoundException.class)
 	public ResponseEntity<ApiResponse<?>> handleUsernameNotFoundException(final UsernameNotFoundException ex) {
-		log.error("UsernameNotFoundException : {}", ex.getMessage());
+		log.warn("인증 사용자 조회에 실패했습니다");
 		return ResponseEntity
 			.status(ErrorCode.INVALID_CREDENTIALS.getStatus())
 			.body(ApiResponse.error(ErrorCode.INVALID_CREDENTIALS));
@@ -38,7 +39,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(BadCredentialsException.class)
 	public ResponseEntity<ApiResponse<?>> handleBadCredentialsException(final BadCredentialsException ex) {
-		log.error("BadCredentialsException : {}", ex.getMessage());
+		log.warn("자격 증명 검증에 실패했습니다");
 		return ResponseEntity
 			.status(ErrorCode.INVALID_CREDENTIALS.getStatus())
 			.body(ApiResponse.error(ErrorCode.INVALID_CREDENTIALS));
@@ -80,7 +81,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ApiResponse<?>> handleValidationException(final MethodArgumentNotValidException ex) {
-		log.error("MethodArgumentNotValidException : {}", ex.getMessage());
+		log.debug("요청 본문 검증에 실패했습니다");
 		final BindingResult bindingResult = ex.getBindingResult();
 		final List<FieldError> fieldErrors = bindingResult.getFieldErrors();
 
@@ -96,7 +97,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(ConstraintViolationException.class)
 	public ResponseEntity<ApiResponse<?>> handleConstraintViolationException(final ConstraintViolationException ex) {
-		log.error("ConstraintViolationException : {}", ex.getMessage());
+		log.debug("요청 파라미터 검증에 실패했습니다");
 		final String errorMessage = ex.getConstraintViolations().stream()
 			.findFirst()
 			.map(violation -> violation.getPropertyPath() + " " + violation.getMessage())
@@ -120,6 +121,16 @@ public class GlobalExceptionHandler {
 			.body(ApiResponse.error(message, HttpStatus.BAD_REQUEST));
 	}
 
+	@ExceptionHandler(HandlerMethodValidationException.class)
+	public ResponseEntity<ApiResponse<?>> handleMethodValidationException(
+		final HandlerMethodValidationException ex
+	) {
+		log.debug("요청 파라미터 범위 검증에 실패했습니다");
+		return ResponseEntity
+			.status(HttpStatus.BAD_REQUEST)
+			.body(ApiResponse.error("요청 파라미터 범위를 확인해주세요", HttpStatus.BAD_REQUEST));
+	}
+
 	@ExceptionHandler(MissingServletRequestParameterException.class)
 	public ResponseEntity<ApiResponse<?>> handleMissingParams(final MissingServletRequestParameterException ex) {
 		log.error("MissingServletRequestParameterException : {}", ex.getMessage());
@@ -133,7 +144,7 @@ public class GlobalExceptionHandler {
 	
 	@ExceptionHandler(CustomException.class)
 	public ResponseEntity<ApiResponse<?>> handleCustomException(final CustomException ex) {
-		log.error("CustomException : {}", ex.getMessage());
+		log.warn("처리 가능한 애플리케이션 오류: {}", ex.getErrorCode().name());
 		final ErrorCode errorCode = ex.getErrorCode();
 		return ResponseEntity
 			.status(errorCode.getStatus())
@@ -143,7 +154,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(RuntimeException.class)
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 	public ApiResponse<?> unknownServerError(final RuntimeException ex) {
-		log.error("서버 오류 : {}", ex.getMessage());
+		log.error("처리되지 않은 서버 오류", ex);
 		return ApiResponse.error(ErrorCode.INTERNAL_SERVER_ERROR);
 	}
 }

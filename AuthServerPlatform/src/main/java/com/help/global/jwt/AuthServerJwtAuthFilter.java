@@ -68,7 +68,7 @@ public class AuthServerJwtAuthFilter extends OncePerRequestFilter {
 			filterChain.doFilter(request, response);
 			return;
 		}
-		log.info("인증 필터 시작: [{}]{}", method, requestUri);
+		log.debug("인증 필터 시작: [{}]{}", method, requestUri);
 		checkAccessTokenAndAuthentication(request, response, filterChain);
 	}
 
@@ -105,7 +105,7 @@ public class AuthServerJwtAuthFilter extends OncePerRequestFilter {
 		final Optional<SessionInfo> sessionInfo = sessionRepository.find(username.get())
 				.filter(SessionInfo::isValid);
 		if (sessionInfo.isEmpty()) {
-			log.warn("유효하지 않은 세션 또는 세션 없음: {}", username.get());
+			log.warn("유효하지 않은 세션 또는 세션 없음");
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			return;
 		}
@@ -130,7 +130,6 @@ public class AuthServerJwtAuthFilter extends OncePerRequestFilter {
 			);
 
 		SecurityContextHolder.getContext().setAuthentication(authentication);
-		log.info("Security Context에 '{}' 인증 정보를 저장", user.getUsername());
-		log.info("isAuthenticated: {}", SecurityContextHolder.getContext().getAuthentication().isAuthenticated());
+		log.debug("인증 정보를 Security Context에 저장했습니다");
 	}
 }
