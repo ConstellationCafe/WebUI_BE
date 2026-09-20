@@ -1,19 +1,15 @@
-# 1단계: 빌드 단계
-FROM gradle:8.13-jdk17 AS builder
+FROM eclipse-temurin:17-jdk-jammy AS builder
 
-# 필요한 파일 복사
-COPY --chown=gradle:gradle ./AuthServerPlatform /home/gradle/WebUI_BE
-WORKDIR /home/gradle/WebUI_BE
+WORKDIR /workspace
+COPY AuthServerPlatform/ ./
+RUN ./gradlew clean bootJar --no-daemon
 
-# 빌드 수행
-RUN gradle build -x test
+FROM eclipse-temurin:17-jre-jammy
 
-# 2단계: 실행 이미지
-FROM eclipse-temurin:17-jdk
+RUN groupadd --system app && useradd --system --gid app --home-dir /app app
+WORKDIR /app
+COPY --from=builder --chown=app:app /workspace/build/libs/*.jar app.jar
 
-# JAR 복사
-COPY --from=builder /home/gradle/WebUI_BE/build/libs/*.jar app.jar
-
-# 애플리케이션 실행
-ENTRYPOINT ["sh", "-c", "java -jar /app.jar"]
+USER app
 EXPOSE 4003
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]
