@@ -32,4 +32,13 @@ public interface DiscordUserRepository extends JpaRepository<DiscordUser, String
     List<DiscordUser> findActiveByDiscordIDIn(
             @Param("discordIDs") List<String> discordIDs
     );
+
+    @Query("""
+        SELECT u
+        FROM DiscordUser u
+        WHERE u.discordID IN :discordIDs
+    """)
+    List<DiscordUser> findAllByDiscordIDIn(
+            @Param("discordIDs") List<String> discordIDs
+    );
 }
