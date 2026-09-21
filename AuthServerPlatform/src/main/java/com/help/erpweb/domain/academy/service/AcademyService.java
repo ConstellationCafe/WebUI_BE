@@ -275,14 +275,13 @@ public class AcademyService {
         List<OptionResponse> students =
                 academyId == null || classId == null
                         ? List.of()
-                        : studentRepository
-                        .findByAcademyIdAndClassId(
-                                academyId,
-                                classId
-                        )
+                        : getStudents(academyId, classId)
                         .stream()
-                        .map(this::toOptionResponse)
-                        .flatMap(Optional::stream)
+                        .map(student -> new OptionResponse(
+                                student.sk(),
+                                student.discordID(),
+                                student.name()
+                        ))
                         .toList();
 
         List<SubjectOptionResponse> subjects =
