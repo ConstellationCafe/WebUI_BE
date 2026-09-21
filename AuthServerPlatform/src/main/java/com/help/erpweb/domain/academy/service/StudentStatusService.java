@@ -28,7 +28,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -78,7 +80,7 @@ public class StudentStatusService {
                         )
                         .toList();
 
-        List<OptionResponse> students =
+        List<Student> studentEntities =
                 academyId == null || classId == null
                         ? List.of()
                         : studentRepository
@@ -87,9 +89,10 @@ public class StudentStatusService {
                                 classId
                         )
                         .stream()
-                        .map(this::toOptionResponse)
-                        .flatMap(Optional::stream)
                         .toList();
+        List<OptionResponse> students = studentEntities.isEmpty()
+                ? List.of()
+                : toOptionResponses(studentEntities);
 
         List<SubjectOptionResponse> subjects =
                 List.of(
@@ -305,6 +308,33 @@ public class StudentStatusService {
                         username
                 )
         );
+    }
+
+    private List<OptionResponse> toOptionResponses(List<Student> students) {
+        List<String> sks = students.stream()
+                .map(Student::getSk)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        Map<String, String> discordIds = membershipRepository.findDiscordIdsBySk(sks);
+        List<String> ids = students.stream()
+                .map(Student::getSk)
+                .map(discordIds::get)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<String, String> usernames = discordUserRepository.findActiveByDiscordIDIn(ids)
+                .stream()
+                .collect(Collectors.toMap(DiscordUser::getDiscordID, DiscordUser::getNickname,
+                        (first, ignored) -> first));
+        return students.stream()
+                .map(student -> {
+                    String discordId = discordIds.getOrDefault(student.getSk(), student.getSk());
+                    String username = usernames.get(discordId);
+                    return username == null ? null
+                            : new OptionResponse(student.getSk(), discordId, username);
+                })
+                .filter(java.util.Objects::nonNull)
+                .toList();
     }
 
     private Optional<StudentResponse> toStudentResponse(
