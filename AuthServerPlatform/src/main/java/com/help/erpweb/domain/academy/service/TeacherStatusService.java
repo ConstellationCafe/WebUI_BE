@@ -27,7 +27,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -82,26 +84,14 @@ public class TeacherStatusService {
             teachers = List.of();
 
         } else if (classId != null) {
-            teachers =
-                    teacherRepository
-                            .findByAcademyClass_Id(
-                                    classId
-                            )
-                            .stream()
-                            .map(this::toOptionResponse)
-                            .flatMap(Optional::stream)
-                            .toList();
+            teachers = toOptionResponses(
+                    teacherRepository.findByAcademyClass_Id(classId)
+            );
 
         } else {
-            teachers =
-                    teacherRepository
-                            .findByAcademyClass_Academy_Id(
-                                    academyId
-                            )
-                            .stream()
-                            .map(this::toOptionResponse)
-                            .flatMap(Optional::stream)
-                            .toList();
+            teachers = toOptionResponses(
+                    teacherRepository.findByAcademyClass_Academy_Id(academyId)
+            );
         }
 
         return new TeacherStatusResponse(
@@ -303,6 +293,28 @@ public class TeacherStatusService {
                         username
                 )
         );
+    }
+
+    private List<OptionResponse> toOptionResponses(List<Teacher> teachers) {
+        List<String> sks = teachers.stream()
+                .map(Teacher::getSk)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+        Map<String, String> discordIds = membershipRepository.findDiscordIdsBySk(sks);
+        List<String> ids = discordIds.values().stream().distinct().toList();
+        Map<String, String> usernames = discordUserRepository.findAllByDiscordIDIn(ids)
+                .stream()
+                .collect(Collectors.toMap(DiscordUser::getDiscordID, DiscordUser::getNickname,
+                        (first, ignored) -> first));
+        return teachers.stream()
+                .map(teacher -> {
+                    String discordId = discordIds.get(teacher.getSk());
+                    String username = usernames.get(discordId);
+                    return discordId == null || username == null ? null
+                            : new OptionResponse(teacher.getSk(), discordId, username);
+                })
+                .filter(java.util.Objects::nonNull)
+                .toList();
     }
 
     private Optional<TeacherResponse> toTeacherResponse(
