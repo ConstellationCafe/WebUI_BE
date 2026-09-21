@@ -1,5 +1,7 @@
 package com.help.authserver.domain.user.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.help.authserver.api.LoginAPI;
 import com.help.authserver.domain.user.dto.discord.DiscordGuildDto;
 import com.help.authserver.domain.user.dto.response.LoginCheckResponseDto;
@@ -28,6 +30,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
 
@@ -35,6 +38,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class DiscordAuthService implements UserDetailsService {
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final JwtUtil jwtUtil;
     private final LoginAPI<DiscordUserDto> loginAPI;
@@ -232,12 +236,44 @@ public class DiscordAuthService implements UserDetailsService {
     private DiscordUserDto getUserInfo(
             String discordAccessToken
     ) {
+        final int maxRetries = 1;
+        for (int attempt = 0; attempt <= maxRetries; attempt++) {
+            try {
+                return loginAPI.getUserInfo(discordAccessToken);
+            } catch (HttpClientErrorException.TooManyRequests exception) {
+                if (attempt == maxRetries) {
+                    throw new CustomException(ErrorCode.EXTERNAL_SERVICE_UNAVAILABLE);
+                }
+                sleep(resolveRetryAfter(exception));
+            } catch (RestClientException exception) {
+                throw new CustomException(ErrorCode.EXTERNAL_SERVICE_UNAVAILABLE);
+            }
+        }
+        throw new CustomException(ErrorCode.EXTERNAL_SERVICE_UNAVAILABLE);
+    }
+
+    private long resolveRetryAfter(HttpClientErrorException.TooManyRequests exception) {
+        String retryAfter = exception.getResponseHeaders() == null
+                ? null
+                : exception.getResponseHeaders().getFirst("Retry-After");
         try {
-            return loginAPI.getUserInfo(discordAccessToken);
-        } catch (RestClientException exception) {
-            throw new CustomException(
-                    ErrorCode.EXTERNAL_SERVICE_UNAVAILABLE
-            );
+            return Math.min(Math.max(Long.parseLong(retryAfter), 1L), 5L);
+        } catch (Exception ignored) {
+            try {
+                JsonNode body = OBJECT_MAPPER.readTree(exception.getResponseBodyAsString());
+                return Math.min(Math.max((long) Math.ceil(body.path("retry_after").asDouble(1.0)), 1L), 5L);
+            } catch (Exception parseException) {
+                return 1L;
+            }
+        }
+    }
+
+    private void sleep(long seconds) {
+        try {
+            Thread.sleep(seconds * 1000L);
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new CustomException(ErrorCode.EXTERNAL_SERVICE_UNAVAILABLE);
         }
     }
 
