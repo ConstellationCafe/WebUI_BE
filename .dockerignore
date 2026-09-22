@@ -1,0 +1,13 @@
+.git
+.github
+.gradle
+**/.gradle
+**/build
+**/.idea
+**/.vscode
+*.iml
+*.log
+.env
+*.pem
+*.key
+docs

@@ -29,7 +29,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
@@ -38,6 +38,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 public class DiscordAuthService implements UserDetailsService {
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final JwtUtil jwtUtil;
     private final LoginAPI<DiscordUserDto> loginAPI;
@@ -66,7 +67,6 @@ public class DiscordAuthService implements UserDetailsService {
                 );
     }
 
-    @Transactional
     public String login(
             final String code,
             final HttpServletResponse response
@@ -136,22 +136,19 @@ public class DiscordAuthService implements UserDetailsService {
                         );
 
         if (!sessionInfo.isValid()) {
-            throw new RuntimeException("Session revoked");
+            throw new CustomException(ErrorCode.SESSION_REVOKED);
         }
 
         String discordAccessToken =
                 sessionInfo.getDiscordAccessToken();
 
         if (discordAccessToken == null) {
-            throw new RuntimeException("Discord token missing");
+            throw new CustomException(ErrorCode.SESSION_EXPIRED);
         }
 
-        // 직접 getUserInfo()를 호출하지 않고
-        // 429 재시도 로직을 사용한다.
         DiscordUserDto userDto =
-                getUserInfoWithRetry(
-                        discordAccessToken,
-                        username
+                getUserInfo(
+                        discordAccessToken
                 );
 
         List<String> roles =
@@ -187,9 +184,8 @@ public class DiscordAuthService implements UserDetailsService {
 
         try {
             DiscordUserDto userDto =
-                    getUserInfoWithRetry(
-                            discordAccessToken,
-                            username
+                    getUserInfo(
+                            discordAccessToken
                     );
 
             List<String> registeredGuildIds =
@@ -217,12 +213,7 @@ public class DiscordAuthService implements UserDetailsService {
             return ApiResponse.success(guilds);
 
         } catch (Exception e) {
-            log.error(
-                    "Discord guild 조회 실패 - username={}, message={}",
-                    username,
-                    e.getMessage(),
-                    e
-            );
+            log.error("Discord guild 조회 실패. 저장된 guild 목록으로 대체합니다", e);
 
             List<DiscordGuildDto> guilds =
                     erpSubscriberRepository
@@ -242,90 +233,47 @@ public class DiscordAuthService implements UserDetailsService {
         }
     }
 
-    private DiscordUserDto getUserInfoWithRetry(
-            String discordAccessToken,
-            String username
+    private DiscordUserDto getUserInfo(
+            String discordAccessToken
     ) {
         final int maxRetries = 1;
-
-        for (int attempt = 0;
-             attempt <= maxRetries;
-             attempt++) {
-
+        for (int attempt = 0; attempt <= maxRetries; attempt++) {
             try {
-                return loginAPI.getUserInfo(
-                        discordAccessToken
-                );
-
-            } catch (
-                    HttpClientErrorException.TooManyRequests e
-            ) {
-                if (attempt >= maxRetries) {
-                    log.error(
-                            "Discord API Rate Limit 재시도 실패 - username={}, attempts={}",
-                            username,
-                            attempt + 1
-                    );
-                    throw e;
+                return loginAPI.getUserInfo(discordAccessToken);
+            } catch (HttpClientErrorException.TooManyRequests exception) {
+                if (attempt == maxRetries) {
+                    throw new CustomException(ErrorCode.EXTERNAL_SERVICE_UNAVAILABLE);
                 }
-
-                double retryAfter =
-                        extractRetryAfter(e);
-
-                log.warn(
-                        "Discord API Rate Limit 발생 - username={}, retryAfter={}초, 재시도={}/{}",
-                        username,
-                        retryAfter,
-                        attempt + 1,
-                        maxRetries
-                );
-
-                sleep(retryAfter);
+                sleep(resolveRetryAfter(exception));
+            } catch (RestClientException exception) {
+                throw new CustomException(ErrorCode.EXTERNAL_SERVICE_UNAVAILABLE);
             }
         }
-
-        throw new IllegalStateException(
-                "Discord API 요청 실패"
-        );
+        throw new CustomException(ErrorCode.EXTERNAL_SERVICE_UNAVAILABLE);
     }
 
-    private double extractRetryAfter(
-            HttpClientErrorException.TooManyRequests e
-    ) {
+    private long resolveRetryAfter(HttpClientErrorException.TooManyRequests exception) {
+        String retryAfter = exception.getResponseHeaders() == null
+                ? null
+                : exception.getResponseHeaders().getFirst("Retry-After");
         try {
-            JsonNode json =
-                    new ObjectMapper()
-                            .readTree(
-                                    e.getResponseBodyAsString()
-                            );
-
-            return json.path("retry_after")
-                    .asDouble(1.0);
-
-        } catch (Exception parseException) {
-            log.warn(
-                    "Discord API 429 응답에서 retry_after 파싱 실패. 기본값 1초 사용",
-                    parseException
-            );
-
-            return 1.0;
+            return Math.min(Math.max(Long.parseLong(retryAfter), 1L), 5L);
+        } catch (Exception ignored) {
+            try {
+                JsonNode body = OBJECT_MAPPER.readTree(exception.getResponseBodyAsString());
+                return Math.min(Math.max((long) Math.ceil(body.path("retry_after").asDouble(1.0)), 1L), 5L);
+            } catch (Exception parseException) {
+                return 1L;
+            }
         }
     }
 
-    private void sleep(double seconds) {
+    private void sleep(long seconds) {
         try {
-            long millis =
-                    (long) Math.ceil(seconds * 1000);
-
-            Thread.sleep(millis);
-
-        } catch (InterruptedException e) {
+            Thread.sleep(seconds * 1000L);
+        } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
-
-            throw new IllegalStateException(
-                    "Discord API 재시도 대기 중 인터럽트 발생",
-                    e
-            );
+            throw new CustomException(ErrorCode.EXTERNAL_SERVICE_UNAVAILABLE);
         }
     }
 

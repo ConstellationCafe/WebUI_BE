@@ -5,9 +5,12 @@ import com.help.global.jwt.CustomUser;
 import com.help.erpweb.domain.learning.dto.request.repository.LearningDto;
 import com.help.erpweb.domain.learning.service.LearningService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +19,7 @@ import java.util.List;
 @RequestMapping("/api/repository/learning")
 @Slf4j
 @RequiredArgsConstructor
+@Validated
 public class LearningController {
     private final LearningService learningService;
 
@@ -23,8 +27,8 @@ public class LearningController {
     public ApiResponse<?> getLearningList(
             @AuthenticationPrincipal CustomUser user,
             // Pagination
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size,
             // Search
             @RequestParam(required = false) String searchColumn,
             @RequestParam(required = false) String searchValue,

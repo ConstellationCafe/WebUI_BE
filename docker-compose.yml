@@ -2,38 +2,43 @@ services:
   redis:
     build:
       context: ./redis
-    container_name: redis-server
-    restart: always
-    ports:
-      - 6379:6379
+    restart: unless-stopped
     volumes:
-      - redis_dev_data:/data
-    command: [ "redis-server", "--appendonly", "yes", "--appendfsync", "everysec" ]
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
 
   webui_be:
     build:
       context: ./
-    container_name: webui_be
-    restart: always
+    restart: unless-stopped
     ports:
-      - 4003:4003
+      - "4003:4003"
     environment:
-      - DB_URL=${DB_URL}
-      - DB_CONFIG_URL=${DB_CONFIG_URL}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
-      - DISCORD_CLIENT_SECRET=${DISCORD_CLIENT_SECRET}
-      - DISCORD_REDIRECT_URI=${DISCORD_REDIRECT_URI}
-      - DISCORD_TOKEN_URI=${DISCORD_TOKEN_URI}
-      - DISCORD_USER_URI=${DISCORD_USER_URI}
-      - DISCORD_GUILDS_URI=${DISCORD_GUILDS_URI}
-      - FRONT_REDIRECT_URI=${FRONT_REDIRECT_URI}
-      - REGISTER_URI=${REGISTER_URI}
-      - JWT_SECRET=${JWT_SECRET}
-      - SPRING_DATA_REDIS_HOST=${SPRING_DATA_REDIS_HOST}
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-
+      DB_URL: ${DB_URL:?DB_URL is required}
+      DB_CONFIG_URL: ${DB_CONFIG_URL:?DB_CONFIG_URL is required}
+      DB_USER: ${DB_USER:?DB_USER is required}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID:?DISCORD_CLIENT_ID is required}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET:?DISCORD_CLIENT_SECRET is required}
+      DISCORD_REDIRECT_URI: ${DISCORD_REDIRECT_URI:?DISCORD_REDIRECT_URI is required}
+      DISCORD_TOKEN_URI: ${DISCORD_TOKEN_URI:?DISCORD_TOKEN_URI is required}
+      DISCORD_USER_URI: ${DISCORD_USER_URI:?DISCORD_USER_URI is required}
+      DISCORD_GUILDS_URI: ${DISCORD_GUILDS_URI:?DISCORD_GUILDS_URI is required}
+      DISCORD_GUILD_INFO_URI: ${DISCORD_GUILD_INFO_URI:?DISCORD_GUILD_INFO_URI is required}
+      FRONT_REDIRECT_URI: ${FRONT_REDIRECT_URI:?FRONT_REDIRECT_URI is required}
+      REGISTER_URI: ${REGISTER_URI:?REGISTER_URI is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+    depends_on:
+      redis:
+        condition: service_healthy
+    stop_grace_period: 40s
 
 volumes:
-  redis_dev_data:
+  redis_data:

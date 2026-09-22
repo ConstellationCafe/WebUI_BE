@@ -28,7 +28,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -142,12 +144,7 @@ public class StudentStatusService {
                 );
 
         List<StatusItemResponse<StudentResponse>> items =
-                studentPage
-                        .getContent()
-                        .stream()
-                        .map(this::toStatusItemResponse)
-                        .flatMap(Optional::stream)
-                        .toList();
+                toStatusItemResponses(studentPage.getContent());
 
         StudentStatusSummaryResponse summary =
                 createSummary(
@@ -351,6 +348,46 @@ public class StudentStatusService {
                         student.getState()
                 )
         );
+    }
+
+    private List<StatusItemResponse<StudentResponse>> toStatusItemResponses(
+            List<Student> students
+    ) {
+        List<String> sks = students.stream()
+                .map(Student::getSk)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<String, String> discordIds = membershipRepository.findDiscordIdsBySk(sks);
+        List<String> ids = discordIds.values().stream().distinct().toList();
+        Map<String, String> usernames = discordUserRepository.findActiveByDiscordIDIn(ids)
+                .stream()
+                .collect(Collectors.toMap(DiscordUser::getDiscordID, DiscordUser::getNickname,
+                        (first, ignored) -> first));
+
+        return students.stream()
+                .map(student -> {
+                    String discordId = discordIds.get(student.getSk());
+                    String username = usernames.get(discordId);
+                    AcademyClass academyClass = student.getAcademyClass();
+                    if (student.getSk() == null || discordId == null || username == null
+                            || academyClass == null || academyClass.getAcademy() == null) {
+                        return null;
+                    }
+                    StudentResponse response = new StudentResponse(
+                            student.getSk(), discordId, username,
+                            academyClass.getAcademy().getId(), academyClass.getId(),
+                            academyClass.getClassNumber(), student.getState());
+                    AcademyResponse academy = new AcademyResponse(
+                            academyClass.getAcademy().getId(), academyClass.getAcademy().getName());
+                    StatusClassResponse classResponse = new StatusClassResponse(
+                            academyClass.getId(), String.valueOf(academyClass.getClassNumber()),
+                            academyClass.getState());
+                    return new StatusItemResponse<>(response, academy, classResponse,
+                            toStudentApiStatus(student.getState()), student.getCreateAt(), null);
+                })
+                .filter(java.util.Objects::nonNull)
+                .toList();
     }
 
     private String toStudentDbStatus(

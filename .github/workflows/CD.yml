@@ -1,12 +1,20 @@
 name: WebUI_BE_CD
+
 on:
   push:
     branches: ["main"]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: webui-be-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-22.04
-
+    timeout-minutes: 30
     steps:
       - name: Checkout Github Repository
         uses: actions/checkout@v4
@@ -25,25 +33,21 @@ jobs:
       - name: Deploy with docker compose (SSH)
         uses: appleboy/ssh-action@v1.0.3
         env:
-          # DB
           DB_URL: ${{ secrets.DB_URL }}
           DB_CONFIG_URL: ${{ secrets.DB_CONFIG_URL }}
           DB_USER: ${{ secrets.DB_USER }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          # Discord
           DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
           DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
           DISCORD_REDIRECT_URI: ${{ secrets.DISCORD_REDIRECT_URI }}
           DISCORD_TOKEN_URI: ${{ secrets.DISCORD_TOKEN_URI }}
           DISCORD_USER_URI: ${{ secrets.DISCORD_USER_URI }}
           DISCORD_GUILDS_URI: ${{ secrets.DISCORD_GUILDS_URI }}
-          # FE
+          DISCORD_GUILD_INFO_URI: ${{ secrets.DISCORD_GUILD_INFO_URI }}
           FRONT_REDIRECT_URI: ${{ secrets.FRONT_REDIRECT_URI }}
           REGISTER_URI: ${{ secrets.REGISTER_URI }}
-          # Spring
           SPRING_DATA_REDIS_HOST: redis
           SPRING_PROFILES_ACTIVE: ${{ secrets.SPRING_PROFILES_ACTIVE }}
-          # Jwt
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -63,6 +67,7 @@ jobs:
             DISCORD_TOKEN_URI,
             DISCORD_USER_URI,
             DISCORD_GUILDS_URI,
+            DISCORD_GUILD_INFO_URI,
             FRONT_REDIRECT_URI,
             REGISTER_URI,
             JWT_SECRET,
@@ -71,5 +76,6 @@ jobs:
           script: |
             set -euo pipefail
             cd /home/elaina/dockers/WebUI_BE/service
-            docker compose down
-            docker compose up -d --build
+            docker compose config --quiet
+            docker compose up -d --build --remove-orphans
+            docker compose ps

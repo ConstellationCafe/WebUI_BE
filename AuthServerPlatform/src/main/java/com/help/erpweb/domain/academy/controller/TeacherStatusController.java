@@ -2,14 +2,18 @@ package com.help.erpweb.domain.academy.controller;
 
 import com.help.erpweb.domain.academy.service.TeacherStatusService;
 import com.help.global.common.response.ApiResponse;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/academy/teacher-status")
+@Validated
 public class TeacherStatusController {
     private final TeacherStatusService teacherStatusService;
 
@@ -53,8 +57,8 @@ public class TeacherStatusController {
             @RequestParam(required = false) Integer classId,
             @RequestParam(required = false) String academyMemberId,
             @RequestParam(required = false) String status,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
         log.info(
                 "[GET] /api/academy/teacher-status " +
