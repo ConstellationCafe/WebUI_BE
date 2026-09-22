@@ -42,7 +42,6 @@ discord:
   token-uri: ${DISCORD_TOKEN_URI}
   user-uri: ${DISCORD_USER_URI}
   guilds-uri: ${DISCORD_GUILDS_URI}
-  guild-info-uri: ${DISCORD_GUILD_INFO_URI}
   redirect-uri: ${DISCORD_REDIRECT_URI}
 
 front:
