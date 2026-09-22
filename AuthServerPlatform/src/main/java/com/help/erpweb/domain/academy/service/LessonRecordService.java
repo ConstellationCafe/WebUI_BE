@@ -57,21 +57,21 @@ public class LessonRecordService {
         }
         String subjectName = convertSubjectIdToName(subject);
         String targetTeacherId = teacherId;
-        // ADMIN → 기존 조회 유지
+        // ADMIN â ê¸°ì¡´ ì¡°í ì ì§
         if (academyAuthorization.hasGlobalAccess(authentication)) {
-            // targetTeacherId 그대로 사용
+            // targetTeacherId ê·¸ëë¡ ì¬ì©
         }
-        // ACADEMY_OWNER → 기존 조회 유지
+        // ACADEMY_OWNER â ê¸°ì¡´ ì¡°í ì ì§
         else if (academyAuthorization.isOwner(
                 authentication,
                 academyId
         )) {
-            // targetTeacherId 그대로 사용
+            // targetTeacherId ê·¸ëë¡ ì¬ì©
         }
-        // 그 외
+        // ê·¸ ì¸
         else {
             String discordId = authentication.getName();
-            // TEACHER는 요청 teacherId와 상관없이 자기 자신으로 강제
+            // TEACHERë ìì²­ teacherIdì ìê´ìì´ ìê¸° ìì ì¼ë¡ ê°ì 
             targetTeacherId = academyMemberRepository
                     .findTeacherSk(
                             discordId,
@@ -79,7 +79,7 @@ public class LessonRecordService {
                     )
                     .orElseThrow(() ->
                             new AccessDeniedException(
-                                    "수업 기록을 조회할 권한이 없습니다."
+                                    "ìì ê¸°ë¡ì ì¡°íí  ê¶íì´ ììµëë¤."
                             )
                     );
         }
@@ -108,7 +108,7 @@ public class LessonRecordService {
             );
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(
-                    "올바르지 않은 분반입니다. className="
+                    "ì¬ë°ë¥´ì§ ìì ë¶ë°ìëë¤. className="
                             + request.className()
             );
         }
@@ -121,7 +121,7 @@ public class LessonRecordService {
                         )
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
-                                        "존재하지 않는 분반입니다. academyId="
+                                        "ì¡´ì¬íì§ ìë ë¶ë°ìëë¤. academyId="
                                                 + request.academyId()
                                                 + ", className="
                                                 + request.className()
@@ -156,9 +156,9 @@ public class LessonRecordService {
         }
 
         return switch (subjectId.trim()) {
-            case "1" -> "로테이션";
-            case "2" -> "언리미티드";
-            case "3" -> "스타터";
+            case "1" -> "ë¡íì´ì";
+            case "2" -> "ì¸ë¦¬ë¯¸í°ë";
+            case "3" -> "ì¤íí°";
             default -> subjectId.trim();
         };
     }

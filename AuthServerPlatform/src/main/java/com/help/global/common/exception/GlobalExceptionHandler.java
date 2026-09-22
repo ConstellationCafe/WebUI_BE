@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 public class GlobalExceptionHandler {
 	@ExceptionHandler(UsernameNotFoundException.class)
 	public ResponseEntity<ApiResponse<?>> handleUsernameNotFoundException(final UsernameNotFoundException ex) {
-		log.warn("인증 사용자 조회에 실패했습니다");
+		log.warn("ì¸ì¦ ì¬ì©ì ì¡°íì ì¤í¨íìµëë¤");
 		return ResponseEntity
 			.status(ErrorCode.INVALID_CREDENTIALS.getStatus())
 			.body(ApiResponse.error(ErrorCode.INVALID_CREDENTIALS));
@@ -39,7 +39,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(BadCredentialsException.class)
 	public ResponseEntity<ApiResponse<?>> handleBadCredentialsException(final BadCredentialsException ex) {
-		log.warn("자격 증명 검증에 실패했습니다");
+		log.warn("ìê²© ì¦ëª ê²ì¦ì ì¤í¨íìµëë¤");
 		return ResponseEntity
 			.status(ErrorCode.INVALID_CREDENTIALS.getStatus())
 			.body(ApiResponse.error(ErrorCode.INVALID_CREDENTIALS));
@@ -81,7 +81,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ApiResponse<?>> handleValidationException(final MethodArgumentNotValidException ex) {
-		log.debug("요청 본문 검증에 실패했습니다");
+		log.debug("ìì²­ ë³¸ë¬¸ ê²ì¦ì ì¤í¨íìµëë¤");
 		final BindingResult bindingResult = ex.getBindingResult();
 		final List<FieldError> fieldErrors = bindingResult.getFieldErrors();
 
@@ -97,7 +97,7 @@ public class GlobalExceptionHandler {
 
 	@ExceptionHandler(ConstraintViolationException.class)
 	public ResponseEntity<ApiResponse<?>> handleConstraintViolationException(final ConstraintViolationException ex) {
-		log.debug("요청 파라미터 검증에 실패했습니다");
+		log.debug("ìì²­ íë¼ë¯¸í° ê²ì¦ì ì¤í¨íìµëë¤");
 		final String errorMessage = ex.getConstraintViolations().stream()
 			.findFirst()
 			.map(violation -> violation.getPropertyPath() + " " + violation.getMessage())
@@ -114,7 +114,7 @@ public class GlobalExceptionHandler {
 	) {
 		log.error("MethodArgumentTypeMismatchException : {}", ex.getMessage());
 		final String name = ex.getName();
-		final String message = String.format("%s의 형식이 잘못되었습니다", name);
+		final String message = String.format("%sì íìì´ ìëª»ëììµëë¤", name);
 
 		return ResponseEntity
 			.status(HttpStatus.BAD_REQUEST)
@@ -125,26 +125,26 @@ public class GlobalExceptionHandler {
 	public ResponseEntity<ApiResponse<?>> handleMethodValidationException(
 		final HandlerMethodValidationException ex
 	) {
-		log.debug("요청 파라미터 범위 검증에 실패했습니다");
+		log.debug("ìì²­ íë¼ë¯¸í° ë²ì ê²ì¦ì ì¤í¨íìµëë¤");
 		return ResponseEntity
 			.status(HttpStatus.BAD_REQUEST)
-			.body(ApiResponse.error("요청 파라미터 범위를 확인해주세요", HttpStatus.BAD_REQUEST));
+			.body(ApiResponse.error("ìì²­ íë¼ë¯¸í° ë²ìë¥¼ íì¸í´ì£¼ì¸ì", HttpStatus.BAD_REQUEST));
 	}
 
 	@ExceptionHandler(MissingServletRequestParameterException.class)
 	public ResponseEntity<ApiResponse<?>> handleMissingParams(final MissingServletRequestParameterException ex) {
 		log.error("MissingServletRequestParameterException : {}", ex.getMessage());
 		final String name = ex.getParameterName();
-		final String message = String.format("필수 요청 파라미터 '%s'가 누락되었습니다", name);
+		final String message = String.format("íì ìì²­ íë¼ë¯¸í° '%s'ê° ëë½ëììµëë¤", name);
 
 		return ResponseEntity
 			.status(HttpStatus.BAD_REQUEST)
 			.body(ApiResponse.error(message, HttpStatus.BAD_REQUEST));
 	}
-	
+
 	@ExceptionHandler(CustomException.class)
 	public ResponseEntity<ApiResponse<?>> handleCustomException(final CustomException ex) {
-		log.warn("처리 가능한 애플리케이션 오류: {}", ex.getErrorCode().name());
+		log.warn("ì²ë¦¬ ê°ë¥í ì íë¦¬ì¼ì´ì ì¤ë¥: {}", ex.getErrorCode().name());
 		final ErrorCode errorCode = ex.getErrorCode();
 		return ResponseEntity
 			.status(errorCode.getStatus())
@@ -154,7 +154,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(RuntimeException.class)
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 	public ApiResponse<?> unknownServerError(final RuntimeException ex) {
-		log.error("처리되지 않은 서버 오류", ex);
+		log.error("ì²ë¦¬ëì§ ìì ìë² ì¤ë¥", ex);
 		return ApiResponse.error(ErrorCode.INTERNAL_SERVER_ERROR);
 	}
 }

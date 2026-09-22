@@ -150,7 +150,7 @@ public class MusicService {
 
             results.add(
                     dto.getVideoId()
-                            + " 추천 결과 : "
+                            + " ì¶ì² ê²°ê³¼ : "
                             + result
             );
         }
@@ -208,11 +208,11 @@ public class MusicService {
         int totalCount = musicList.size();
 
         String result =
-                "총 "
+                "ì´ "
                         + totalCount
-                        + "행 중 "
+                        + "í ì¤ "
                         + delCount
-                        + "행 삭제됨";
+                        + "í ì­ì ë¨";
 
         return ApiResponse.success(result);
     }
