@@ -9,16 +9,16 @@ import lombok.*;
 @Builder
 public class LearningDto {
 
-    @NotBlank(message = "ln_key는 필수입니다.")
+    @NotBlank(message = "ln_keyë íììëë¤.")
     private String lnKey;
 
-    @NotBlank(message = "ln_value는 필수입니다.")
+    @NotBlank(message = "ln_valueë íììëë¤.")
     private String lnValue;
 
     /*
-     * API에서는 Discord ID를 사용한다.
-     * 실제 DB에는 Stored Procedure에서 SK로 변환하여 저장한다.
+     * APIììë Discord IDë¥¼ ì¬ì©íë¤.
+     * ì¤ì  DBìë Stored Procedureìì SKë¡ ë³ííì¬ ì ì¥íë¤.
      */
-    @NotBlank(message = "teacher는 필수입니다.")
+    @NotBlank(message = "teacherë íììëë¤.")
     private String teacher;
 }

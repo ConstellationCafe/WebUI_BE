@@ -96,7 +96,7 @@ public class ContentService {
                                         .cnValue(
                                                 entity.getCnValue()
                                         )
-                                        // API의 recommender는 Discord ID
+                                        // APIì recommenderë Discord ID
                                         .recommender(
                                                 entity.getRecommender()
                                         )
@@ -155,7 +155,7 @@ public class ContentService {
 
             results.add(
                     dto.getCnValue()
-                            + " 추천 결과 : "
+                            + " ì¶ì² ê²°ê³¼ : "
                             + result
             );
         }
@@ -214,11 +214,11 @@ public class ContentService {
                 contentList.size();
 
         String result =
-                "총 "
+                "ì´ "
                         + totalCount
-                        + "행 중 "
+                        + "í ì¤ "
                         + delCount
-                        + "행 삭제됨";
+                        + "í ì­ì ë¨";
 
         return ApiResponse.success(result);
     }
