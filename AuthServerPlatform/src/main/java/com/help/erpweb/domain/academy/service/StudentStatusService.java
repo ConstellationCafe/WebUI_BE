@@ -80,7 +80,7 @@ public class StudentStatusService {
                         )
                         .toList();
 
-        List<Student> studentEntities =
+        List<OptionResponse> students =
                 academyId == null || classId == null
                         ? List.of()
                         : studentRepository
@@ -89,10 +89,9 @@ public class StudentStatusService {
                                 classId
                         )
                         .stream()
+                        .map(this::toOptionResponse)
+                        .flatMap(Optional::stream)
                         .toList();
-        List<OptionResponse> students = studentEntities.isEmpty()
-                ? List.of()
-                : toOptionResponses(studentEntities);
 
         List<SubjectOptionResponse> subjects =
                 List.of(
@@ -145,12 +144,7 @@ public class StudentStatusService {
                 );
 
         List<StatusItemResponse<StudentResponse>> items =
-                studentPage
-                        .getContent()
-                        .stream()
-                        .map(this::toStatusItemResponse)
-                        .flatMap(Optional::stream)
-                        .toList();
+                toStatusItemResponses(studentPage.getContent());
 
         StudentStatusSummaryResponse summary =
                 createSummary(
@@ -310,33 +304,6 @@ public class StudentStatusService {
         );
     }
 
-    private List<OptionResponse> toOptionResponses(List<Student> students) {
-        List<String> sks = students.stream()
-                .map(Student::getSk)
-                .filter(java.util.Objects::nonNull)
-                .toList();
-        Map<String, String> discordIds = membershipRepository.findDiscordIdsBySk(sks);
-        List<String> ids = students.stream()
-                .map(Student::getSk)
-                .map(discordIds::get)
-                .filter(java.util.Objects::nonNull)
-                .distinct()
-                .toList();
-        Map<String, String> usernames = discordUserRepository.findActiveByDiscordIDIn(ids)
-                .stream()
-                .collect(Collectors.toMap(DiscordUser::getDiscordID, DiscordUser::getNickname,
-                        (first, ignored) -> first));
-        return students.stream()
-                .map(student -> {
-                    String discordId = discordIds.getOrDefault(student.getSk(), student.getSk());
-                    String username = usernames.get(discordId);
-                    return username == null ? null
-                            : new OptionResponse(student.getSk(), discordId, username);
-                })
-                .filter(java.util.Objects::nonNull)
-                .toList();
-    }
-
     private Optional<StudentResponse> toStudentResponse(
             Student student
     ) {
@@ -381,6 +348,46 @@ public class StudentStatusService {
                         student.getState()
                 )
         );
+    }
+
+    private List<StatusItemResponse<StudentResponse>> toStatusItemResponses(
+            List<Student> students
+    ) {
+        List<String> sks = students.stream()
+                .map(Student::getSk)
+                .filter(java.util.Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<String, String> discordIds = membershipRepository.findDiscordIdsBySk(sks);
+        List<String> ids = discordIds.values().stream().distinct().toList();
+        Map<String, String> usernames = discordUserRepository.findActiveByDiscordIDIn(ids)
+                .stream()
+                .collect(Collectors.toMap(DiscordUser::getDiscordID, DiscordUser::getNickname,
+                        (first, ignored) -> first));
+
+        return students.stream()
+                .map(student -> {
+                    String discordId = discordIds.get(student.getSk());
+                    String username = usernames.get(discordId);
+                    AcademyClass academyClass = student.getAcademyClass();
+                    if (student.getSk() == null || discordId == null || username == null
+                            || academyClass == null || academyClass.getAcademy() == null) {
+                        return null;
+                    }
+                    StudentResponse response = new StudentResponse(
+                            student.getSk(), discordId, username,
+                            academyClass.getAcademy().getId(), academyClass.getId(),
+                            academyClass.getClassNumber(), student.getState());
+                    AcademyResponse academy = new AcademyResponse(
+                            academyClass.getAcademy().getId(), academyClass.getAcademy().getName());
+                    StatusClassResponse classResponse = new StatusClassResponse(
+                            academyClass.getId(), String.valueOf(academyClass.getClassNumber()),
+                            academyClass.getState());
+                    return new StatusItemResponse<>(response, academy, classResponse,
+                            toStudentApiStatus(student.getState()), student.getCreateAt(), null);
+                })
+                .filter(java.util.Objects::nonNull)
+                .toList();
     }
 
     private String toStudentDbStatus(
