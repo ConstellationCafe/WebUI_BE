@@ -43,7 +43,6 @@ jobs:
           DISCORD_TOKEN_URI: ${{ secrets.DISCORD_TOKEN_URI }}
           DISCORD_USER_URI: ${{ secrets.DISCORD_USER_URI }}
           DISCORD_GUILDS_URI: ${{ secrets.DISCORD_GUILDS_URI }}
-          DISCORD_GUILD_INFO_URI: ${{ secrets.DISCORD_GUILD_INFO_URI }}
           FRONT_REDIRECT_URI: ${{ secrets.FRONT_REDIRECT_URI }}
           REGISTER_URI: ${{ secrets.REGISTER_URI }}
           SPRING_DATA_REDIS_HOST: redis
@@ -67,7 +66,6 @@ jobs:
             DISCORD_TOKEN_URI,
             DISCORD_USER_URI,
             DISCORD_GUILDS_URI,
-            DISCORD_GUILD_INFO_URI,
             FRONT_REDIRECT_URI,
             REGISTER_URI,
             JWT_SECRET,
