@@ -57,7 +57,6 @@ cd AuthServerPlatform
 | `DISCORD_TOKEN_URI` | 예 | Discord token endpoint | HTTPS URI |
 | `DISCORD_USER_URI` | 예 | Discord user endpoint | HTTPS URI |
 | `DISCORD_GUILDS_URI` | 예 | Discord guilds endpoint | HTTPS URI |
-| `DISCORD_GUILD_INFO_URI` | 예 | Discord guild detail endpoint | HTTPS URI template |
 | `FRONT_REDIRECT_URI` | 예 | 로그인 후 frontend URI | HTTPS URI |
 | `REGISTER_URI` | 예 | 가입 안내 URI | HTTPS URI |
 | `SPRING_DATA_REDIS_HOST` | 아니요 | Redis host | 기본값 `redis` |
