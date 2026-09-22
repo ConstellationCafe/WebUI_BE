@@ -25,10 +25,10 @@ public class AcademyAuthorization {
     }
 
     /**
-     * 해당 Academy의 구성원인지 확인한다.
+     * í´ë¹ Academyì êµ¬ì±ìì¸ì§ íì¸íë¤.
      *
-     * ADMIN은 모든 Academy에 접근 가능하다.
-     * ACADEMY_OWNER / TEACHER / STUDENT 모두 true가 될 수 있다.
+     * ADMINì ëª¨ë  Academyì ì ê·¼ ê°ë¥íë¤.
+     * ACADEMY_OWNER / TEACHER / STUDENT ëª¨ë trueê° ë  ì ìë¤.
      */
     public boolean isMember(
             Authentication authentication,
@@ -52,9 +52,9 @@ public class AcademyAuthorization {
     }
 
     /**
-     * 해당 Academy의 학원장인지 확인한다.
+     * í´ë¹ Academyì íìì¥ì¸ì§ íì¸íë¤.
      *
-     * ADMIN은 모든 Academy에서 학원장 권한을 가진 것으로 처리한다.
+     * ADMINì ëª¨ë  Academyìì íìì¥ ê¶íì ê°ì§ ê²ì¼ë¡ ì²ë¦¬íë¤.
      */
     public boolean isOwner(
             Authentication authentication,
@@ -79,19 +79,19 @@ public class AcademyAuthorization {
     }
 
     /**
-     * 특정 Class에 대한 관리 권한이 있는지 확인한다.
+     * í¹ì  Classì ëí ê´ë¦¬ ê¶íì´ ìëì§ íì¸íë¤.
      *
      * ADMIN
-     *      -> 모든 Academy / Class 접근 가능
+     *      -> ëª¨ë  Academy / Class ì ê·¼ ê°ë¥
      *
      * ACADEMY_OWNER
-     *      -> 자신이 학원장인 Academy의 모든 Class 접근 가능
+     *      -> ìì ì´ íìì¥ì¸ Academyì ëª¨ë  Class ì ê·¼ ê°ë¥
      *
      * TEACHER
-     *      -> 자신이 담당하는 Class만 접근 가능
+     *      -> ìì ì´ ë´ë¹íë Classë§ ì ê·¼ ê°ë¥
      *
      * STUDENT
-     *      -> 관리 권한 없음
+     *      -> ê´ë¦¬ ê¶í ìì
      */
     public boolean canManageClass(
             Authentication authentication,
@@ -108,7 +108,7 @@ public class AcademyAuthorization {
 
         String discordId = authentication.getName();
 
-        // 해당 Academy의 학원장이면 모든 Class 접근 가능
+        // í´ë¹ Academyì íìì¥ì´ë©´ ëª¨ë  Class ì ê·¼ ê°ë¥
         boolean isOwner =
                 academyMemberRepository
                         .existsByDiscordIdAndAcademyIdAndRoleName(
@@ -121,7 +121,7 @@ public class AcademyAuthorization {
             return true;
         }
 
-        // 일반 교사는 자신이 담당하는 Class만 접근 가능
+        // ì¼ë° êµì¬ë ìì ì´ ë´ë¹íë Classë§ ì ê·¼ ê°ë¥
         return academyMemberRepository
                 .existsByDiscordIdAndAcademyIdAndClassIdAndRoleName(
                         discordId,
@@ -132,16 +132,16 @@ public class AcademyAuthorization {
     }
 
     /**
-     * 해당 Class에 소속되어 있는지 확인한다.
+     * í´ë¹ Classì ììëì´ ìëì§ íì¸íë¤.
      *
      * ADMIN
-     *      -> 항상 접근 가능
+     *      -> í­ì ì ê·¼ ê°ë¥
      *
      * ACADEMY_OWNER
-     *      -> 해당 Academy의 모든 Class 접근 가능
+     *      -> í´ë¹ Academyì ëª¨ë  Class ì ê·¼ ê°ë¥
      *
      * TEACHER / STUDENT
-     *      -> 자신이 속한 Class만 접근 가능
+     *      -> ìì ì´ ìí Classë§ ì ê·¼ ê°ë¥
      */
     public boolean canAccessClass(
             Authentication authentication,
@@ -179,8 +179,8 @@ public class AcademyAuthorization {
     }
 
     /**
-     * 해당 Class의 교사인지 확인한다.
-     * ADMIN / ACADEMY_OWNER도 교사 이상 권한으로 취급한다.
+     * í´ë¹ Classì êµì¬ì¸ì§ íì¸íë¤.
+     * ADMIN / ACADEMY_OWNERë êµì¬ ì´ì ê¶íì¼ë¡ ì·¨ê¸íë¤.
      */
     public boolean isTeacherOrAbove(
             Authentication authentication
@@ -188,7 +188,7 @@ public class AcademyAuthorization {
         if (!isAuthenticated(authentication)) {
             return false;
         }
-        // 전역 ADMIN
+        // ì ì­ ADMIN
         if (isAdmin(authentication)) {
             return true;
         }

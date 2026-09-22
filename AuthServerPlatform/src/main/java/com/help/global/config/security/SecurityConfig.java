@@ -49,16 +49,16 @@ public class SecurityConfig {
 	public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
 		http.securityMatcher("/auth/**");
 
-		http.csrf(AbstractHttpConfigurer::disable);  // CSRF 비활성화 (JWT 기반)
+		http.csrf(AbstractHttpConfigurer::disable);  // CSRF ë¹íì±í (JWT ê¸°ë°)
 		http.sessionManagement(session -> session
 			.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-		);  // 세션 생성 x, JWT로만 인증
-		http.cors(corsCustomizer -> corsCustomizer.configurationSource(configurationSource()));  // 커스텀 CORS
-		http.formLogin(AbstractHttpConfigurer::disable);  // login 폼 기반 인증 x
+		);  // ì¸ì ìì± x, JWTë¡ë§ ì¸ì¦
+		http.cors(corsCustomizer -> corsCustomizer.configurationSource(configurationSource()));  // ì»¤ì¤í CORS
+		http.formLogin(AbstractHttpConfigurer::disable);  // login í¼ ê¸°ë° ì¸ì¦ x
 
-		http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());  // 인가 설정
+		http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());  // ì¸ê° ì¤ì 
 		http.addFilterBefore(authServerJwtAuthFilter, ExceptionTranslationFilter.class)
-			.addFilterBefore(emailVerificationFilter, AuthServerJwtAuthFilter.class);  // 인증 필터 구성
+			.addFilterBefore(emailVerificationFilter, AuthServerJwtAuthFilter.class);  // ì¸ì¦ íí° êµ¬ì±
 		return http.build();
 	}
 
@@ -106,9 +106,9 @@ public class SecurityConfig {
 	public CorsConfigurationSource configurationSource() {
 		final CorsConfiguration configuration = new CorsConfiguration();
 
-		// 프론트엔드 서버 주소
+		// íë¡ í¸ìë ìë² ì£¼ì
 		configuration.setAllowedOriginPatterns(List.of(redirectUri));
-		
+
 		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 		configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 		configuration.setExposedHeaders(List.of("Authorization"));

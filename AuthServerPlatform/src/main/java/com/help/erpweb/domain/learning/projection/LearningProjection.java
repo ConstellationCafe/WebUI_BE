@@ -12,8 +12,8 @@ public class LearningProjection {
     private String lnValue;
 
     /*
-     * DB의 teacher(SK)를 JOIN하여 얻은 Discord ID.
-     * API에서는 이 값을 teacher로 사용한다.
+     * DBì teacher(SK)ë¥¼ JOINíì¬ ì»ì Discord ID.
+     * APIììë ì´ ê°ì teacherë¡ ì¬ì©íë¤.
      */
     private String teacher;
 }

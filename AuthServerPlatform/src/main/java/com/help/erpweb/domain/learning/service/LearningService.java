@@ -49,12 +49,12 @@ public class LearningService {
         String teacher = null;
 
         /*
-         * 일반 사용자:
-         * 자신의 데이터만 조회
+         * ì¼ë° ì¬ì©ì:
+         * ìì ì ë°ì´í°ë§ ì¡°í
          *
-         * 관리자:
+         * ê´ë¦¬ì:
          * teacher = null
-         * 전체 조회
+         * ì ì²´ ì¡°í
          */
         if (!authorization.isAdmin(user)) {
             teacher = findSkByDiscordId(
@@ -63,7 +63,7 @@ public class LearningService {
         }
 
         /*
-         * DB metadata 조회
+         * DB metadata ì¡°í
          */
         List<ColumnMetaDto> metadata =
                 learningRepository
@@ -88,7 +88,7 @@ public class LearningService {
                         .toList();
 
         /*
-         * 검색/정렬 허용 컬럼
+         * ê²ì/ì ë ¬ íì© ì»¬ë¼
          */
         Set<String> allowedColumns =
                 metadata.stream()
@@ -100,8 +100,8 @@ public class LearningService {
                         );
 
         /*
-         * API page는 1-based
-         * Repository page는 0-based
+         * API pageë 1-based
+         * Repository pageë 0-based
          */
         Page<LearningProjection> learningPage =
                 learningRepository.findPage(
@@ -116,8 +116,8 @@ public class LearningService {
                 );
 
         /*
-         * Projection.teacher에는
-         * SK가 아니라 Discord ID가 들어 있다.
+         * Projection.teacherìë
+         * SKê° ìëë¼ Discord IDê° ë¤ì´ ìë¤.
          */
         List<LearningDto> learningList =
                 learningPage
@@ -200,16 +200,16 @@ public class LearningService {
         for (LearningDto dto : learningList) {
 
             /*
-             * dto.teacher는 Discord ID
+             * dto.teacherë Discord ID
              *
-             * Stored Procedure 내부에서:
+             * Stored Procedure ë´ë¶ìì:
              *
              * search_sk(
              *     "discord",
              *     dto.teacher
              * )
              *
-             * 를 통해 SK로 변환한다.
+             * ë¥¼ íµí´ SKë¡ ë³ííë¤.
              */
             String result =
                     learningRepository.callLearningProcedure(
@@ -221,7 +221,7 @@ public class LearningService {
 
             results.add(
                     dto.getLnKey()
-                            + " 학습 결과 : "
+                            + " íìµ ê²°ê³¼ : "
                             + result
             );
         }
@@ -247,17 +247,17 @@ public class LearningService {
         int deleteCount = 0;
 
         /*
-         * teacher를 사용자가 수정할 수 있으므로
-         * 모든 행의 teacher가 같다고 가정하면 안 된다.
+         * teacherë¥¼ ì¬ì©ìê° ìì í  ì ìì¼ë¯ë¡
+         * ëª¨ë  íì teacherê° ê°ë¤ê³  ê°ì íë©´ ì ëë¤.
          *
-         * 각 삭제 대상마다:
+         * ê° ì­ì  ëìë§ë¤:
          *
          * Discord ID
-         *      ↓
+         *      â
          * search_sk()
-         *      ↓
+         *      â
          * SK
-         *      ↓
+         *      â
          * deleteByLnKey()
          */
         for (LearningDto dto : learningList) {
@@ -279,11 +279,11 @@ public class LearningService {
         }
 
         String result =
-                "총 "
+                "ì´ "
                         + learningList.size()
-                        + "행 중 "
+                        + "í ì¤ "
                         + deleteCount
-                        + "행 삭제됨";
+                        + "í ì­ì ë¨";
 
         return ApiResponse.success(
                 result
@@ -291,9 +291,9 @@ public class LearningService {
     }
 
     /*
-     * Discord ID → Users.sk
+     * Discord ID â Users.sk
      *
-     * 기존 DB 함수 재사용
+     * ê¸°ì¡´ DB í¨ì ì¬ì¬ì©
      */
     private String findSkByDiscordId(
             String discordId
@@ -318,7 +318,7 @@ public class LearningService {
 
         if (result == null) {
             throw new IllegalArgumentException(
-                    "존재하지 않는 Discord ID입니다: "
+                    "ì¡´ì¬íì§ ìë Discord IDìëë¤: "
                             + discordId
             );
         }
