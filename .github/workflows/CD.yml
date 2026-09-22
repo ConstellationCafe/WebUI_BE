@@ -74,6 +74,6 @@ jobs:
           script: |
             set -euo pipefail
             cd /home/elaina/dockers/WebUI_BE/service
-            docker compose config --quiet
-            docker compose up -d --build --remove-orphans
-            docker compose ps
+            docker compose -p webui-be config --quiet
+            docker compose -p webui-be up -d --build --remove-orphans
+            docker compose -p webui-be ps
