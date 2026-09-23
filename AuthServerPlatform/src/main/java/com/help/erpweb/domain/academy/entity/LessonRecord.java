@@ -9,6 +9,7 @@ import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Getter
 @Entity
@@ -36,6 +37,12 @@ public class LessonRecord {
     @Column(name = "education_date", nullable = false)
     private LocalDateTime educationDate;
 
+    @Column(name = "start_time")
+    private LocalTime startTime;
+
+    @Column(name = "end_time")
+    private LocalTime endTime;
+
     @Column(name = "education_duration", nullable = false)
     private Integer educationDuration;
 
@@ -58,6 +65,8 @@ public class LessonRecord {
             String className,
             String subject,
             LocalDateTime educationDate,
+            LocalTime startTime,
+            LocalTime endTime,
             Integer educationDuration,
             String mainTeacherId,
             JsonNode coTeacherIds,
@@ -68,6 +77,8 @@ public class LessonRecord {
         this.className = className;
         this.subject = subject;
         this.educationDate = educationDate;
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.educationDuration = educationDuration;
         this.mainTeacherId = mainTeacherId;
         this.coTeacherIds = coTeacherIds;

@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -138,6 +139,8 @@ public class LessonRecordService {
                 ),
                 subjectName,
                 request.educationDate(),
+                request.startTime(),
+                request.endTime(),
                 request.educationDuration(),
                 request.mainTeacherId(),
                 objectMapper.valueToTree(
@@ -178,6 +181,8 @@ public class LessonRecordService {
                 projection.getClassName(),
                 projection.getSubject(),
                 projection.getEducationDate(),
+                projection.getStartTime(),
+                projection.getEndTime(),
                 projection.getEducationDuration(),
                 teacherName,
                 projection.getDescription(),
