@@ -15,6 +15,7 @@ public interface LessonRecordRepository
     @Query(value = """
         SELECT
             lr.lr_id AS id,
+            lr.a_id AS academyId,
             a.name AS academyName,
             lr.class_name AS className,
             lr.subject AS subject,
@@ -102,6 +103,8 @@ public interface LessonRecordRepository
     interface LessonRecordSummaryProjection {
 
         Long getId();
+
+        Integer getAcademyId();
 
         String getAcademyName();
 

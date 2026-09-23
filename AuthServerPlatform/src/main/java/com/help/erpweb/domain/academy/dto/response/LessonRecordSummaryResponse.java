@@ -14,6 +14,7 @@ public record LessonRecordSummaryResponse(
         Integer educationDuration,
         String mainTeacherName,
         String description,
-        Integer memberCount
+        Integer memberCount,
+        boolean canModify
 ) {
 }

@@ -5,6 +5,7 @@ import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
 import com.help.erpweb.domain.academy.authorization.AcademyAuthorization;
 import com.help.erpweb.domain.academy.dto.request.LessonRecordCreateRequest;
+import com.help.erpweb.domain.academy.dto.request.LessonRecordUpdateRequest;
 import com.help.erpweb.domain.academy.dto.response.LessonRecordSummaryResponse;
 import com.help.erpweb.domain.academy.entity.LessonRecord;
 import com.help.erpweb.domain.academy.entity.AcademyClass;
@@ -16,6 +17,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
@@ -95,7 +98,14 @@ public class LessonRecordService {
                         normalize(targetTeacherId)
                 )
                 .stream()
-                .map(this::toResponse)
+                .map(projection -> toResponse(
+                        projection,
+                        canModifyLessonRecord(
+                                authentication,
+                                projection.getAcademyId(),
+                                projection.getMainTeacherId()
+                        )
+                ))
                 .toList();
     }
 
@@ -154,6 +164,75 @@ public class LessonRecordService {
         lessonRecordRepository.save(lessonRecord);
     }
 
+    @Transactional
+    public void updateLessonRecord(
+            Authentication authentication,
+            Long id,
+            LessonRecordUpdateRequest request
+    ) {
+        LessonRecord lessonRecord = getAuthorizedLessonRecord(authentication, id);
+        lessonRecord.updateDetails(
+                request.subject(),
+                request.educationDate(),
+                request.startTime(),
+                request.endTime(),
+                request.educationDuration(),
+                request.description()
+        );
+    }
+
+    @Transactional
+    public void deleteLessonRecord(Authentication authentication, Long id) {
+        lessonRecordRepository.delete(
+                getAuthorizedLessonRecord(authentication, id)
+        );
+    }
+
+    private LessonRecord getAuthorizedLessonRecord(
+            Authentication authentication,
+            Long id
+    ) {
+        LessonRecord lessonRecord = lessonRecordRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Lesson record not found"
+                ));
+
+        if (!canModifyLessonRecord(
+                authentication,
+                lessonRecord.getAcademyId(),
+                lessonRecord.getMainTeacherId()
+        )) {
+            throw new AccessDeniedException(
+                    "You do not have permission to modify this lesson record"
+            );
+        }
+
+        return lessonRecord;
+    }
+
+    private boolean canModifyLessonRecord(
+            Authentication authentication,
+            Integer academyId,
+            String mainTeacherId
+    ) {
+        if (academyAuthorization.hasGlobalAccess(authentication)
+                || academyAuthorization.isOwner(authentication, academyId)) {
+            return true;
+        }
+
+        if (authentication == null || authentication.getName() == null) {
+            return false;
+        }
+
+        return academyMemberRepository.findTeacherSk(
+                        authentication.getName(),
+                        academyId
+                )
+                .filter(mainTeacherId::equals)
+                .isPresent();
+    }
+
     private String convertSubjectIdToName(String subjectId) {
         if (subjectId == null || subjectId.isBlank()) {
             return null;
@@ -168,7 +247,8 @@ public class LessonRecordService {
     }
 
     private LessonRecordSummaryResponse toResponse(
-            LessonRecordRepository.LessonRecordSummaryProjection projection
+            LessonRecordRepository.LessonRecordSummaryProjection projection,
+            boolean canModify
     ) {
         String teacherName =
                 findTeacherName(
@@ -188,7 +268,8 @@ public class LessonRecordService {
                 projection.getDescription(),
                 projection.getMemberCount() != null
                         ? projection.getMemberCount()
-                        : 0
+                        : 0,
+                canModify
         );
     }
 
