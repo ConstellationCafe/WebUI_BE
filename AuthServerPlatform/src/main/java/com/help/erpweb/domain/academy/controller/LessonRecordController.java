@@ -1,6 +1,7 @@
 package com.help.erpweb.domain.academy.controller;
 
 import com.help.erpweb.domain.academy.dto.request.LessonRecordCreateRequest;
+import com.help.erpweb.domain.academy.dto.request.LessonRecordUpdateRequest;
 import com.help.erpweb.domain.academy.dto.response.LessonRecordSummaryResponse;
 import com.help.erpweb.domain.academy.service.LessonRecordService;
 import com.help.global.common.response.ApiResponse;
@@ -45,6 +46,27 @@ public class LessonRecordController {
                 academyId,
                 classId
         );
+    }
+
+    @PreAuthorize("@academyAuth.isTeacherOrAbove(authentication)")
+    @PutMapping("/lesson-record/{id}")
+    public ApiResponse<?> updateLessonRecord(
+            Authentication authentication,
+            @PathVariable Long id,
+            @RequestBody LessonRecordUpdateRequest request
+    ) {
+        lessonRecordService.updateLessonRecord(authentication, id, request);
+        return ApiResponse.success(null);
+    }
+
+    @PreAuthorize("@academyAuth.isTeacherOrAbove(authentication)")
+    @DeleteMapping("/lesson-record/{id}")
+    public ApiResponse<?> deleteLessonRecord(
+            Authentication authentication,
+            @PathVariable Long id
+    ) {
+        lessonRecordService.deleteLessonRecord(authentication, id);
+        return ApiResponse.success(null);
     }
 
     @PreAuthorize("@academyAuth.isTeacherOrAbove(authentication)")

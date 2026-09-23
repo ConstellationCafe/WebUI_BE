@@ -60,6 +60,22 @@ public class LessonRecord {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    public void updateDetails(
+            String subject,
+            LocalDateTime educationDate,
+            LocalTime startTime,
+            LocalTime endTime,
+            Integer educationDuration,
+            String description
+    ) {
+        this.subject = subject;
+        this.educationDate = educationDate;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.educationDuration = educationDuration;
+        this.description = description;
+    }
+
     public LessonRecord(
             Integer academyId,
             String className,
