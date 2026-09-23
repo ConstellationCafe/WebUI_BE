@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 public interface LessonRecordRepository
@@ -14,10 +15,13 @@ public interface LessonRecordRepository
     @Query(value = """
         SELECT
             lr.lr_id AS id,
+            lr.a_id AS academyId,
             a.name AS academyName,
             lr.class_name AS className,
             lr.subject AS subject,
             DATE(lr.education_date) AS educationDate,
+            lr.start_time AS startTime,
+            lr.end_time AS endTime,
             lr.education_duration AS educationDuration,
             lr.main_teacher_id AS mainTeacherId,
             lr.description AS description,
@@ -100,6 +104,8 @@ public interface LessonRecordRepository
 
         Long getId();
 
+        Integer getAcademyId();
+
         String getAcademyName();
 
         String getClassName();
@@ -107,6 +113,10 @@ public interface LessonRecordRepository
         String getSubject();
 
         LocalDate getEducationDate();
+
+        LocalTime getStartTime();
+
+        LocalTime getEndTime();
 
         Integer getEducationDuration();
 
