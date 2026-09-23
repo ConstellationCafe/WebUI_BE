@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 
 @Service
@@ -71,17 +72,18 @@ public class LessonRecordService {
         // ê·¸ ì¸
         else {
             String discordId = authentication.getName();
-            // TEACHERë ìì²­ teacherIdì ìê´ìì´ ìê¸° ìì ì¼ë¡ ê°ì 
+            // TEACHERë ìì²­ teacherIdì ìê´ìì´ ìê¸° ìì ì¼ë¡ ê°•ì 
             targetTeacherId = academyMemberRepository
                     .findTeacherSk(
                             discordId,
                             academyId
                     )
-                    .orElseThrow(() ->
-                            new AccessDeniedException(
-                                    "ìì ê¸°ë¡ì ì¡°íí  ê¶íì´ ììµëë¤."
-                            )
-                    );
+                    .orElse(null);
+
+            // 교사에게 아직 수업 기록이 없으면 빈 목록으로 응답한다.
+            if (targetTeacherId == null) {
+                return List.of();
+            }
         }
         return lessonRecordRepository
                 .findLessonRecordSummaries(
@@ -137,6 +139,8 @@ public class LessonRecordService {
                 ),
                 subjectName,
                 request.educationDate(),
+                request.startTime(),
+                request.endTime(),
                 request.educationDuration(),
                 request.mainTeacherId(),
                 objectMapper.valueToTree(
@@ -177,6 +181,8 @@ public class LessonRecordService {
                 projection.getClassName(),
                 projection.getSubject(),
                 projection.getEducationDate(),
+                projection.getStartTime(),
+                projection.getEndTime(),
                 projection.getEducationDuration(),
                 teacherName,
                 projection.getDescription(),
