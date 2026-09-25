@@ -3,6 +3,8 @@ package com.help.erpweb.domain.membership.repository;
 import com.help.erpweb.domain.membership.dto.response.AdminPointLogResponse;
 import com.help.erpweb.domain.membership.dto.response.AdminPointMemberResponse;
 import com.help.erpweb.domain.membership.exception.ActiveMemberNotFoundException;
+import com.help.erpweb.domain.membership.exception.PointLogConflictException;
+import com.help.erpweb.domain.membership.exception.PointLogNotFoundException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.sql.Timestamp;
@@ -94,7 +96,7 @@ public class AdminPointRepository {
                             ON d.discordID = u.discordID
                         WHERE u.discordID = :discordId
                           AND d.state = :state
-                        ORDER BY p.at DESC
+                        ORDER BY p.at DESC, p.amount DESC
                         """)
                 .setParameter("discordId", discordId)
                 .setParameter("state", ACTIVE_STATE)
@@ -175,6 +177,61 @@ public class AdminPointRepository {
                 .setParameter("at", at)
                 .setParameter("description", description)
                 .executeUpdate();
+    }
+
+    public AdminPointLogResponse lockLog(String sk, int amount, LocalDateTime at) {
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = entityManager.createNativeQuery("""
+                        SELECT amount, at, description
+                        FROM Constellation_Network.PayLog
+                        WHERE sk = :sk AND amount = :amount AND at = :at
+                        FOR UPDATE
+                        """)
+                .setParameter("sk", sk)
+                .setParameter("amount", amount)
+                .setParameter("at", at)
+                .getResultList();
+        if (rows.isEmpty()) {
+            throw new PointLogNotFoundException();
+        }
+        return toLogResponse(rows.get(0));
+    }
+
+    public void updateLog(
+            String sk,
+            int originalAmount,
+            LocalDateTime at,
+            int amount,
+            String description
+    ) {
+        int changed = entityManager.createNativeQuery("""
+                        UPDATE Constellation_Network.PayLog
+                        SET amount = :amount, description = :description
+                        WHERE sk = :sk AND amount = :originalAmount AND at = :at
+                        """)
+                .setParameter("amount", amount)
+                .setParameter("description", description)
+                .setParameter("sk", sk)
+                .setParameter("originalAmount", originalAmount)
+                .setParameter("at", at)
+                .executeUpdate();
+        if (changed != 1) {
+            throw new PointLogConflictException();
+        }
+    }
+
+    public void deleteLog(String sk, int amount, LocalDateTime at) {
+        int changed = entityManager.createNativeQuery("""
+                        DELETE FROM Constellation_Network.PayLog
+                        WHERE sk = :sk AND amount = :amount AND at = :at
+                        """)
+                .setParameter("sk", sk)
+                .setParameter("amount", amount)
+                .setParameter("at", at)
+                .executeUpdate();
+        if (changed != 1) {
+            throw new PointLogConflictException();
+        }
     }
 
     private String normalizeSearch(String discordId) {

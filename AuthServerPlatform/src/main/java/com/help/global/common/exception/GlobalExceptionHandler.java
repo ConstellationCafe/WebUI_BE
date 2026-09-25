@@ -4,6 +4,9 @@ import java.util.List;
 
 import com.help.erpweb.domain.membership.exception.ActiveMemberNotFoundException;
 import com.help.erpweb.domain.membership.exception.InsufficientCoinException;
+import com.help.erpweb.domain.membership.exception.PointBalanceLimitException;
+import com.help.erpweb.domain.membership.exception.PointLogConflictException;
+import com.help.erpweb.domain.membership.exception.PointLogNotFoundException;
 import com.help.global.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,17 +34,21 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-	@ExceptionHandler(ActiveMemberNotFoundException.class)
+	@ExceptionHandler({ActiveMemberNotFoundException.class, PointLogNotFoundException.class})
 	public ResponseEntity<ApiResponse<?>> handleActiveMemberNotFoundException(
-		final ActiveMemberNotFoundException ex
+		final RuntimeException ex
 	) {
 		return ResponseEntity
 			.status(HttpStatus.NOT_FOUND)
 			.body(ApiResponse.error(ex.getMessage(), HttpStatus.NOT_FOUND));
 	}
 
-	@ExceptionHandler(InsufficientCoinException.class)
-	public ResponseEntity<ApiResponse<?>> handleInsufficientCoinException(final InsufficientCoinException ex) {
+	@ExceptionHandler({
+		InsufficientCoinException.class,
+		PointBalanceLimitException.class,
+		PointLogConflictException.class
+	})
+	public ResponseEntity<ApiResponse<?>> handleInsufficientCoinException(final RuntimeException ex) {
 		return ResponseEntity
 			.status(HttpStatus.CONFLICT)
 			.body(ApiResponse.error(ex.getMessage(), HttpStatus.CONFLICT));
