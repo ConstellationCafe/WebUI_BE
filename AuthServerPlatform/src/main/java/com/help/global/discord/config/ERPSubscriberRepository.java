@@ -1,6 +1,5 @@
-package com.help.authserver.domain.user.repository.config;
+package com.help.global.discord.config;
 
-import com.help.authserver.domain.user.entity.config.ErpSubscriber;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -8,6 +7,6 @@ import java.util.Optional;
 
 public interface ERPSubscriberRepository extends JpaRepository<ErpSubscriber, String> {
     List<ErpSubscriber> findByGuildIdIn(List<String> guildIds);
-    List<ErpSubscriber> findByDiscordId(String discordId);  // ììë¡ ë§ë  ê¸°ë¥
+    List<ErpSubscriber> findByDiscordId(String discordId);
     Optional<ErpSubscriber> findByGuildId(String guildId);
 }

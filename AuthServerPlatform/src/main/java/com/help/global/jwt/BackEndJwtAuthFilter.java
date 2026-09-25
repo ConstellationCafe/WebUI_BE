@@ -1,9 +1,7 @@
 package com.help.global.jwt;
 
-//import com.help.authserver.domain.user.entity.constellation.EmailUser;
-import com.help.authserver.domain.user.entity.constellation.DiscordUser;
-import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
-//import com.help.authserver.domain.user.repository.UserRepository;
+import com.help.global.discord.constellation.DiscordUser;
+import com.help.global.discord.constellation.DiscordUserRepository;
 import com.help.global.guild.GuildContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -112,7 +110,12 @@ public class BackEndJwtAuthFilter extends OncePerRequestFilter {
 	}
 
 	private void saveAuthentication(final DiscordUser discordUser) {
-		final UserDetails userDetails = CustomUser.from(discordUser);
+		final UserDetails userDetails = CustomUser.of(
+			discordUser.getUsername(),
+			discordUser.getPassword(),
+			discordUser.getRoleName(),
+			null
+		);
 		final Authentication authentication =
 			new UsernamePasswordAuthenticationToken(
 				userDetails,

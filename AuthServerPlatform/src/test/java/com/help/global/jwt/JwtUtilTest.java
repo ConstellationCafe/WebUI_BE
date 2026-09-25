@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 
-import com.help.authserver.domain.user.entity.constellation.DiscordUser;
+import com.help.global.discord.constellation.DiscordUser;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,8 +29,13 @@ class JwtUtilTest {
         ReflectionTestUtils.setField(jwtUtil, "activeProfiles", "dev");
         jwtUtil.init();
 
-        user = CustomUser.from(
-                DiscordUser.of("test-bot", "discord-user", List.of("서버장"))
+        DiscordUser discordUser =
+                DiscordUser.of("test-bot", "discord-user", List.of("서버장"));
+        user = CustomUser.of(
+                discordUser.getUsername(),
+                discordUser.getPassword(),
+                discordUser.getRoleName(),
+                null
         );
     }
 

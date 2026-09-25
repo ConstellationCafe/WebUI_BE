@@ -1,4 +1,4 @@
-package com.help.authserver.domain.user.entity.config;
+package com.help.global.discord.config;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,6 +10,11 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * authserver/erpweb 서비스 분리 준비로 com.help.global 아래로 옮겨왔다.
+ * 로그인(guildId -> botId 조회)과 erpweb academy 도메인(등록된 guild 확인)
+ * 양쪽에서 읽는다.
+ */
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor

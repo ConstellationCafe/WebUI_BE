@@ -30,23 +30,24 @@ public class CustomUser extends User {
 		super(username, password, authorities);  // username = discordId
 	}
 
-	// User 인터페이스로부터 생성
-	public static CustomUser from(final com.help.authserver.domain.user.entity.constellation.User user) {
+	// authserver/erpweb 서비스 분리 준비: CustomUser(global)가 authserver의
+	// User 인터페이스에 의존하지 않도록, 필요한 원시 값만 받는 팩토리로 바꼈다.
+	// 예전 CustomUser.from(User)는 global -> authserver 방향의 의존이었다.
+	public static CustomUser of(
+		final String username,
+		final String password,
+		final String roleName,
+		final UUID userId
+	) {
 		final List<GrantedAuthority> authorities = new ArrayList<>();
-		authorities.add(
-				new SimpleGrantedAuthority(
-						user
-						.getRole()  // UserRole
-						.getRoleName()  // String
-				)
-		);
+		authorities.add(new SimpleGrantedAuthority(roleName));
+
 		final CustomUser customUser = new CustomUser(
-			user.getUsername(),
-			user.getPassword(),
+			username,
+			password,
 			authorities
 		);
-		customUser.setUserId(user.getUserId());
-//		customUser.setNickname(user.getUserProfile().getNickname());  // DiscordUser는 Profile이 없음
+		customUser.setUserId(userId);
 
 		return customUser;
 	}

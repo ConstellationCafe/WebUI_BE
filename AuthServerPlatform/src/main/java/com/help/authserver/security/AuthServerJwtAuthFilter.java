@@ -1,13 +1,15 @@
-package com.help.global.jwt;
+package com.help.authserver.security;
 
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import com.help.authserver.domain.user.entity.constellation.DiscordUser;
-import com.help.authserver.domain.user.entity.constellation.User;
-import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
+import com.help.authserver.domain.user.entity.SessionInfo;
 import com.help.authserver.domain.user.repository.SessionRepository;
+import com.help.global.discord.constellation.DiscordUser;
+import com.help.global.discord.constellation.DiscordUserRepository;
+import com.help.global.jwt.CustomUser;
+import com.help.global.jwt.JwtUtil;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,8 +26,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import com.help.authserver.domain.user.entity.SessionInfo;
-
+/**
+ * authserver/erpweb 서비스 분리 준비: 이 필터는 authserver의 로그인 세션
+ * (SessionRepository/SessionInfo)에만 의존하고 /auth/** 에서만 쓰인다
+ * (erpweb이 쓰는 /api/**의 인증/인가는 BackEndJwtAuthFilter가 담당,
+ * 그건 authserver에 의존하지 않으므로 com.help.global.jwt에 남아있다).
+ * 그래서 com.help.global이 아니라 com.help.authserver 아래로 옮겼다 —
+ * 예전에는 global.jwt 패키지에 있으면서 authserver의 SessionRepository/
+ * SessionInfo를 직접 import했는데, 이건 global -> authserver 방향의
+ * 의존이라 서비스 분리에 방해가 됐다.
+ */
 @RequiredArgsConstructor
 @Slf4j
 @Component
@@ -125,8 +135,13 @@ public class AuthServerJwtAuthFilter extends OncePerRequestFilter {
 		filterChain.doFilter(request, response);
 	}
 
-	private void saveAuthentication(final User user) {
-		final UserDetails userDetails = CustomUser.from(user);
+	private void saveAuthentication(final DiscordUser user) {
+		final UserDetails userDetails = CustomUser.of(
+			user.getUsername(),
+			user.getPassword(),
+			user.getRoleName(),
+			null
+		);
 		final Authentication authentication =
 			new UsernamePasswordAuthenticationToken(
 				userDetails,

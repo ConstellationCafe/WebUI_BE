@@ -1,5 +1,6 @@
-package com.help.authserver.domain.user.entity.constellation;
+package com.help.global.discord.constellation;
 
+import com.help.global.data.Authority;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -8,13 +9,22 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
+/**
+ * authserver/erpweb 서비스 분리 준비: 이 엔티티는 로그인(authserver)과
+ * 여러 erpweb 도메인 서비스(academy 등) 양쪽에서 읽으므로 com.help.global
+ * 아래로 옮겨왔다. 더 이상 authserver의 로그인 전용 User 인터페이스를
+ * 구현하지 않는다 — 그 인터페이스는 EmailUser(순수 authserver 개념)를 위한
+ * 것이었고, DiscordUser가 그걸 구현해야만 했던 유일한 이유는
+ * CustomUser.from(User)였다. CustomUser는 이제 원시 값(username/password/
+ * roleName/userId)만 받는 CustomUser.of(...)를 쓰므로 이 인터페이스가
+ * 필요 없다.
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(name = "DiscordUsers")
 @Entity
-public class DiscordUser implements User {
+public class DiscordUser {
     // ADR-0001: discordID 단독으로는 더 이상 전역 유일하지 않다 —
     // (botId, discordID) 조합으로만 유일하며, 같은 사람이 여러 방에 각각
     // 별도의 행(그리고 별도의 역할)을 가질 수 있다. JPA @Id는 단일 컬럼이
@@ -80,33 +90,27 @@ public class DiscordUser implements User {
         return new DiscordUser(botId, discordID, roles);
     }
 
-    @Override
-    public UUID getUserId() {
-        return null;
+    public String getUsername() {
+        return discordID;
     }
 
-    @Override
-    public String getUsername() { return discordID; }
+    public String getNickname() {
+        return username;
+    }
 
-    public String getNickname() { return username; }
-
-    @Override
-    public UserRole getRole() {
+    /**
+     * Spring Security authority 문자열("ROLE_ADMIN"/"ROLE_USER").
+     * 예전에는 authserver의 UserRole enum을 반환했지만(User 인터페이스
+     * 계약), 그 인터페이스를 더 이상 구현하지 않으므로 global의 Authority
+     * 상수를 직접 쓴다.
+     */
+    public String getRoleName() {
         boolean isAdmin = roles.stream()
                 .anyMatch("서버장"::equals);
-        if (isAdmin)
-            return UserRole.ADMIN;
-        else
-            return UserRole.USER;
+        return isAdmin ? Authority.ADMIN : Authority.USER;
     }
 
-    @Override
     public String getPassword() {
         return "OAUTH_USER";
-    }
-
-    @Override
-    public UserProfile getUserProfile() {
-        return null;
     }
 }

@@ -1,11 +1,13 @@
 package com.help.erpweb.domain.academy.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-// FIXME : AuthServer 패키지에서 ERPWeb 패키지로 이동 필요
-import com.help.authserver.domain.user.entity.config.ErpSubscriber;
-import com.help.authserver.domain.user.entity.constellation.DiscordUser;
-import com.help.authserver.domain.user.repository.config.ERPSubscriberRepository;
-import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
+// authserver/erpweb 서비스 분리 준비: DiscordUser/ErpSubscriber는 로그인과
+// erpweb 양쪽에서 쓰이는 공용 식별 데이터라 com.help.global.discord로 옮겼다
+// (기존 FIXME였던 "AuthServer -> ERPWeb 이동"은 이 방향으로 해결됨).
+import com.help.global.discord.config.ERPSubscriberRepository;
+import com.help.global.discord.config.ErpSubscriber;
+import com.help.global.discord.constellation.DiscordUser;
+import com.help.global.discord.constellation.DiscordUserRepository;
 import com.help.erpweb.domain.academy.authorization.AcademyAuthorization;
 import com.help.erpweb.domain.academy.dto.response.*;
 import com.help.erpweb.domain.academy.entity.*;

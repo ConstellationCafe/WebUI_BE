@@ -8,14 +8,14 @@ import com.help.authserver.domain.user.dto.response.LoginCheckResponseDto;
 import com.help.authserver.domain.user.dto.user.CurrentUserDto;
 import com.help.authserver.domain.user.dto.user.DiscordUserDto;
 import com.help.authserver.domain.user.entity.SessionInfo;
-import com.help.authserver.domain.user.entity.config.ErpSubscriber;
-import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 import com.help.authserver.domain.user.repository.SessionRepository;
-import com.help.authserver.domain.user.repository.config.ERPSubscriberRepository;
-import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
 import com.help.global.common.exception.CustomException;
 import com.help.global.common.exception.ErrorCode;
 import com.help.global.common.response.ApiResponse;
+import com.help.global.discord.config.ErpSubscriber;
+import com.help.global.discord.config.ERPSubscriberRepository;
+import com.help.global.discord.constellation.DiscordUser;
+import com.help.global.discord.constellation.DiscordUserRepository;
 import com.help.global.jwt.CustomUser;
 import com.help.global.jwt.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,7 +60,7 @@ public class DiscordAuthService implements UserDetailsService {
 
         // ADR-0001: 채팅방 선택 이전이라 botId 스코프가 없다 — 신원 확인만 수행한다.
         return userRepository.findIdentityByDiscordID(discordID)
-                .map(CustomUser::from)
+                .map(DiscordAuthService::toCustomUser)
                 .orElseThrow(() ->
                         new UsernameNotFoundException(
                                 "UserDetails creation failed. discordID="
@@ -235,6 +235,20 @@ public class DiscordAuthService implements UserDetailsService {
         }
     }
 
+    /**
+     * authserver/erpweb 서비스 분리 준비: CustomUser(global)가 더 이상
+     * authserver의 User 인터페이스를 몰라도 되도록, DiscordUser -> CustomUser
+     * 변환은 authserver 쪽(여기)에서 원시 값을 뽑아 넘기는 식으로 한다.
+     */
+    private static CustomUser toCustomUser(final DiscordUser user) {
+        return CustomUser.of(
+                user.getUsername(),
+                user.getPassword(),
+                user.getRoleName(),
+                null
+        );
+    }
+
     private DiscordUserDto getUserInfo(
             String discordAccessToken
     ) {
@@ -364,7 +378,7 @@ public class DiscordAuthService implements UserDetailsService {
 
         final String accessToken =
                 jwtUtil.createAccessToken(
-                        CustomUser.from(user),
+                        toCustomUser(user),
                         botId
                 );
 

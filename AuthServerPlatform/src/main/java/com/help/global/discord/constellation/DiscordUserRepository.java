@@ -1,6 +1,5 @@
-package com.help.authserver.domain.user.repository.constellation;
+package com.help.global.discord.constellation;
 
-import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,7 +12,7 @@ public interface DiscordUserRepository extends JpaRepository<DiscordUser, Long> 
 
     // ADR-0001: 로그인 완료(채팅방 선택) 이전, discordId 신원 확인에만 사용한다.
     // botId 스코프가 없으므로 결과의 roles(방별 admin 여부)는 신뢰할 수 없다 —
-    // 이 결과의 getRole()을 인가(authorization) 판단에 사용하지 말 것.
+    // 이 결과의 getRoleName()을 인가(authorization) 판단에 사용하지 말 것.
     // 같은 discordID로 여러 행(여러 방)이 있을 수 있으므로 임의의 한 행을 고른다.
     @EntityGraph(attributePaths = "roles")
     List<DiscordUser> findByDiscordIDOrderByIdAsc(String discordID);

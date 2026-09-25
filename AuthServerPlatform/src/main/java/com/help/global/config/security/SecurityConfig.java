@@ -1,6 +1,6 @@
 package com.help.global.config.security;
 
-import com.help.global.jwt.AuthServerJwtAuthFilter;
+import com.help.authserver.security.AuthServerJwtAuthFilter;
 import com.help.global.jwt.BackEndJwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
