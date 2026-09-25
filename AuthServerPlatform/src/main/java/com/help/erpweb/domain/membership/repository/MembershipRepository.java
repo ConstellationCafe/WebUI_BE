@@ -16,14 +16,16 @@ public class MembershipRepository {
     private EntityManager entityManager;
 
     /**
-     * ADR-0001: search_sk는 이제 botId까지 포함해 sk를 조회한다
+     * ADR-0001: 기존 search_sk(cardType, membershipId)는 봇 저장소가 그대로 쓰므로
+     * 그대로 두고, botId까지 포함해 sk를 조회하는 search_sk_by_bot(botId, cardType,
+     * membershipId)를 별도로 새로 만들어 쓴다(봇 코드와의 시그니처 충돌 회피).
      * (동일 discordId라도 bot마다 다른 sk가 나올 수 있음).
      * botId는 요청을 처리 중인 스레드의 GuildContext에서 가져온다.
      */
     public String findSkByDiscordId(String discordId) {
         return (String) entityManager
                 .createNativeQuery(
-                        "SELECT Constellation_Network.search_sk(:botId, :cardType, :membershipId)"
+                        "SELECT Constellation_Network.search_sk_by_bot(:botId, :cardType, :membershipId)"
                 )
                 .setParameter("botId", GuildContext.requireBotId())
                 .setParameter("cardType", MembershipID.discord.name())
