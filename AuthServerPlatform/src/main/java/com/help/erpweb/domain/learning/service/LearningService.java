@@ -5,6 +5,8 @@ import com.help.erpweb.domain.learning.projection.LearningProjection;
 import com.help.erpweb.domain.learning.repository.LearningRepository;
 import com.help.erpweb.domain.metadata.response.ColumnMetaDto;
 import com.help.global.authorization.Authorization;
+import com.help.global.chat.ChatIdentities;
+import com.help.global.chat.ChatUser;
 import com.help.global.common.response.ApiResponse;
 import com.help.global.data.MembershipID;
 import com.help.global.guild.GuildContext;
@@ -58,8 +60,8 @@ public class LearningService {
          * ì ì²´ ì¡°í
          */
         if (!authorization.isAdmin(user)) {
-            teacher = findSkByDiscordId(
-                    user.getUsername()
+            teacher = findSkByChatUser(
+                    ChatIdentities.fromPrincipal(user)
             );
         }
 
@@ -264,8 +266,8 @@ public class LearningService {
         for (LearningDto dto : learningList) {
 
             String teacherSk =
-                    findSkByDiscordId(
-                            dto.getTeacher()
+                    findSkByChatUser(
+                            ChatIdentities.ofDiscord(dto.getTeacher())
                     );
 
             int deleted =
@@ -292,12 +294,13 @@ public class LearningService {
     }
 
     /*
-     * Discord ID â Users.sk
+     * ChatUser -> Users.sk
      *
-     * ê¸°ì¡´ DB í¨ì ì¬ì¬ì©
+     * 기존 DB 함수 재사용. ChatUser를 받아 cardType/membershipId를 platform에서
+     * 그대로 뽑아 쓰므로 discord뿐 아니라 다른 ChatUser 구현체가 생겨도 바뀌지 않는다.
      */
-    private String findSkByDiscordId(
-            String discordId
+    private String findSkByChatUser(
+            ChatUser chatUser
     ) {
         // ADR-0001: 기존 search_sk(cardType, membershipId)는 봇 저장소가 그대로 쓰므로
         // 그대로 두고, botId까지 포함해 sk를 조회하는 search_sk_by_bot(botId, cardType,
@@ -318,18 +321,18 @@ public class LearningService {
                         )
                         .setParameter(
                                 "cardType",
-                                MembershipID.discord.name()
+                                chatUser.getPlatform().name()
                         )
                         .setParameter(
                                 "membershipId",
-                                discordId
+                                chatUser.getExternalId()
                         )
                         .getSingleResult();
 
         if (result == null) {
             throw new IllegalArgumentException(
-                    "ì¡´ì¬íì§ ìë Discord IDìëë¤: "
-                            + discordId
+                    "존재하지 않는 ID입니다: "
+                            + chatUser.getExternalId()
             );
         }
 

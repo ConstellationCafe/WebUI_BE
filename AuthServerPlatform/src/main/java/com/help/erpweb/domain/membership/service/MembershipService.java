@@ -5,6 +5,8 @@ import com.help.erpweb.domain.membership.entity.PointLogEntity;
 import com.help.erpweb.domain.membership.repository.MembershipRepository;
 import com.help.erpweb.domain.membership.repository.PointRepository;
 import com.help.erpweb.domain.metadata.response.ColumnMetaDto;
+import com.help.global.chat.ChatIdentities;
+import com.help.global.chat.ChatUser;
 import com.help.global.common.response.ApiResponse;
 import com.help.global.jwt.CustomUser;
 import jakarta.persistence.EntityManager;
@@ -35,11 +37,11 @@ public class MembershipService {
         int normalizedPage = Math.max(page, 1);
         int normalizedSize = Math.max(size, 1);
 
-        String discordId = user.getUsername();
+        ChatUser chatUser = ChatIdentities.fromPrincipal(user);
 
         String sk =
-                membershipRepository.findSkByDiscordId(
-                        discordId
+                membershipRepository.findSkByChatUser(
+                        chatUser
                 );
 
         List<ColumnMetaDto> metadata =

@@ -5,6 +5,8 @@ import com.help.erpweb.domain.music.dto.request.repository.MusicDto;
 import com.help.erpweb.domain.music.projection.MusicProjection;
 import com.help.erpweb.domain.music.repository.MusicRepository;
 import com.help.global.authorization.Authorization;
+import com.help.global.chat.ChatIdentities;
+import com.help.global.chat.ChatUser;
 import com.help.global.common.response.ApiResponse;
 import com.help.global.data.MembershipID;
 import com.help.global.guild.GuildContext;
@@ -51,8 +53,8 @@ public class MusicService {
 
         if (!authorization.isAdmin(user)) {
             recommender =
-                    findSkByDiscordId(
-                            user.getUsername()
+                    findSkByChatUser(
+                            ChatIdentities.fromPrincipal(user)
                     );
         }
 
@@ -189,8 +191,8 @@ public class MusicService {
                 : valuesByRecommender.entrySet()) {
 
             String recommenderSk =
-                    findSkByDiscordId(
-                            entry.getKey()
+                    findSkByChatUser(
+                            ChatIdentities.ofDiscord(entry.getKey())
                     );
 
             List<String> values =
@@ -223,9 +225,12 @@ public class MusicService {
      * 그대로 두고, botId까지 포함해 sk를 조회하는 search_sk_by_bot(botId, cardType,
      * membershipId)를 별도로 새로 만들어 쓴다(봇 코드와의 시그니처 충돌 회피).
      * botId는 현재 요청의 GuildContext에서 가져온다.
+     * <p>
+     * ChatUser를 받아 cardType/membershipId를 platform에서 그대로 뽑아
+     * 쓰므로 discord뿐 아니라 다른 ChatUser 구현체가 생겨도 바뀌지 않는다.
      */
-    private String findSkByDiscordId(
-            String discordId
+    private String findSkByChatUser(
+            ChatUser chatUser
     ) {
         return (String) entityManager
                 .createNativeQuery("""
@@ -241,11 +246,11 @@ public class MusicService {
                 )
                 .setParameter(
                         "cardType",
-                        MembershipID.discord.name()
+                        chatUser.getPlatform().name()
                 )
                 .setParameter(
                         "membershipId",
-                        discordId
+                        chatUser.getExternalId()
                 )
                 .getSingleResult();
     }
