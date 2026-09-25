@@ -15,6 +15,7 @@ public enum ErrorCode {
 	UNAUTHORIZED_PASSWORD_CHANGE(401, "비밀번호 변경 권한이 없습니다"),
 	UNTRUSTED_EMAIL_SERVER(403, "신뢰할 수 없는 이메일 서버입니다"),
 	GUILD_NOT_REGISTERED(403, "등록되지 않은 채팅방입니다"),
+	GUILD_MEMBER_NOT_FOUND(403, "해당 채팅방의 멤버가 아닙니다"),
 
 	USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다"),
 	NOT_FOUND(404, "페이지를 찾을 수 없습니다"),

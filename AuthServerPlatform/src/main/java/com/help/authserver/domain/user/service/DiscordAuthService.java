@@ -58,7 +58,8 @@ public class DiscordAuthService implements UserDetailsService {
             final String discordID
     ) throws UsernameNotFoundException {
 
-        return userRepository.findByDiscordID(discordID)
+        // ADR-0001: 채팅방 선택 이전이라 botId 스코프가 없다 — 신원 확인만 수행한다.
+        return userRepository.findIdentityByDiscordID(discordID)
                 .map(CustomUser::from)
                 .orElseThrow(() ->
                         new UsernameNotFoundException(
@@ -319,15 +320,6 @@ public class DiscordAuthService implements UserDetailsService {
                                 )
                         );
 
-        final DiscordUser user =
-                jwtUtil.extractUsername(refreshToken)
-                        .flatMap(userRepository::findByDiscordID)
-                        .orElseThrow(() ->
-                                new CustomException(
-                                        ErrorCode.INVALID_TOKEN
-                                )
-                        );
-
         // ADR-0001: RefreshToken이 botId를 갖고 있으면(=채팅방을 선택한 뒤
         // 재발급하는 경우) 새 AccessToken에도 그대로 실어준다. 없으면
         // 여전히 "선택 대기" 상태이므로 botId 없이 재발급한다.
@@ -335,7 +327,26 @@ public class DiscordAuthService implements UserDetailsService {
                 jwtUtil.extractBotId(refreshToken)
                         .orElse(null);
 
-        String username = user.getDiscordID();
+        final String username =
+                jwtUtil.extractUsername(refreshToken)
+                        .orElseThrow(() ->
+                                new CustomException(
+                                        ErrorCode.INVALID_TOKEN
+                                )
+                        );
+
+        // admin 여부(roles)가 방(botId) 단위로 갈리므로, 선택된 방이 있으면
+        // 반드시 그 방으로 스코프해서 조회한다. 스코프 없이 조회하면 임의의
+        // 방(다른 방)의 roles를 CustomUser에 실어버릴 수 있다.
+        final DiscordUser user =
+                (botId != null
+                        ? userRepository.findByBotIdAndDiscordID(botId, username)
+                        : userRepository.findIdentityByDiscordID(username))
+                        .orElseThrow(() ->
+                                new CustomException(
+                                        ErrorCode.INVALID_TOKEN
+                                )
+                        );
 
         SessionInfo sessionInfo =
                 sessionRepository.find(username)
@@ -390,6 +401,13 @@ public class DiscordAuthService implements UserDetailsService {
                                         ErrorCode.GUILD_NOT_REGISTERED
                                 )
                         );
+
+        // ADR-0001: guildId가 "등록"되어 있다는 것만으로는 부족하다 — 이
+        // discordId가 실제로 그 방(botId)의 멤버인지까지 검증해야 한다.
+        // 검증하지 않으면 admin 여부가 방 단위로 갈리더라도, 등록된 다른
+        // 방을 골라 그 방의 멤버가 아닌 채로 로그인을 완료해버릴 수 있다.
+        userRepository.findByBotIdAndDiscordID(botId, user.getUsername())
+                .orElseThrow(() -> new CustomException(ErrorCode.GUILD_MEMBER_NOT_FOUND));
 
         final String accessToken =
                 jwtUtil.createAccessToken(user, botId);

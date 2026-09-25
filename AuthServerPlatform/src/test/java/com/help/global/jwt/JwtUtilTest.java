@@ -30,7 +30,7 @@ class JwtUtilTest {
         jwtUtil.init();
 
         user = CustomUser.from(
-                DiscordUser.of("discord-user", List.of("서버장"))
+                DiscordUser.of("test-bot", "discord-user", List.of("서버장"))
         );
     }
 

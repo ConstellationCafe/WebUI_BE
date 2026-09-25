@@ -91,9 +91,13 @@ public class BackEndJwtAuthFilter extends OncePerRequestFilter {
 
 		final Optional<String> botId = accessToken.flatMap(jwtUtil::extractBotId);
 
+		// ADR-0001: admin 여부(RoleTable)는 방(botId) 단위로 재정의되었으므로,
+		// discordID만으로 조회하지 않고 반드시 botId까지 스코프해서 조회한다.
+		// 이 조회가 비면(=등록된 방이지만 이 사용자가 멤버가 아님) 인증 정보를
+		// 저장하지 않고 그대로 흘려보내 401로 걸러지게 한다.
 		if (accessToken.isPresent() && botId.isPresent()) {
 			accessToken.flatMap(jwtUtil::extractUsername)
-				.flatMap(userRepository::findByDiscordID)
+				.flatMap(username -> userRepository.findByBotIdAndDiscordID(botId.get(), username))
 				.ifPresent(discordUser -> {
 					GuildContext.setBotId(botId.get());
 					saveAuthentication(discordUser);

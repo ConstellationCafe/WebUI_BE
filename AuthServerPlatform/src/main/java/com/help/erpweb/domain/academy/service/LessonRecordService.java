@@ -3,6 +3,7 @@ package com.help.erpweb.domain.academy.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
+import com.help.global.guild.GuildContext;
 import com.help.erpweb.domain.academy.authorization.AcademyAuthorization;
 import com.help.erpweb.domain.academy.dto.request.LessonRecordCreateRequest;
 import com.help.erpweb.domain.academy.dto.request.LessonRecordUpdateRequest;
@@ -285,7 +286,7 @@ public class LessonRecordService {
                             .findDiscordIdBySk(teacherSk);
 
             return discordUserRepository
-                    .findByDiscordID(discordId)
+                    .findByBotIdAndDiscordID(GuildContext.requireBotId(), discordId)
                     .map(DiscordUser::getNickname)
                     .orElse(null);
 

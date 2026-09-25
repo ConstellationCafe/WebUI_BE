@@ -13,6 +13,7 @@ import com.help.erpweb.domain.academy.repository.*;
 import com.help.erpweb.domain.config.entity.ModuleConfig;
 import com.help.erpweb.domain.config.repository.ModuleConfigRepository;
 import com.help.erpweb.domain.membership.repository.MembershipRepository;
+import com.help.global.guild.GuildContext;
 import com.help.global.jwt.CustomUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -173,7 +174,7 @@ public class AcademyService {
                         .distinct()
                         .toList();
         Map<String, DiscordUser> discordUserById = discordUserRepository
-                        .findActiveByDiscordIDIn(discordIds)
+                        .findActiveByBotIdAndDiscordIDIn(GuildContext.requireBotId(), discordIds)
                         .stream()
                         .collect(
                                 Collectors.toMap(
@@ -221,7 +222,7 @@ public class AcademyService {
                         .distinct()
                         .toList();
         Map<String, DiscordUser> discordUserById = discordUserRepository
-                        .findActiveByDiscordIDIn(discordIds)
+                        .findActiveByBotIdAndDiscordIDIn(GuildContext.requireBotId(), discordIds)
                         .stream()
                         .collect(
                                 Collectors.toMap(
@@ -319,7 +320,7 @@ public class AcademyService {
 
         String username =
                 discordUserRepository
-                        .findByDiscordID(discordId)
+                        .findByBotIdAndDiscordID(GuildContext.requireBotId(), discordId)
                         .map(DiscordUser::getNickname)
                         .orElse(null);
 

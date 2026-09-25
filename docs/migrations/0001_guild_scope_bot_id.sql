@@ -13,12 +13,43 @@
 -- 포함하지 않음. 시그니처가 search_sk(bot_id, cardType, membershipId)로
 -- 바뀌어 있어야 한다.
 
--- 1) DiscordUsers: (bot_id, discordID) 자연키로 확장
---    기존 PK가 discordID 단독이었다면, bot_id를 포함하는 복합 PK/유니크로 변경.
+-- 1) DiscordUsers: admin 여부(RoleTable)를 방 단위로 재정의하기 위해
+--    discordID 단독 PK를 surrogate key(id)로 교체하고, bot_id 컬럼을 추가한다.
+--    discordID는 더 이상 전역 유일하지 않다 — (bot_id, discordID) 조합으로만
+--    유일하며, 같은 사람이 여러 방에 각각 별도 행(및 별도 역할)을 가질 수 있다.
+--
+--    주의(순서 중요): 이 ALTER는 RoleTable의 FK 교체(2번)보다 먼저,
+--    그리고 두 번째 길드의 DiscordUsers 행이 생기기 전에 적용해야 한다.
+--    같은 discordID가 여러 bot_id로 쪼개진 뒤에는 RoleTable.discordID ->
+--    DiscordUsers.id 매핑이 더 이상 1:1이 아니라 되돌릴 수 없다.
+ALTER TABLE Constellation_Network.DiscordUsers
+    ADD COLUMN id BIGINT NOT NULL AUTO_INCREMENT UNIQUE FIRST;
+-- 기존 PK가 discordID(VARCHAR) 단독이었다면, RoleTable 매핑(2번)을 끝낸 뒤
+-- 아래 순서로 PK를 교체한다:
+-- ALTER TABLE Constellation_Network.DiscordUsers DROP PRIMARY KEY;
+-- ALTER TABLE Constellation_Network.DiscordUsers ADD PRIMARY KEY (id);
+
 ALTER TABLE Constellation_Network.DiscordUsers
     ADD COLUMN bot_id VARCHAR(30) NOT NULL DEFAULT '';
 -- 백필 후 DEFAULT ''는 제거하고 NOT NULL만 유지할 것.
 -- ALTER TABLE Constellation_Network.DiscordUsers ALTER COLUMN bot_id DROP DEFAULT;
+-- ALTER TABLE Constellation_Network.DiscordUsers
+--     ADD UNIQUE KEY uk_discord_users_bot_discord (bot_id, discordID);
+
+-- 1-1) RoleTable: FK를 discordID -> DiscordUsers.id 로 교체.
+--      이 시점(아직 DiscordUsers가 discordID당 한 행뿐일 때)에는
+--      discordID -> id 매핑이 1:1로 안전하다.
+ALTER TABLE Constellation_Network.RoleTable
+    ADD COLUMN discord_user_id BIGINT NULL AFTER discordID;
+-- UPDATE Constellation_Network.RoleTable rt
+--     JOIN Constellation_Network.DiscordUsers du ON du.discordID = rt.discordID
+--     SET rt.discord_user_id = du.id;
+-- 매핑 완료 후 FK/PK 교체 및 구컬럼 정리:
+-- ALTER TABLE Constellation_Network.RoleTable
+--     MODIFY discord_user_id BIGINT NOT NULL,
+--     ADD CONSTRAINT fk_roletable_discord_user
+--         FOREIGN KEY (discord_user_id) REFERENCES Constellation_Network.DiscordUsers(id),
+--     DROP COLUMN discordID;
 
 -- 2) Users: sk가 이제 (bot_id, discordID) 단위로 스코프되므로 bot_id 컬럼 필요.
 --    discordID만으로는 더 이상 행이 유일하지 않다.
@@ -39,5 +70,7 @@ ALTER TABLE Constellation_Network.Users
 -- 5) 검증
 --    - 모든 DiscordUsers/Users 행의 bot_id가 빈 문자열이 아닌지 확인
 --    - erp_subscriber에 등록된 bot_id와 일치하는지 확인
+--    - RoleTable.discord_user_id가 전부 채워졌는지(NULL 없음) 확인
 -- SELECT COUNT(*) FROM Constellation_Network.DiscordUsers WHERE bot_id = '';
 -- SELECT COUNT(*) FROM Constellation_Network.Users WHERE bot_id = '';
+-- SELECT COUNT(*) FROM Constellation_Network.RoleTable WHERE discord_user_id IS NULL;

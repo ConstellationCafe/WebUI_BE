@@ -110,7 +110,12 @@ public class AuthServerJwtAuthFilter extends OncePerRequestFilter {
 			return;
 		}
 		// Discord 사용자 존재 여부 검증
-		final Optional<DiscordUser> user = userRepository.findByDiscordID(username.get());
+		// ADR-0001: /auth/**는 채팅방(botId) 선택 이전 구간이라 아직 스코프가 없다.
+		// 신원 확인 목적으로만 사용하며, 이 결과의 roles(방별 admin 여부)는
+		// 사용하지 않는다(saveAuthentication이 만드는 CustomUser의 authority는
+		// 실제 인가 판단에 쓰이지 않고, /api/**의 진짜 인가는 BackEndJwtAuthFilter가
+		// botId로 다시 조회해서 수행한다).
+		final Optional<DiscordUser> user = userRepository.findIdentityByDiscordID(username.get());
 		if (user.isEmpty()) {
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			return;

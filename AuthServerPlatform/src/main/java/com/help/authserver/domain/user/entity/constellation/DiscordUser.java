@@ -15,7 +15,19 @@ import java.util.UUID;
 @Table(name = "DiscordUsers")
 @Entity
 public class DiscordUser implements User {
+    // ADR-0001: admin 여부(RoleTable)를 방(=봇) 단위로 재정의하기 위해
+    // discordID 단독 PK를 surrogate key(id)로 교체했다. discordID는 더 이상
+    // 전역 유일하지 않고 (botId, discordID) 조합으로만 유일하다 — 같은
+    // 사람이 여러 방에 각각 별도의 행(그리고 별도의 역할)을 가질 수 있다.
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // guildId와 1:1이며, 내부 전파/DB 스코프 단위는 botId로 통일한다.
+    @Column(name = "bot_id", nullable = false)
+    private String botId;
+
+    @Column(nullable = false)
     private String discordID;
 
     @Column
@@ -33,25 +45,28 @@ public class DiscordUser implements User {
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(
             name = "RoleTable",
-            joinColumns = @JoinColumn(name = "discordID", referencedColumnName = "discordID")
+            joinColumns = @JoinColumn(name = "discord_user_id", referencedColumnName = "id")
     )
     @Column(name = "role_name")
     private List<String> roles = new ArrayList<>();
 
     private DiscordUser(
+        String botId,
         String discordID,
         List<String> roles
     ) {
+        this.botId = botId;
         this.discordID = discordID;
         this.roles = roles;
     }
 
     public static DiscordUser of(
+        String botId,
         String discordID,
         List<String> roles
     ) {
         // 테스트를 위한 DiscordUser 객체 생성
-        return new DiscordUser(discordID, roles);
+        return new DiscordUser(botId, discordID, roles);
     }
 
     @Override
