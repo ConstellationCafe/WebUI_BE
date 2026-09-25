@@ -7,6 +7,7 @@ import com.help.erpweb.domain.music.repository.MusicRepository;
 import com.help.global.authorization.Authorization;
 import com.help.global.common.response.ApiResponse;
 import com.help.global.data.MembershipID;
+import com.help.global.guild.GuildContext;
 import com.help.global.jwt.CustomUser;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -217,16 +218,25 @@ public class MusicService {
         return ApiResponse.success(result);
     }
 
+    /**
+     * ADR-0001: search_sk는 이제 botId까지 포함해 sk를 조회한다.
+     * botId는 현재 요청의 GuildContext에서 가져온다.
+     */
     private String findSkByDiscordId(
             String discordId
     ) {
         return (String) entityManager
                 .createNativeQuery("""
                     SELECT Constellation_Network.search_sk(
+                        :botId,
                         :cardType,
                         :membershipId
                     )
                 """)
+                .setParameter(
+                        "botId",
+                        GuildContext.requireBotId()
+                )
                 .setParameter(
                         "cardType",
                         MembershipID.discord.name()

@@ -5,6 +5,7 @@ import com.help.erpweb.domain.membership.dto.response.AdminPointMemberResponse;
 import com.help.erpweb.domain.membership.exception.ActiveMemberNotFoundException;
 import com.help.erpweb.domain.membership.exception.PointLogConflictException;
 import com.help.erpweb.domain.membership.exception.PointLogNotFoundException;
+import com.help.global.guild.GuildContext;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import java.sql.Timestamp;
@@ -12,6 +13,18 @@ import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Repository;
 
+/**
+ * ADR-0001: admin은 항상 현재 요청의 GuildContext(botId)로 스코프된다.
+ * 즉 이 리포지토리의 모든 조회/변경은 "관리자가 현재 보고 있는 채팅방(bot)"
+ * 범위 안에서만 유효하며, 다른 봇에 속한 회원 데이터는 조회/변경할 수 없다.
+ * <p>
+ * 전제: {@code Constellation_Network.Users}와 {@code DiscordUsers}에
+ * {@code bot_id} 컬럼이 추가되어 있다(search_sk가 이미 botId를 반영해
+ * bot별로 다른 sk를 부여하므로, discordID만으로는 더 이상 행이 유일하지 않음).
+ * sk 자체는 이미 bot에 스코프된 값이므로, sk로만 동작하는 하위 쿼리
+ * (findCoin/updateCoin/insertLog/lockLog/updateLog/deleteLog)는 botId 필터가
+ * 필요 없다.
+ */
 @Repository
 public class AdminPointRepository {
     private static final String ACTIVE_STATE = "재적";
@@ -30,13 +43,15 @@ public class AdminPointRepository {
                         SELECT u.discordID, d.username, d.state, c.coin
                         FROM Constellation_Network.Users u
                         INNER JOIN Constellation_Network.DiscordUsers d
-                            ON d.discordID = u.discordID
+                            ON d.discordID = u.discordID AND d.bot_id = u.bot_id
                         INNER JOIN Constellation_Network.CoinTable c
                             ON c.sk = u.sk
-                        WHERE d.state = :state
+                        WHERE u.bot_id = :botId
+                          AND d.state = :state
                           AND (:discordId = '' OR u.discordID LIKE CONCAT('%', :discordId, '%'))
                         ORDER BY d.username ASC, u.discordID ASC
                         """)
+                .setParameter("botId", GuildContext.requireBotId())
                 .setParameter("state", ACTIVE_STATE)
                 .setParameter("discordId", search)
                 .setFirstResult(offset)
@@ -52,12 +67,14 @@ public class AdminPointRepository {
                         SELECT COUNT(*)
                         FROM Constellation_Network.Users u
                         INNER JOIN Constellation_Network.DiscordUsers d
-                            ON d.discordID = u.discordID
+                            ON d.discordID = u.discordID AND d.bot_id = u.bot_id
                         INNER JOIN Constellation_Network.CoinTable c
                             ON c.sk = u.sk
-                        WHERE d.state = :state
+                        WHERE u.bot_id = :botId
+                          AND d.state = :state
                           AND (:discordId = '' OR u.discordID LIKE CONCAT('%', :discordId, '%'))
                         """)
+                .setParameter("botId", GuildContext.requireBotId())
                 .setParameter("state", ACTIVE_STATE)
                 .setParameter("discordId", search)
                 .getSingleResult();
@@ -70,13 +87,15 @@ public class AdminPointRepository {
                         SELECT u.discordID, d.username, d.state, c.coin
                         FROM Constellation_Network.Users u
                         INNER JOIN Constellation_Network.DiscordUsers d
-                            ON d.discordID = u.discordID
+                            ON d.discordID = u.discordID AND d.bot_id = u.bot_id
                         INNER JOIN Constellation_Network.CoinTable c
                             ON c.sk = u.sk
                         WHERE u.discordID = :discordId
+                          AND u.bot_id = :botId
                           AND d.state = :state
                         """)
                 .setParameter("discordId", discordId)
+                .setParameter("botId", GuildContext.requireBotId())
                 .setParameter("state", ACTIVE_STATE)
                 .setMaxResults(1)
                 .getResultList();
@@ -93,12 +112,14 @@ public class AdminPointRepository {
                         FROM Constellation_Network.PayLog p
                         INNER JOIN Constellation_Network.Users u ON u.sk = p.sk
                         INNER JOIN Constellation_Network.DiscordUsers d
-                            ON d.discordID = u.discordID
+                            ON d.discordID = u.discordID AND d.bot_id = u.bot_id
                         WHERE u.discordID = :discordId
+                          AND u.bot_id = :botId
                           AND d.state = :state
                         ORDER BY p.at DESC, p.amount DESC
                         """)
                 .setParameter("discordId", discordId)
+                .setParameter("botId", GuildContext.requireBotId())
                 .setParameter("state", ACTIVE_STATE)
                 .setFirstResult(offset)
                 .setMaxResults(size)
@@ -112,11 +133,13 @@ public class AdminPointRepository {
                         FROM Constellation_Network.PayLog p
                         INNER JOIN Constellation_Network.Users u ON u.sk = p.sk
                         INNER JOIN Constellation_Network.DiscordUsers d
-                            ON d.discordID = u.discordID
+                            ON d.discordID = u.discordID AND d.bot_id = u.bot_id
                         WHERE u.discordID = :discordId
+                          AND u.bot_id = :botId
                           AND d.state = :state
                         """)
                 .setParameter("discordId", discordId)
+                .setParameter("botId", GuildContext.requireBotId())
                 .setParameter("state", ACTIVE_STATE)
                 .getSingleResult();
         return count.longValue();
@@ -128,14 +151,16 @@ public class AdminPointRepository {
                         SELECT u.sk
                         FROM Constellation_Network.Users u
                         INNER JOIN Constellation_Network.DiscordUsers d
-                            ON d.discordID = u.discordID
+                            ON d.discordID = u.discordID AND d.bot_id = u.bot_id
                         INNER JOIN Constellation_Network.CoinTable c
                             ON c.sk = u.sk
                         WHERE u.discordID = :discordId
+                          AND u.bot_id = :botId
                           AND d.state = :state
                         FOR UPDATE
                         """)
                 .setParameter("discordId", discordId)
+                .setParameter("botId", GuildContext.requireBotId())
                 .setParameter("state", ACTIVE_STATE)
                 .setMaxResults(1)
                 .getResultList();

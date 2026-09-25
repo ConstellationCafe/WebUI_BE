@@ -1,6 +1,7 @@
 package com.help.erpweb.domain.membership.repository;
 
 import com.help.global.data.MembershipID;
+import com.help.global.guild.GuildContext;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -14,11 +15,17 @@ public class MembershipRepository {
     @PersistenceContext(unitName = "constellation")
     private EntityManager entityManager;
 
+    /**
+     * ADR-0001: search_sk는 이제 botId까지 포함해 sk를 조회한다
+     * (동일 discordId라도 bot마다 다른 sk가 나올 수 있음).
+     * botId는 요청을 처리 중인 스레드의 GuildContext에서 가져온다.
+     */
     public String findSkByDiscordId(String discordId) {
         return (String) entityManager
                 .createNativeQuery(
-                        "SELECT Constellation_Network.search_sk(:cardType, :membershipId)"
+                        "SELECT Constellation_Network.search_sk(:botId, :cardType, :membershipId)"
                 )
+                .setParameter("botId", GuildContext.requireBotId())
                 .setParameter("cardType", MembershipID.discord.name())
                 .setParameter("membershipId", discordId)
                 .getSingleResult();

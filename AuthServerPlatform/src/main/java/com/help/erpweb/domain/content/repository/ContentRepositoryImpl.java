@@ -1,6 +1,7 @@
 package com.help.erpweb.domain.content.repository;
 
 import com.help.erpweb.domain.content.projection.ContentProjection;
+import com.help.global.guild.GuildContext;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.ParameterMode;
 import jakarta.persistence.PersistenceContext;
@@ -139,11 +140,11 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
         if (hasSearch) {
             if ("recommender".equals(searchColumn)) {
                 sql.append(
-                        " AND u.discordID = :searchValue"
+                        " AND u.discordID = :searchValue AND u.bot_id = :botId"
                 );
 
                 countSql.append(
-                        " AND u.discordID = :searchValue"
+                        " AND u.discordID = :searchValue AND u.bot_id = :botId"
                 );
             } else {
                 sql.append(
@@ -215,6 +216,12 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
                     "searchValue",
                     searchValue
             );
+
+            if ("recommender".equals(searchColumn)) {
+                final String botId = GuildContext.requireBotId();
+                query.setParameter("botId", botId);
+                countQuery.setParameter("botId", botId);
+            }
         }
 
         query.setFirstResult(page * size);

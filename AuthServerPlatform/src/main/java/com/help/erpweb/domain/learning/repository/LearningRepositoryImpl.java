@@ -1,6 +1,7 @@
 package com.help.erpweb.domain.learning.repository;
 
 import com.help.erpweb.domain.learning.projection.LearningProjection;
+import com.help.global.guild.GuildContext;
 import jakarta.persistence.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -176,7 +177,7 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
              */
             if ("teacher".equals(searchColumn)) {
                 sql.append(
-                        " AND u.discordID = :searchValue"
+                        " AND u.discordID = :searchValue AND u.bot_id = :botId"
                 );
 
                 /*
@@ -197,7 +198,7 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
                 }
 
                 countSql.append(
-                        " AND u.discordID = :searchValue"
+                        " AND u.discordID = :searchValue AND u.bot_id = :botId"
                 );
             } else {
                 sql.append(
@@ -281,6 +282,12 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
                     "searchValue",
                     searchValue
             );
+
+            if ("teacher".equals(searchColumn)) {
+                final String botId = GuildContext.requireBotId();
+                query.setParameter("botId", botId);
+                countQuery.setParameter("botId", botId);
+            }
         }
 
         /*

@@ -1,6 +1,7 @@
 package com.help.erpweb.domain.music.repository;
 
 import com.help.erpweb.domain.music.projection.MusicProjection;
+import com.help.global.guild.GuildContext;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.ParameterMode;
 import jakarta.persistence.PersistenceContext;
@@ -140,11 +141,11 @@ public class MusicRepositoryImpl
         if (hasSearch) {
             if ("recommender".equals(searchColumn)) {
                 sql.append(
-                        " AND u.discordID = :searchValue"
+                        " AND u.discordID = :searchValue AND u.bot_id = :botId"
                 );
 
                 countSql.append(
-                        " AND u.discordID = :searchValue"
+                        " AND u.discordID = :searchValue AND u.bot_id = :botId"
                 );
             } else {
                 sql.append(
@@ -216,6 +217,12 @@ public class MusicRepositoryImpl
                     "searchValue",
                     searchValue
             );
+
+            if ("recommender".equals(searchColumn)) {
+                final String botId = GuildContext.requireBotId();
+                query.setParameter("botId", botId);
+                countQuery.setParameter("botId", botId);
+            }
         }
 
         query.setFirstResult(page * size);
