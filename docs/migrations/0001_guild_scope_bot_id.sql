@@ -90,46 +90,45 @@ ALTER TABLE Constellation_Network.Users
 -- 봇 쪽 확인 전까지는 이 ALTER를 미뤄두는 걸 권장한다.
 
 -- ============================================================
--- ▶ search_sk: 기존 프로시저를 바꾸지 않고 새 프로시저를 추가
+-- ▶ search_sk: 기존 함수를 바꾸지 않고 새 함수를 추가
 -- ============================================================
 --
 -- 기존 search_sk(cardType, membershipId)는 봇 저장소가 그대로 호출하고
--- 있으므로 시그니처를 바꾸지 않는다. 대신 botId까지 받는
--- search_sk_by_bot(botId, cardType, membershipId)를 별도로 새로 만들고,
+-- 있으므로 시그니처/DEFINER를 그대로 두고 손대지 않는다. 대신 bot_id까지
+-- 받는 search_sk_by_bot을 별도 함수로 새로 추가한다. 로직은 기존
+-- search_sk 정의(사용자 제공)에 u.bot_id 조건만 추가한 것과 동일하다.
+--
 -- WebUI_BE는 이 신규 함수만 호출하도록 이미 코드를 맞췄다
 -- (MembershipRepository, ContentService, MenuService, MusicService,
--- LearningService의 findSkByDiscordId).
---
--- 아래는 시그니처/계약만 정의한 틀이다. 실제 조회 로직(내부에서 Users
--- 테이블을 어떤 조건으로 조회하는지)은 기존 search_sk의 정의를 그대로
--- 가져와 bot_id 조건만 추가해야 한다 — 기존 search_sk의 실제 본문을
--- 이 리포지토리에서는 보유하고 있지 않으므로, 아래는 뼈대이며 실제
--- 배포 전 기존 함수 정의를 참고해 로직을 맞춰야 한다.
---
--- CREATE FUNCTION Constellation_Network.search_sk_by_bot(
---     p_bot_id VARCHAR(30),
---     p_card_type VARCHAR(50),
---     p_membership_id VARCHAR(100)
--- )
--- RETURNS VARCHAR(100)
--- DETERMINISTIC
--- BEGIN
---     DECLARE result VARCHAR(100);
---
---     -- TODO: 기존 search_sk(cardType, membershipId) 본문을 그대로 가져와
---     -- WHERE 조건에 `AND bot_id = p_bot_id`만 추가한다.
---     SELECT sk INTO result
---     FROM Constellation_Network.Users
---     WHERE bot_id = p_bot_id
---       AND cardType = p_card_type
---       AND membershipId = p_membership_id
---     LIMIT 1;
---
---     RETURN result;
--- END;
+-- LearningService의 findSkByDiscordId). 파라미터 이름은 bot_id로 두면
+-- WHERE u.bot_id = bot_id가 컬럼/파라미터를 구분하지 못해 모호해지므로
+-- p_bot_id로 바꿨다. DEFINER는 실제 DB 계정에 맞게 조정할 것.
+CREATE DEFINER=`elaina`@`%` FUNCTION `Constellation_Network`.`search_sk_by_bot`(
+	p_bot_id VARCHAR(30),
+	card_type VARCHAR(10),
+	membershipID VARCHAR(32)
+) RETURNS varchar(36) CHARSET utf8mb4
+    READS SQL DATA
+BEGIN
+	DECLARE result_sk VARCHAR(36);
+    IF card_type = 'kakaotalk' THEN
+        SELECT sk INTO result_sk
+		FROM Constellation_Network.Users u
+		WHERE u.kakaotalkID = membershipID
+		  AND u.bot_id = p_bot_id;
+    ELSE
+        SELECT sk INTO result_sk
+        FROM Constellation_Network.Users u
+        WHERE u.discordID = membershipID
+          AND u.bot_id = p_bot_id;
+    END IF;
+    RETURN result_sk;
+END;
 --
 -- 검증: 기존 search_sk 호출부(봇 쪽)는 건드리지 않았으므로 회귀 테스트
 -- 대상이 아니다. search_sk_by_bot만 새로 검증하면 된다.
+-- SELECT Constellation_Network.search_sk_by_bot(:existing_bot_id, 'discord', :test_discord_id);
+-- 기존 SELECT Constellation_Network.search_sk('discord', :test_discord_id)와 같은 sk가 나와야 한다.
 
 -- ============================================================
 -- ▶ 검증
