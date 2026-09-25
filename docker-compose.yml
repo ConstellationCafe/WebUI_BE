@@ -4,9 +4,13 @@ services:
   redis:
     build:
       context: ./redis
+    container_name: redis-server
     restart: unless-stopped
+    ports:
+      - "6379:6379"
     volumes:
       - redis_data:/data
+    command: [ "redis-server", "--appendonly", "yes", "--appendfsync", "everysec" ]
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -17,6 +21,7 @@ services:
   webui_be:
     build:
       context: ./
+    container_name: webui_be
     restart: unless-stopped
     ports:
       - "4003:4003"
