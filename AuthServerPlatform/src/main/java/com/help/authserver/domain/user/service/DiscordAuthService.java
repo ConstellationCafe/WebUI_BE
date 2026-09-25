@@ -33,6 +33,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.HttpClientErrorException;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -280,20 +281,27 @@ public class DiscordAuthService implements UserDetailsService {
     public ApiResponse<?> checkLogin(
             final HttpServletRequest request
     ) {
-        boolean isLogin =
+        Optional<String> validAccessToken =
                 jwtUtil.extractAccessTokenFromRequest(request)
-                        .filter(jwtUtil::isTokenValidate)
-                        .isPresent();
+                        .filter(jwtUtil::isTokenValidate);
+
+        boolean isLogin = validAccessToken.isPresent();
 
         boolean refreshHint =
                 jwtUtil.extractRefreshTokenFromRequest(request)
                         .filter(jwtUtil::isTokenValidate)
                         .isPresent();
 
+        boolean roomSelected =
+                validAccessToken
+                        .flatMap(jwtUtil::extractBotId)
+                        .isPresent();
+
         return ApiResponse.success(
                 new LoginCheckResponseDto(
                         isLogin,
-                        refreshHint
+                        refreshHint,
+                        roomSelected
                 )
         );
     }
@@ -302,16 +310,30 @@ public class DiscordAuthService implements UserDetailsService {
             final HttpServletRequest request,
             final HttpServletResponse response
     ) {
-        final DiscordUser user =
+        final String refreshToken =
                 jwtUtil.extractRefreshTokenFromRequest(request)
                         .filter(jwtUtil::isTokenValidate)
-                        .flatMap(jwtUtil::extractUsername)
+                        .orElseThrow(() ->
+                                new CustomException(
+                                        ErrorCode.INVALID_TOKEN
+                                )
+                        );
+
+        final DiscordUser user =
+                jwtUtil.extractUsername(refreshToken)
                         .flatMap(userRepository::findByDiscordID)
                         .orElseThrow(() ->
                                 new CustomException(
                                         ErrorCode.INVALID_TOKEN
                                 )
                         );
+
+        // ADR-0001: RefreshToken이 botId를 갖고 있으면(=채팅방을 선택한 뒤
+        // 재발급하는 경우) 새 AccessToken에도 그대로 실어준다. 없으면
+        // 여전히 "선택 대기" 상태이므로 botId 없이 재발급한다.
+        final String botId =
+                jwtUtil.extractBotId(refreshToken)
+                        .orElse(null);
 
         String username = user.getDiscordID();
 
@@ -331,7 +353,8 @@ public class DiscordAuthService implements UserDetailsService {
 
         final String accessToken =
                 jwtUtil.createAccessToken(
-                        CustomUser.from(user)
+                        CustomUser.from(user),
+                        botId
                 );
 
         ResponseCookie accessCookie =
@@ -342,6 +365,44 @@ public class DiscordAuthService implements UserDetailsService {
         response.addHeader(
                 "Set-Cookie",
                 accessCookie.toString()
+        );
+
+        return ApiResponse.success(true);
+    }
+
+    /**
+     * ADR-0001: discordId 인증만으로는 로그인이 완료되지 않는다.
+     * 이 메서드가 호출되어야("채팅방 선택") botId가 담긴 AccessToken/
+     * RefreshToken이 발급되고, 그 순간부터 /api/**가 이 사용자를
+     * 인증된 것으로 취급한다(BackEndJwtAuthFilter 참고).
+     */
+    public ApiResponse<?> selectGuild(
+            final CustomUser user,
+            final String guildId,
+            final HttpServletResponse response
+    ) {
+        final String botId =
+                erpSubscriberRepository
+                        .findByGuildId(guildId)
+                        .map(ErpSubscriber::getBotId)
+                        .orElseThrow(() ->
+                                new CustomException(
+                                        ErrorCode.GUILD_NOT_REGISTERED
+                                )
+                        );
+
+        final String accessToken =
+                jwtUtil.createAccessToken(user, botId);
+        final String refreshToken =
+                jwtUtil.createRefreshToken(user, botId);
+
+        response.addHeader(
+                "Set-Cookie",
+                jwtUtil.createAccessTokenCookie(accessToken).toString()
+        );
+        response.addHeader(
+                "Set-Cookie",
+                jwtUtil.createRefreshTokenCookie(refreshToken).toString()
         );
 
         return ApiResponse.success(true);

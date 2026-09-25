@@ -1,9 +1,11 @@
 package com.help.authserver.domain.user.controller;
 
+import com.help.authserver.domain.user.dto.request.GuildSelectRequestDto;
 import com.help.authserver.domain.user.dto.response.LoginCheckResponseDto;
 import com.help.authserver.domain.user.service.DiscordAuthService;
 import com.help.global.jwt.CustomUser;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -67,6 +69,17 @@ public class AuthController {
 	) {
 		log.info("[GET] /auth/guilds");
 		return discordAuthService.guilds(user);
+	}
+
+	// ADR-0001: discordId 인증 이후, 채팅방(guildId)을 선택해야 로그인이 완료된다.
+	@PostMapping("/guild/select")
+	public ApiResponse<?> selectGuild(
+		@AuthenticationPrincipal CustomUser user,
+		@Valid @RequestBody GuildSelectRequestDto request,
+		HttpServletResponse response
+	) {
+		log.info("[POST] /auth/guild/select");
+		return discordAuthService.selectGuild(user, request.guildId(), response);
 	}
 
 	// AccessToken 갱신 요청

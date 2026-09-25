@@ -4,6 +4,7 @@ package com.help.global.jwt;
 import com.help.authserver.domain.user.entity.constellation.DiscordUser;
 import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
 //import com.help.authserver.domain.user.repository.UserRepository;
+import com.help.global.guild.GuildContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,6 +22,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -80,13 +82,29 @@ public class BackEndJwtAuthFilter extends OncePerRequestFilter {
 	private void checkAccessTokenAndAuthentication(final HttpServletRequest request,
 												   final HttpServletResponse response,
 												   final FilterChain filterChain) throws ServletException, IOException {
-		jwtUtil.extractAccessTokenFromRequest(request)
-			.filter(jwtUtil::isTokenValidate)
-			.flatMap(jwtUtil::extractUsername)
-			.flatMap(userRepository::findByDiscordID)
-			.ifPresent(this::saveAuthentication);
+		// ADR-0001: /api/**는 "채팅방까지 선택해 로그인이 완료된" 토큰만 인정한다.
+		// botId claim이 없는 토큰(=discordId 인증만 끝난 "선택 대기" 상태)은
+		// 인증 정보를 저장하지 않고 그대로 통과시켜, 이후 authorizeHttpRequests()의
+		// anyRequest().authenticated()가 401(UNAUTHORIZED)로 걸러내게 한다.
+		final Optional<String> accessToken = jwtUtil.extractAccessTokenFromRequest(request)
+			.filter(jwtUtil::isTokenValidate);
 
-		filterChain.doFilter(request, response);
+		final Optional<String> botId = accessToken.flatMap(jwtUtil::extractBotId);
+
+		if (accessToken.isPresent() && botId.isPresent()) {
+			accessToken.flatMap(jwtUtil::extractUsername)
+				.flatMap(userRepository::findByDiscordID)
+				.ifPresent(discordUser -> {
+					GuildContext.setBotId(botId.get());
+					saveAuthentication(discordUser);
+				});
+		}
+
+		try {
+			filterChain.doFilter(request, response);
+		} finally {
+			GuildContext.clear();
+		}
 	}
 
 	private void saveAuthentication(final DiscordUser discordUser) {

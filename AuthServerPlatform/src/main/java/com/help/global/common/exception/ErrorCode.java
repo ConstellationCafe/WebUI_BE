@@ -14,7 +14,6 @@ public enum ErrorCode {
 	UNAUTHORIZED(401, "로그인이 필요합니다"),
 	UNAUTHORIZED_PASSWORD_CHANGE(401, "비밀번호 변경 권한이 없습니다"),
 	UNTRUSTED_EMAIL_SERVER(403, "신뢰할 수 없는 이메일 서버입니다"),
-	GUILD_HEADER_MISSING(403, "X-Guild-Id 헤더가 필요합니다"),
 	GUILD_NOT_REGISTERED(403, "등록되지 않은 채팅방입니다"),
 
 	USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다"),
