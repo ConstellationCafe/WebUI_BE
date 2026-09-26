@@ -13,23 +13,36 @@ import com.help.erpweb.domain.modules.erp.point.dto.request.AdminPointTransactio
 import com.help.erpweb.domain.modules.erp.point.dto.request.TransactionType;
 import com.help.erpweb.domain.modules.erp.point.dto.response.AdminPointMemberResponse;
 import com.help.erpweb.domain.modules.erp.point.dto.response.AdminPointLogResponse;
+import com.help.erpweb.domain.metadata.entity.ColumnMetaView;
+import com.help.erpweb.domain.metadata.response.ColumnMetaDto;
+import com.help.erpweb.domain.modules.erp.point.dto.request.repository.PointLogDto;
+import com.help.erpweb.domain.modules.erp.point.entity.PointLogEntity;
 import com.help.erpweb.domain.modules.erp.point.exception.InsufficientCoinException;
 import com.help.erpweb.domain.modules.erp.point.repository.AdminPointRepository;
 import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;
 import com.help.erpweb.domain.modules.erp.point.repository.PointRepository;
+import com.help.global.chat.ChatUser;
+import com.help.global.common.response.ApiResponse;
+import com.help.global.jwt.CustomUser;
 import java.util.List;
+import java.util.Map;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 /**
  * 2026-09-26: AdminPointServiceTest에서 이름을 바꿈(AdminPointService가
- * PointService로 합쳐짐에 따라). 여기서는 기존 관리자용 포인트 CRUD 동작만
- * 검증한다 — 본인 포인트 로그 조회(getPointLog)는 별도 테스트가 없었고
- * 이번에도 추가하지 않았다(필요하면 별도 테스트 추가 요청 바람).
+ * PointService로 합쳐짐에 따라). 관리자용 포인트 CRUD 동작에 더해, 본인 포인트
+ * 로그 조회(getPointLog, 구 MembershipService.getPointLog)에 대한 테스트를
+ * 추가했다 — 서비스 통합 시점까지 이 메서드는 테스트가 없었다.
  */
 @ExtendWith(MockitoExtension.class)
 class PointServiceTest {
@@ -156,5 +169,93 @@ class PointServiceTest {
                 .thenReturn(new AdminPointMemberResponse("123", "별자리", "재적", coin));
         when(repository.countLogs("123")).thenReturn(1L);
         when(repository.findLogs("123", 0, 20)).thenReturn(List.of());
+    }
+
+    @Test
+    void getPointLogReturnsOwnLogsScopedBySkAndExcludesSkColumnFromMetadata() {
+        CustomUser user = CustomUser.of("123", "OAUTH_USER", "ROLE_USER", null);
+        when(membershipRepository.findSkByChatUser(any(ChatUser.class)))
+                .thenReturn("member-sk");
+        when(pointRepository.findColumnMetas(
+                eq(PointRepository.schemaName),
+                eq(PointRepository.tableName)
+        )).thenReturn(List.of(
+                columnMeta("sk", 1, 0),
+                columnMeta("amount", 0, 0),
+                columnMeta("at", 0, 0)
+        ));
+
+        LocalDateTime at = LocalDateTime.of(2026, 9, 26, 10, 0);
+        PointLogEntity entity = PointLogEntity.of("member-sk", 500, at, "충전");
+        Page<PointLogEntity> page =
+                new PageImpl<>(List.of(entity), PageRequest.of(0, 20), 1);
+        when(pointRepository.findBySk(eq("member-sk"), any(Pageable.class)))
+                .thenReturn(page);
+
+        ApiResponse<?> response = service.getPointLog(user, 1, 20);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getResponse();
+
+        @SuppressWarnings("unchecked")
+        List<ColumnMetaDto> metadata = (List<ColumnMetaDto>) body.get("metadata");
+        assertThat(metadata)
+                .extracting(ColumnMetaDto::getColName)
+                .containsExactly("amount", "at");
+
+        @SuppressWarnings("unchecked")
+        List<PointLogDto> entities = (List<PointLogDto>) body.get("entities");
+        assertThat(entities).hasSize(1);
+        assertThat(entities.get(0).getAmount()).isEqualTo("500");
+        assertThat(entities.get(0).getDescription()).isEqualTo("충전");
+
+        assertThat(body.get("page")).isEqualTo(1);
+        assertThat(body.get("size")).isEqualTo(20);
+        assertThat(body.get("totalElements")).isEqualTo(1L);
+        assertThat(body.get("hasNext")).isEqualTo(false);
+    }
+
+    @Test
+    void getPointLogNormalizesNonPositivePageAndSize() {
+        CustomUser user = CustomUser.of("123", "OAUTH_USER", "ROLE_USER", null);
+        when(membershipRepository.findSkByChatUser(any(ChatUser.class)))
+                .thenReturn("member-sk");
+        when(pointRepository.findColumnMetas(
+                eq(PointRepository.schemaName),
+                eq(PointRepository.tableName)
+        )).thenReturn(List.of());
+        when(pointRepository.findBySk(eq("member-sk"), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        ApiResponse<?> response = service.getPointLog(user, 0, -5);
+
+        @SuppressWarnings("unchecked")
+        Map<String, Object> body = (Map<String, Object>) response.getResponse();
+        assertThat(body.get("page")).isEqualTo(1);
+        assertThat(body.get("size")).isEqualTo(1);
+
+        ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+        verify(pointRepository).findBySk(eq("member-sk"), pageableCaptor.capture());
+        assertThat(pageableCaptor.getValue().getPageNumber()).isEqualTo(0);
+        assertThat(pageableCaptor.getValue().getPageSize()).isEqualTo(1);
+    }
+
+    private ColumnMetaView columnMeta(String colName, Integer isPrimary, Integer isNullable) {
+        return new ColumnMetaView() {
+            @Override
+            public String getColName() {
+                return colName;
+            }
+
+            @Override
+            public Integer getIsPrimary() {
+                return isPrimary;
+            }
+
+            @Override
+            public Integer getIsNullable() {
+                return isNullable;
+            }
+        };
     }
 }
