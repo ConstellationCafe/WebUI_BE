@@ -11,7 +11,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 
 import com.help.erpweb.domain.academy.repository.AcademyMemberRepository;
-import com.help.erpweb.domain.membership.repository.MembershipRepository;
+import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;
 import com.help.global.chat.ChatUser;
 import com.help.global.jwt.CustomUser;
 import org.junit.jupiter.api.BeforeEach;

@@ -20,7 +20,7 @@ import com.help.erpweb.domain.academy.entity.Student;
 import com.help.erpweb.domain.academy.repository.AcademyClassRepository;
 import com.help.erpweb.domain.academy.repository.AcademyRepository;
 import com.help.erpweb.domain.academy.repository.StudentRepository;
-import com.help.erpweb.domain.membership.repository.MembershipRepository;
+import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

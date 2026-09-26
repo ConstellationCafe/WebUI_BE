@@ -15,7 +15,7 @@ import com.help.erpweb.domain.academy.entity.AcademyClass;
 import com.help.erpweb.domain.academy.repository.AcademyClassRepository;
 import com.help.erpweb.domain.academy.repository.AcademyMemberRepository;
 import com.help.erpweb.domain.academy.repository.LessonRecordRepository;
-import com.help.erpweb.domain.membership.repository.MembershipRepository;
+import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;

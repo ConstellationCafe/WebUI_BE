@@ -12,7 +12,7 @@ import com.help.erpweb.domain.academy.repository.TeacherRepository;
 import com.help.global.discord.config.ERPSubscriberRepository;
 import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.erpweb.domain.config.repository.ModuleConfigRepository;
-import com.help.erpweb.domain.membership.repository.MembershipRepository;
+import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 

@@ -20,7 +20,7 @@ import com.help.erpweb.domain.academy.entity.LessonRecord;
 import com.help.erpweb.domain.academy.repository.AcademyClassRepository;
 import com.help.erpweb.domain.academy.repository.AcademyMemberRepository;
 import com.help.erpweb.domain.academy.repository.LessonRecordRepository;
-import com.help.erpweb.domain.membership.repository.MembershipRepository;
+import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;

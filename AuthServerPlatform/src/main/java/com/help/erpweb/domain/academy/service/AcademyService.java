@@ -14,7 +14,7 @@ import com.help.erpweb.domain.academy.entity.*;
 import com.help.erpweb.domain.academy.repository.*;
 import com.help.erpweb.domain.config.entity.ModuleConfig;
 import com.help.erpweb.domain.config.repository.ModuleConfigRepository;
-import com.help.erpweb.domain.membership.repository.MembershipRepository;
+import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;
 import com.help.global.chat.ChatIdentities;
 import com.help.global.guild.GuildContext;
 import com.help.global.jwt.CustomUser;

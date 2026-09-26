@@ -1,7 +1,7 @@
 package com.help.erpweb.domain.academy.authorization;
 
 import com.help.erpweb.domain.academy.repository.AcademyMemberRepository;
-import com.help.erpweb.domain.membership.repository.MembershipRepository;
+import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;
 import com.help.global.chat.ChatIdentities;
 import com.help.global.data.Authority;
 import com.help.global.jwt.CustomUser;

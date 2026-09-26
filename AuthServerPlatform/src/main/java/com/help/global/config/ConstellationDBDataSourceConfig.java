@@ -30,7 +30,7 @@ import java.util.Map;
 		"com.help.erpweb.domain.academy.repository",
 		"com.help.erpweb.domain.modules.chatbot.content.repository",
 		"com.help.erpweb.domain.modules.chatbot.learning.repository",
-		"com.help.erpweb.domain.membership.repository",
+		"com.help.erpweb.domain.modules.erp.point.repository",
 		"com.help.erpweb.domain.modules.chatbot.menu.repository",
 		"com.help.erpweb.domain.metadata.repository",
 		"com.help.erpweb.domain.modules.chatbot.music.repository"
@@ -88,7 +88,7 @@ public class ConstellationDBDataSourceConfig {
 				"com.help.erpweb.domain.academy.entity",
 				"com.help.erpweb.domain.modules.chatbot.content.entity",
 				"com.help.erpweb.domain.modules.chatbot.learning.entity",
-				"com.help.erpweb.domain.membership.entity",
+				"com.help.erpweb.domain.modules.erp.point.entity",
 				"com.help.erpweb.domain.modules.chatbot.menu.entity",
 				"com.help.erpweb.domain.metadata.entity",
 				"com.help.erpweb.domain.modules.chatbot.music.entity"
