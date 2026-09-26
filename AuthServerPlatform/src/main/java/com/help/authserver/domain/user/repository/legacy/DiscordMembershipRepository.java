@@ -1,6 +1,6 @@
-package com.help.authserver.domain.user.repository.constellation;
+package com.help.authserver.domain.user.repository.legacy;
 
-//import com.help.authserver.domain.user.entity.constellation.DiscordUser;
+//import com.help.authserver.domain.user.entity.legacy.DiscordUser;
 //import com.help.authserver.domain.user.view.DiscordMembershipView;
 //import org.springframework.data.jpa.repository.JpaRepository;
 //import org.springframework.data.jpa.repository.Query;

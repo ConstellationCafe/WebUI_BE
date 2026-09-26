@@ -1,4 +1,4 @@
-package com.help.global.discord.constellation;
+package com.help.global.discord.identity;
 
 import com.help.global.data.Authority;
 import jakarta.persistence.*;

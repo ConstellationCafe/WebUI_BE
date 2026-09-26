@@ -6,8 +6,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 // (기존 FIXME였던 "AuthServer -> ERPWeb 이동"은 이 방향으로 해결됨).
 import com.help.global.discord.config.ERPSubscriberRepository;
 import com.help.global.discord.config.ErpSubscriber;
-import com.help.global.discord.constellation.DiscordUser;
-import com.help.global.discord.constellation.DiscordUserRepository;
+import com.help.global.discord.identity.DiscordUser;
+import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.erpweb.domain.academy.authorization.AcademyAuthorization;
 import com.help.erpweb.domain.academy.dto.response.*;
 import com.help.erpweb.domain.academy.entity.*;

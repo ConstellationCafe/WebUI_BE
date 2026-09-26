@@ -32,7 +32,7 @@ import java.util.List;
 public class SecurityConfig {
 	private final AuthServerJwtAuthFilter authServerJwtAuthFilter;
 	private final BackEndJwtAuthFilter backEndJwtAuthFilter;
-	private final EmailVerificationFilter emailVerificationFilter;
+//	private final EmailVerificationFilter emailVerificationFilter; // 사용되지 않는 코드 - 주석 처리됨 (EmailVerificationFilter.java 참고)
 	private final JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint;
 
 	@Value("${front.redirect-uri}")
@@ -58,8 +58,8 @@ public class SecurityConfig {
 		http.formLogin(AbstractHttpConfigurer::disable);  // login í¼ ê¸°ë° ì¸ì¦ x
 
 		http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());  // ì¸ê° ì¤ì 
-		http.addFilterBefore(authServerJwtAuthFilter, ExceptionTranslationFilter.class)
-			.addFilterBefore(emailVerificationFilter, AuthServerJwtAuthFilter.class);  // ì¸ì¦ íí° êµ¬ì±
+		http.addFilterBefore(authServerJwtAuthFilter, ExceptionTranslationFilter.class);
+//			.addFilterBefore(emailVerificationFilter, AuthServerJwtAuthFilter.class); // 사용되지 않는 코드 - 주석 처리됨 (EmailVerificationFilter.java 참고)  // ì¸ì¦ íí° êµ¬ì±
 		return http.build();
 	}
 

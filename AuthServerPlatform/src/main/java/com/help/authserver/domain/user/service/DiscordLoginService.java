@@ -13,7 +13,7 @@ import com.help.global.common.exception.ErrorCode;
 import com.help.global.common.response.ApiResponse;
 import com.help.global.discord.config.ERPSubscriberRepository;
 import com.help.global.discord.config.ErpSubscriber;
-import com.help.global.discord.constellation.DiscordUserRepository;
+import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.global.jwt.CustomUser;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;

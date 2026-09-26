@@ -1,7 +1,7 @@
 package com.help.global.jwt;
 
-import com.help.global.discord.constellation.DiscordUser;
-import com.help.global.discord.constellation.DiscordUserRepository;
+import com.help.global.discord.identity.DiscordUser;
+import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.global.guild.GuildContext;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -1,4 +1,4 @@
-package com.help.global.discord.constellation;
+package com.help.global.discord.identity;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;

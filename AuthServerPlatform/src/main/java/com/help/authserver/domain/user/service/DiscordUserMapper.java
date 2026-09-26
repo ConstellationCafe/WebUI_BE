@@ -1,6 +1,6 @@
 package com.help.authserver.domain.user.service;
 
-import com.help.global.discord.constellation.DiscordUser;
+import com.help.global.discord.identity.DiscordUser;
 import com.help.global.jwt.CustomUser;
 
 /**

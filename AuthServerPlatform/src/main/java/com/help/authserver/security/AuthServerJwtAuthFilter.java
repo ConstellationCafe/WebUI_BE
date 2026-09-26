@@ -6,8 +6,8 @@ import java.util.Optional;
 
 import com.help.authserver.domain.user.entity.SessionInfo;
 import com.help.authserver.domain.user.repository.SessionRepository;
-import com.help.global.discord.constellation.DiscordUser;
-import com.help.global.discord.constellation.DiscordUserRepository;
+import com.help.global.discord.identity.DiscordUser;
+import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.global.jwt.CustomUser;
 import com.help.global.jwt.JwtUtil;
 import org.springframework.lang.NonNull;

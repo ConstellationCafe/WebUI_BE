@@ -1,4 +1,4 @@
-package com.help.authserver.domain.user.repository.constellation;
+package com.help.authserver.domain.user.repository.legacy;
 
 //public interface UserRepository extends JpaRepository<EmailUser, Long> {
 //	@Transactional(readOnly = true)

@@ -10,7 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.help.global.discord.constellation.DiscordUserRepository;
+import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.erpweb.domain.academy.authorization.AcademyAuthorization;
 import com.help.erpweb.domain.academy.dto.request.LessonRecordUpdateRequest;
 import com.help.erpweb.domain.academy.entity.LessonRecord;
