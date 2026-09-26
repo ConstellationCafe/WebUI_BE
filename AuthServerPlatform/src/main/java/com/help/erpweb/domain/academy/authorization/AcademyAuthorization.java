@@ -228,6 +228,68 @@ public class AcademyAuthorization {
         );
     }
 
+    /**
+     * 2026-09-26: 학생/교사 상태 목록 조회(getStudentStatuses/getTeacherStatuses)에
+     * 인가를 추가하며 새로 만듦. academyId가 지정된 경우, 특정 class 단위가
+     * 아니라 "이 Academy에서 TEACHER 이상인지"만 확인한다(어느 class를
+     * 담당하는지는 안 따짐) — canManageClass/isTeacherOrAbove(3-arg)는 항상
+     * classId까지 요구해서 이 용도에는 안 맞는다.
+     */
+    public boolean isTeacherOrAboveOfAcademy(
+            Authentication authentication,
+            Integer academyId
+    ) {
+        if (!isAuthenticated(authentication)) {
+            return false;
+        }
+
+        if (isAdmin(authentication)) {
+            return true;
+        }
+
+        if (academyId == null) {
+            return isTeacherOrAbove(authentication);
+        }
+
+        String sk = resolveSk(authentication);
+
+        return academyMemberRepository
+                .existsBySkAndAcademyIdAndRoleNameIn(
+                        sk,
+                        academyId,
+                        List.of(
+                                ROLE_ACADEMY_OWNER,
+                                ROLE_TEACHER
+                        )
+                );
+    }
+
+    /**
+     * 2026-09-26: getTeacherStatuses에서 academyId 없이(전체 조회) 호출되는
+     * 경우용 — 특정 Academy가 아니라 "어느 Academy에서든 학원장(ACADEMY_OWNER)
+     * 인지"만 확인한다. academyId가 있으면 기존 isOwner(authentication,
+     * academyId)를 그대로 쓴다.
+     */
+    public boolean isOwnerOfAnyAcademy(
+            Authentication authentication
+    ) {
+        if (!isAuthenticated(authentication)) {
+            return false;
+        }
+
+        if (isAdmin(authentication)) {
+            return true;
+        }
+
+        String sk = resolveSk(authentication);
+
+        return academyMemberRepository
+                .existsBySkAndRoleNameIn(
+                        sk,
+                        List.of(ROLE_ACADEMY_OWNER)
+                );
+    }
+
     private String resolveSk(
             Authentication authentication
     ) {

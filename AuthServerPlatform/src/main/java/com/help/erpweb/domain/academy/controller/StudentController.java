@@ -72,6 +72,17 @@ public class StudentController {
      * academyMemberId는 기존 studentId 대신
      * 학생/교사 상태 조회 API에서 공통으로 사용하는 이름이다.
      */
+    /**
+     * 2026-09-26: 교사 이상만 접근 가능하도록 인가 추가 (FE에서는 학생 관리/조회
+     * 메뉴가 isTeacherOrAbove() 기준이라 학원장뿐 아니라 담당 교사도 접근 가능
+     * — getTeacherStatuses와 달리 isOwner 전용이 아니다). academyId 없이(전체
+     * 조회) 호출되면 "어느 Academy에서든 교사 이상인지"만 확인한다.
+     */
+    @PreAuthorize(
+            "#academyId == null "
+                    + "? @academyAuth.isTeacherOrAbove(authentication) "
+                    + ": @academyAuth.isTeacherOrAboveOfAcademy(authentication, #academyId)"
+    )
     @GetMapping
     public ApiResponse<?> getStudentStatuses(
             @RequestParam(required = false) Integer academyId,

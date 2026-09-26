@@ -103,6 +103,83 @@ class AcademyAuthorizationTest {
         assertFalse(authorization.canManageClass(student, 1, 2));
     }
 
+    @Test
+    void ownerOfOneAcademyIsNotOwnerOfAnyAcademyCheckWhenNotOwnerAnywhere() {
+        Authentication teacher = authentication("teacher", "ROLE_USER");
+        when(membershipRepository.findSkByChatUser(any(ChatUser.class)))
+                .thenReturn("teacher-sk");
+        when(academyMemberRepository
+                .existsBySkAndRoleNameIn("teacher-sk", List.of("ACADEMY_OWNER")))
+                .thenReturn(false);
+
+        assertFalse(authorization.isOwnerOfAnyAcademy(teacher));
+    }
+
+    @Test
+    void ownerOfAnyAcademyIsTrueWhenSkOwnsAtLeastOneAcademy() {
+        Authentication owner = authentication("owner", "ROLE_USER");
+        when(membershipRepository.findSkByChatUser(any(ChatUser.class)))
+                .thenReturn("owner-sk");
+        when(academyMemberRepository
+                .existsBySkAndRoleNameIn("owner-sk", List.of("ACADEMY_OWNER")))
+                .thenReturn(true);
+
+        assertTrue(authorization.isOwnerOfAnyAcademy(owner));
+    }
+
+    @Test
+    void adminIsOwnerOfAnyAcademyWithoutRepositoryLookup() {
+        Authentication admin = authentication("admin", "ROLE_ADMIN");
+
+        assertTrue(authorization.isOwnerOfAnyAcademy(admin));
+        verify(academyMemberRepository, never())
+                .existsBySkAndRoleNameIn(any(), any());
+    }
+
+    @Test
+    void teacherOrAboveOfAcademyChecksOwnerOrTeacherRoleWithoutRequiringClassId() {
+        Authentication teacher = authentication("teacher", "ROLE_USER");
+        when(membershipRepository.findSkByChatUser(any(ChatUser.class)))
+                .thenReturn("teacher-sk");
+        when(academyMemberRepository
+                .existsBySkAndAcademyIdAndRoleNameIn(
+                        "teacher-sk", 1, List.of("ACADEMY_OWNER", "TEACHER")
+                ))
+                .thenReturn(true);
+
+        assertTrue(authorization.isTeacherOrAboveOfAcademy(teacher, 1));
+    }
+
+    @Test
+    void studentIsNotTeacherOrAboveOfAcademy() {
+        Authentication student = authentication("student", "ROLE_USER");
+        when(membershipRepository.findSkByChatUser(any(ChatUser.class)))
+                .thenReturn("student-sk");
+        when(academyMemberRepository
+                .existsBySkAndAcademyIdAndRoleNameIn(
+                        "student-sk", 1, List.of("ACADEMY_OWNER", "TEACHER")
+                ))
+                .thenReturn(false);
+
+        assertFalse(authorization.isTeacherOrAboveOfAcademy(student, 1));
+    }
+
+    @Test
+    void teacherOrAboveOfAcademyWithNullAcademyIdFallsBackToAnyAcademyCheck() {
+        Authentication teacher = authentication("teacher", "ROLE_USER");
+        when(membershipRepository.findSkByChatUser(any(ChatUser.class)))
+                .thenReturn("teacher-sk");
+        when(academyMemberRepository
+                .existsBySkAndRoleNameIn(
+                        "teacher-sk", List.of("ACADEMY_OWNER", "TEACHER")
+                ))
+                .thenReturn(true);
+
+        assertTrue(authorization.isTeacherOrAboveOfAcademy(teacher, null));
+        verify(academyMemberRepository, never())
+                .existsBySkAndAcademyIdAndRoleNameIn(any(), any(), any());
+    }
+
     private Authentication authentication(String name, String authority) {
         CustomUser principal = CustomUser.of(name, "OAUTH_USER", authority, null);
         return new UsernamePasswordAuthenticationToken(

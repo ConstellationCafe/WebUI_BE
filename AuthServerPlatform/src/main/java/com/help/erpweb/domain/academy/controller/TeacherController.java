@@ -66,7 +66,17 @@ public class TeacherController {
 
     /**
      * 교사 상태 이력 조회
+     *
+     * 2026-09-26: 학원장 이상만 접근 가능하도록 인가 추가 (FE academy_category.dart가
+     * "교사 관리/조회" 메뉴 자체를 isOwner() 기준으로 숨기고 있었는데, API에는
+     * 대응하는 서버 측 인가가 없었다). academyId 없이(전체 조회) 호출되면 "어느
+     * Academy에서든 학원장인지"만 확인한다.
      */
+    @PreAuthorize(
+            "#academyId == null "
+                    + "? @academyAuth.isOwnerOfAnyAcademy(authentication) "
+                    + ": @academyAuth.isOwner(authentication, #academyId)"
+    )
     @GetMapping
     public ApiResponse<?> getTeacherStatuses(
             @RequestParam(required = false) Integer academyId,

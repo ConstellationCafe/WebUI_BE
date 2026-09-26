@@ -91,4 +91,10 @@ public interface AcademyMemberRepository
             String sk,
             Collection<String> roleNames
     );
+
+    boolean existsBySkAndAcademyIdAndRoleNameIn(
+            String sk,
+            Integer academyId,
+            Collection<String> roleNames
+    );
 }
