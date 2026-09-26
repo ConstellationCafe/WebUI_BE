@@ -142,10 +142,13 @@ public class AuthSessionService {
      * 발급되고, 그 순간부터 /api/**가 이 사용자를 인증된 것으로 취급한다
      * (BackEndJwtAuthFilter 참고).
      *
-     * roles(authorities)는 기존 동작 그대로 selectRoom 이전에 확인된 값을
-     * 그대로 쓴다(재조회하지 않는다) — 이건 이번 리팩토링 이전부터 있던
-     * 동작이라 그대로 옮겼다. refresh()는 반대로 botId 스코프로 재조회하므로
-     * 둘의 동작이 다르다는 점은 별도로 보고할 사항이다.
+     * 2026-09-26: roles(authorities)는 방 선택 이전에 확인된 값이 아니라,
+     * botId 스코프로 재조회한 값을 쓰도록 바꿨다(refresh()와 동일한 패턴).
+     * 원래는 재조회 결과(멤버 여부 확인용으로만 쓰던 것)를 버리고 파라미터로
+     * 들어온 user(방 선택 이전 권한)로 토큰을 만들었는데, admin 여부가 방
+     * 단위로 재정의되는 이 시스템에서는 그 사이 시간창 동안 잘못된 권한의
+     * 토큰이 발급되는 문제가 있었다 — refresh()를 호출하기 전까지는 교정되지
+     * 않았다.
      */
     public ApiResponse<?> selectRoom(
             final CustomUser user,
@@ -159,11 +162,14 @@ public class AuthSessionService {
 
         // ADR-0001: guildId가 "등록"되어 있다는 것만으로는 부족하다 — 이
         // discordId가 실제로 그 방(botId)의 멤버인지까지 검증해야 한다.
-        identityResolver.resolveIdentity(user.getUsername(), botId)
-                .orElseThrow(() -> new CustomException(ErrorCode.GUILD_MEMBER_NOT_FOUND));
+        // 2026-09-26: 검증 결과(botId 스코프로 재조회된 identity)를 버리지
+        // 않고 그대로 토큰 발급에 사용한다.
+        final CustomUser scopedIdentity =
+                identityResolver.resolveIdentity(user.getUsername(), botId)
+                        .orElseThrow(() -> new CustomException(ErrorCode.GUILD_MEMBER_NOT_FOUND));
 
-        final String accessToken = jwtUtil.createAccessToken(user, botId);
-        final String refreshToken = jwtUtil.createRefreshToken(user, botId);
+        final String accessToken = jwtUtil.createAccessToken(scopedIdentity, botId);
+        final String refreshToken = jwtUtil.createRefreshToken(scopedIdentity, botId);
 
         response.addHeader(
                 "Set-Cookie",
