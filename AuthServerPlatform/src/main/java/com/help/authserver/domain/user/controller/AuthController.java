@@ -2,7 +2,8 @@ package com.help.authserver.domain.user.controller;
 
 import com.help.authserver.domain.user.dto.request.GuildSelectRequestDto;
 import com.help.authserver.domain.user.dto.response.LoginCheckResponseDto;
-import com.help.authserver.domain.user.service.DiscordAuthService;
+import com.help.authserver.domain.user.service.AuthSessionService;
+import com.help.authserver.domain.user.service.DiscordLoginService;
 import com.help.global.jwt.CustomUser;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -28,7 +29,8 @@ import java.net.URI;
 public class AuthController {
 //	private final UserService userService;
 //	private final AuthService authService;  // 형식상 남겨둠
-	private final DiscordAuthService discordAuthService;
+	private final DiscordLoginService discordLoginService;
+	private final AuthSessionService authSessionService;
 //	private final VerificationTokenService tokenService;
 
 	// 로그인 (형식상 남겨둠)
@@ -48,7 +50,7 @@ public class AuthController {
 //			@RequestParam(value = "state", required = false) String state,
 			HttpServletResponse response
 	) {
-		String redirectTo = discordAuthService.login(code, response);
+		String redirectTo = discordLoginService.login(code, response);
 		HttpHeaders headers = new HttpHeaders();
 		headers.setLocation(URI.create(redirectTo));
 		log.info("로그인 성공, 리다이렉션 시작");
@@ -60,7 +62,7 @@ public class AuthController {
 		@AuthenticationPrincipal CustomUser user
 	) {
 		log.info("[GET] /auth/me");
-		return discordAuthService.me(user);
+		return discordLoginService.me(user);
 	}
 
 	@GetMapping("/guilds")
@@ -68,7 +70,7 @@ public class AuthController {
 		@AuthenticationPrincipal CustomUser user
 	) {
 		log.info("[GET] /auth/guilds");
-		return discordAuthService.guilds(user);
+		return discordLoginService.guilds(user);
 	}
 
 	// ADR-0001: discordId 인증 이후, 채팅방(guildId)을 선택해야 로그인이 완료된다.
@@ -79,7 +81,7 @@ public class AuthController {
 		HttpServletResponse response
 	) {
 		log.info("[POST] /auth/guild/select");
-		return discordAuthService.selectGuild(user, request.guildId(), response);
+		return authSessionService.selectRoom(user, request.guildId(), response);
 	}
 
 	// AccessToken 갱신 요청
@@ -89,13 +91,13 @@ public class AuthController {
 		final HttpServletResponse response
 	) {
 		log.info("[POST] /auth/refresh");
-		return discordAuthService.refresh(request, response);
+		return authSessionService.refresh(request, response);
 	}
 
 	@GetMapping("/check")
 	public ApiResponse<?> loginCheck(final HttpServletRequest request) {
 		log.info("[GET] /auth/check");
-		return discordAuthService.checkLogin(request);
+		return authSessionService.checkLogin(request);
 	}
 
 	@PostMapping("/logout")
@@ -104,7 +106,7 @@ public class AuthController {
 			final HttpServletResponse response
 	) {
 		log.info("[GET] /auth/logout");
-		discordAuthService.logout(user, response);
+		authSessionService.logout(user, response);
 		return ApiResponse.success(null);
 	}
 
