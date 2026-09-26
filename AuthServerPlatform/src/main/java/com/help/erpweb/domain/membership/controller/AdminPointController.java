@@ -4,7 +4,7 @@ import com.help.erpweb.domain.membership.dto.request.AdminPointLogUpdateRequest;
 import com.help.erpweb.domain.membership.dto.request.AdminPointTransactionRequest;
 import com.help.erpweb.domain.membership.dto.response.AdminPointDetailResponse;
 import com.help.erpweb.domain.membership.dto.response.AdminPointMemberPageResponse;
-import com.help.erpweb.domain.membership.service.AdminPointService;
+import com.help.erpweb.domain.membership.service.PointService;
 import com.help.global.common.response.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Validated
 @PreAuthorize("@authorization.isAdmin(authentication)")
 public class AdminPointController {
-    private final AdminPointService adminPointService;
+    private final PointService pointService;
 
     @GetMapping("/members")
     public ApiResponse<AdminPointMemberPageResponse> getMembers(
@@ -39,7 +39,7 @@ public class AdminPointController {
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
-        return ApiResponse.success(adminPointService.getMembers(discordId, page, size));
+        return ApiResponse.success(pointService.getMembers(discordId, page, size));
     }
 
     @GetMapping("/members/{discordId}")
@@ -48,7 +48,7 @@ public class AdminPointController {
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
-        return ApiResponse.success(adminPointService.getMember(discordId, page, size));
+        return ApiResponse.success(pointService.getMember(discordId, page, size));
     }
 
     @PostMapping("/members/{discordId}/transactions")
@@ -56,7 +56,7 @@ public class AdminPointController {
             @PathVariable @Pattern(regexp = "[0-9]{1,20}") String discordId,
             @Valid @RequestBody AdminPointTransactionRequest request
     ) {
-        return ApiResponse.success(adminPointService.transact(discordId, request));
+        return ApiResponse.success(pointService.transact(discordId, request));
     }
 
     @PatchMapping("/members/{discordId}/logs/{originalAmount}")
@@ -66,7 +66,7 @@ public class AdminPointController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime at,
             @Valid @RequestBody AdminPointLogUpdateRequest request
     ) {
-        return ApiResponse.success(adminPointService.updateLog(
+        return ApiResponse.success(pointService.updateLog(
                 discordId,
                 originalAmount,
                 at,
@@ -81,6 +81,6 @@ public class AdminPointController {
             @PathVariable int originalAmount,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime at
     ) {
-        return ApiResponse.success(adminPointService.deleteLog(discordId, originalAmount, at));
+        return ApiResponse.success(pointService.deleteLog(discordId, originalAmount, at));
     }
 }

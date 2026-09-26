@@ -15,6 +15,8 @@ import com.help.erpweb.domain.membership.dto.response.AdminPointMemberResponse;
 import com.help.erpweb.domain.membership.dto.response.AdminPointLogResponse;
 import com.help.erpweb.domain.membership.exception.InsufficientCoinException;
 import com.help.erpweb.domain.membership.repository.AdminPointRepository;
+import com.help.erpweb.domain.membership.repository.MembershipRepository;
+import com.help.erpweb.domain.membership.repository.PointRepository;
 import java.util.List;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,16 +25,28 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+/**
+ * 2026-09-26: AdminPointServiceTest에서 이름을 바꿈(AdminPointService가
+ * PointService로 합쳐짐에 따라). 여기서는 기존 관리자용 포인트 CRUD 동작만
+ * 검증한다 — 본인 포인트 로그 조회(getPointLog)는 별도 테스트가 없었고
+ * 이번에도 추가하지 않았다(필요하면 별도 테스트 추가 요청 바람).
+ */
 @ExtendWith(MockitoExtension.class)
-class AdminPointServiceTest {
+class PointServiceTest {
     @Mock
     private AdminPointRepository repository;
 
-    private AdminPointService service;
+    @Mock
+    private PointRepository pointRepository;
+
+    @Mock
+    private MembershipRepository membershipRepository;
+
+    private PointService service;
 
     @BeforeEach
     void setUp() {
-        service = new AdminPointService(repository);
+        service = new PointService(repository, pointRepository, membershipRepository);
     }
 
     @Test
