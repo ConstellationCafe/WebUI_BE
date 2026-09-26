@@ -1,13 +1,24 @@
 package com.help.erpweb.domain.academy.authorization;
 
 import com.help.erpweb.domain.academy.repository.AcademyMemberRepository;
+import com.help.erpweb.domain.membership.repository.MembershipRepository;
+import com.help.global.chat.ChatIdentities;
 import com.help.global.data.Authority;
+import com.help.global.jwt.CustomUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * 2026-09-26: 권한 판정을 discordId(전역, 봇/방 무관) 기준에서 sk(=(botId,
+ * discordId)로 결정되는 방 스코프 신원) 기준으로 바꿨다 — discordId만으로는
+ * 같은 사람이 다른 방에서 가진 Academy 멤버십까지 통과시켜버리는 문제가
+ * 있었다. sk는 {@link MembershipRepository#findSkByChatUser}로 구하며,
+ * 이 메서드가 내부적으로 {@code GuildContext.requireBotId()}(현재 요청의
+ * botId)를 쓰므로 여기서 botId를 직접 다룰 필요는 없다.
+ */
 @Component("academyAuth")
 @RequiredArgsConstructor
 public class AcademyAuthorization {
@@ -16,6 +27,7 @@ public class AcademyAuthorization {
     private static final String ROLE_STUDENT = "STUDENT";
 
     private final AcademyMemberRepository academyMemberRepository;
+    private final MembershipRepository membershipRepository;
 
     public boolean hasGlobalAccess(
             Authentication authentication
@@ -42,11 +54,11 @@ public class AcademyAuthorization {
             return true;
         }
 
-        String discordId = authentication.getName();
+        String sk = resolveSk(authentication);
 
         return academyMemberRepository
-                .existsByDiscordIdAndAcademyId(
-                        discordId,
+                .existsBySkAndAcademyId(
+                        sk,
                         academyId
                 );
     }
@@ -68,11 +80,11 @@ public class AcademyAuthorization {
             return true;
         }
 
-        String discordId = authentication.getName();
+        String sk = resolveSk(authentication);
 
         return academyMemberRepository
-                .existsByDiscordIdAndAcademyIdAndRoleName(
-                        discordId,
+                .existsBySkAndAcademyIdAndRoleName(
+                        sk,
                         academyId,
                         ROLE_ACADEMY_OWNER
                 );
@@ -106,13 +118,13 @@ public class AcademyAuthorization {
             return true;
         }
 
-        String discordId = authentication.getName();
+        String sk = resolveSk(authentication);
 
         // í´ë¹ Academyì íìì¥ì´ë©´ ëª¨ë  Class ì ê·¼ ê°ë¥
         boolean isOwner =
                 academyMemberRepository
-                        .existsByDiscordIdAndAcademyIdAndRoleName(
-                                discordId,
+                        .existsBySkAndAcademyIdAndRoleName(
+                                sk,
                                 academyId,
                                 ROLE_ACADEMY_OWNER
                         );
@@ -123,8 +135,8 @@ public class AcademyAuthorization {
 
         // ì¼ë° êµì¬ë ìì ì´ ë´ë¹íë Classë§ ì ê·¼ ê°ë¥
         return academyMemberRepository
-                .existsByDiscordIdAndAcademyIdAndClassIdAndRoleName(
-                        discordId,
+                .existsBySkAndAcademyIdAndClassIdAndRoleName(
+                        sk,
                         academyId,
                         classId,
                         ROLE_TEACHER
@@ -156,12 +168,12 @@ public class AcademyAuthorization {
             return true;
         }
 
-        String discordId = authentication.getName();
+        String sk = resolveSk(authentication);
 
         boolean isOwner =
                 academyMemberRepository
-                        .existsByDiscordIdAndAcademyIdAndRoleName(
-                                discordId,
+                        .existsBySkAndAcademyIdAndRoleName(
+                                sk,
                                 academyId,
                                 ROLE_ACADEMY_OWNER
                         );
@@ -171,8 +183,8 @@ public class AcademyAuthorization {
         }
 
         return academyMemberRepository
-                .existsByDiscordIdAndAcademyIdAndClassId(
-                        discordId,
+                .existsBySkAndAcademyIdAndClassId(
+                        sk,
                         academyId,
                         classId
                 );
@@ -193,10 +205,10 @@ public class AcademyAuthorization {
             return true;
         }
 
-        String discordId = authentication.getName();
+        String sk = resolveSk(authentication);
         return academyMemberRepository
-                .existsByDiscordIdAndRoleNameIn(
-                        discordId,
+                .existsBySkAndRoleNameIn(
+                        sk,
                         List.of(
                                 "ACADEMY_OWNER",
                                 "TEACHER"
@@ -213,6 +225,15 @@ public class AcademyAuthorization {
                 authentication,
                 academyId,
                 classId
+        );
+    }
+
+    private String resolveSk(
+            Authentication authentication
+    ) {
+        CustomUser user = (CustomUser) authentication.getPrincipal();
+        return membershipRepository.findSkByChatUser(
+                ChatIdentities.fromPrincipal(user)
         );
     }
 
@@ -250,11 +271,11 @@ public class AcademyAuthorization {
             return AcademyAccessScope.ADMIN;
         }
 
-        String discordId = authentication.getName();
+        String sk = resolveSk(authentication);
 
         boolean isOwner = academyMemberRepository
-                        .existsByDiscordIdAndAcademyIdAndRoleName(
-                                discordId,
+                        .existsBySkAndAcademyIdAndRoleName(
+                                sk,
                                 academyId,
                                 ROLE_ACADEMY_OWNER
                         );
@@ -269,8 +290,8 @@ public class AcademyAuthorization {
 
         boolean isTeacher =
                 academyMemberRepository
-                        .existsByDiscordIdAndAcademyIdAndClassIdAndRoleName(
-                                discordId,
+                        .existsBySkAndAcademyIdAndClassIdAndRoleName(
+                                sk,
                                 academyId,
                                 classId,
                                 ROLE_TEACHER
@@ -282,8 +303,8 @@ public class AcademyAuthorization {
 
         boolean isStudent =
                 academyMemberRepository
-                        .existsByDiscordIdAndAcademyIdAndClassIdAndRoleName(
-                                discordId,
+                        .existsBySkAndAcademyIdAndClassIdAndRoleName(
+                                sk,
                                 academyId,
                                 classId,
                                 ROLE_STUDENT

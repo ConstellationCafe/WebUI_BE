@@ -4,7 +4,6 @@ import com.help.erpweb.domain.academy.service.AcademyService;
 import com.help.global.common.response.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,10 +28,12 @@ public class AcademyController {
     }
 
     @GetMapping
-    public ApiResponse<?> getAcademies() {
+    public ApiResponse<?> getAcademies(
+            Authentication authentication
+    ) {
         log.info("[GET] /api/academy");
         return ApiResponse.success(
-                academyService.getAcademies()
+                academyService.getAcademies(authentication)
         );
     }
 
@@ -62,36 +63,6 @@ public class AcademyController {
         );
     }
 
-    @PreAuthorize("@academyAuth.isMember(authentication, #academyId)")
-    @GetMapping("/{academyId}/classes/{classId}/teachers")
-    public ApiResponse<?> getTeachers(
-            @PathVariable Integer academyId,
-            @PathVariable Integer classId
-    ) {
-        log.info(
-                "[GET] /api/academy/{}/teachers",
-                academyId
-        );
-        return ApiResponse.success(
-                academyService.getTeachers(academyId, classId)
-        );
-    }
-
-    @PreAuthorize("@academyAuth.canManageClass(authentication, #academyId, #classId)")
-    @GetMapping("/{academyId}/classes/{classId}/students")
-    public ApiResponse<?> getStudents(
-            @PathVariable Integer academyId,
-            @PathVariable Integer classId
-    ) {
-        log.info(
-                "[GET] /api/academy/{}/classes/{}/students",
-                academyId, classId
-        );
-        return ApiResponse.success(
-                academyService.getStudents(
-                        academyId,
-                        classId
-                )
-        );
-    }
+    // getTeachers -> TeacherController(/api/academy/teachers/{academyId}/classes/{classId})로 이관
+    // getStudents -> StudentController(/api/academy/students/{academyId}/classes/{classId})로 이관
 }

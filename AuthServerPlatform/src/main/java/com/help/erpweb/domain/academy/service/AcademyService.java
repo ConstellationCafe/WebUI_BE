@@ -52,9 +52,13 @@ public class AcademyService {
         boolean isAdmin = academyAuthorization
                 .hasGlobalAccess(authentication);
         // academies
-        String discordId = authentication.getName();
+        // 2026-09-26: discordId(전역)가 아니라 sk(=(botId, discordId), 방 스코프)로
+        // 조회한다 — 같은 사람이 다른 방에서 가진 멤버십까지 섞여 나오는 것을 막는다.
+        String sk = membershipRepository.findSkByChatUser(
+                ChatIdentities.fromPrincipal((CustomUser) authentication.getPrincipal())
+        );
         List<AcademyMember> members = academyMemberRepository
-                .findAllByDiscordId(discordId);
+                .findAllBySk(sk);
         Map<String, List<AcademyMember>> grouped = members
                 .stream()
                 .collect(
@@ -96,8 +100,28 @@ public class AcademyService {
         );
     }
 
-    public List<AcademyResponse> getAcademies() {
-        return academyRepository.findAll()
+    /**
+     * 2026-09-26: 기존에는 academyId 무관하게 모든 Academy를 반환했다 — 방(봇)
+     * 경계가 전혀 없어서, 어떤 방으로 로그인했든 다른 방의 Academy 목록까지
+     * 그대로 노출되는 문제가 있었다. ADMIN은 기존처럼 전체를 보고, 그 외에는
+     * 본인 sk(=현재 방 스코프 신원)가 속한 Academy만 보이도록 스코프한다.
+     */
+    public List<AcademyResponse> getAcademies(
+            Authentication authentication
+    ) {
+        final List<Academy> academies;
+        if (academyAuthorization.hasGlobalAccess(authentication)) {
+            academies = academyRepository.findAll();
+        } else {
+            String sk = membershipRepository.findSkByChatUser(
+                    ChatIdentities.fromPrincipal((CustomUser) authentication.getPrincipal())
+            );
+            List<Integer> accessibleAcademyIds =
+                    academyMemberRepository.findAccessibleAcademyIds(sk);
+            academies = academyRepository.findAllByIdIn(accessibleAcademyIds);
+        }
+
+        return academies
                 .stream()
                 .map(academy ->
                         new AcademyResponse(

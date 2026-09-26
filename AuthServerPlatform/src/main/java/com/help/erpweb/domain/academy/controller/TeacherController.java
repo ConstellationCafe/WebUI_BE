@@ -1,21 +1,37 @@
 package com.help.erpweb.domain.academy.controller;
 
+import com.help.erpweb.domain.academy.service.AcademyService;
 import com.help.erpweb.domain.academy.service.TeacherStatusService;
 import com.help.global.common.response.ApiResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 2026-09-26: TeacherStatusController에서 이름을 바꾸고(교사 상태 이력 조회만
+ * 다루던 컨트롤러 -> "교사" 리소스 전반을 다루는 컨트롤러), AcademyController의
+ * getTeachers를 이 컨트롤러로 옮겼다. StudentController와 대칭되는 구조로
+ * 맞췄다 — API 명세가 일부 바뀐다(FE/Notion 갱신 필요).
+ *
+ *   (기존) GET /api/academy/teacher-status/options
+ *        -> GET /api/academy/teachers/options
+ *   (기존) GET /api/academy/teacher-status
+ *        -> GET /api/academy/teachers
+ *   (기존) GET /api/academy/{academyId}/classes/{classId}/teachers
+ *        -> GET /api/academy/teachers/{academyId}/classes/{classId}
+ */
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/academy/teacher-status")
+@RequestMapping("/api/academy/teachers")
 @Validated
-public class TeacherStatusController {
+public class TeacherController {
     private final TeacherStatusService teacherStatusService;
+    private final AcademyService academyService;
 
     /**
      * 교사 상태 처리 화면의 선택 옵션 조회
@@ -35,7 +51,7 @@ public class TeacherStatusController {
             @RequestParam(required = false) Integer classId
     ) {
         log.info(
-                "[GET] /api/academy/teacher-status/options academyId={}, classId={}",
+                "[GET] /api/academy/teachers/options academyId={}, classId={}",
                 academyId,
                 classId
         );
@@ -61,7 +77,7 @@ public class TeacherStatusController {
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
         log.info(
-                "[GET] /api/academy/teacher-status " +
+                "[GET] /api/academy/teachers " +
                         "academyId={}, classId={}, academyMemberId={}, status={}, page={}, size={}",
                 academyId,
                 classId,
@@ -80,6 +96,24 @@ public class TeacherStatusController {
                         page,
                         size
                 )
+        );
+    }
+
+    /**
+     * 특정 분반의 교사 목록 조회 (AcademyController.getTeachers에서 이관됨)
+     */
+    @PreAuthorize("@academyAuth.isMember(authentication, #academyId)")
+    @GetMapping("/{academyId}/classes/{classId}")
+    public ApiResponse<?> getTeachers(
+            @PathVariable Integer academyId,
+            @PathVariable Integer classId
+    ) {
+        log.info(
+                "[GET] /api/academy/teachers/{}/classes/{}",
+                academyId, classId
+        );
+        return ApiResponse.success(
+                academyService.getTeachers(academyId, classId)
         );
     }
 }

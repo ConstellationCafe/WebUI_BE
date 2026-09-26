@@ -1,9 +1,11 @@
 package com.help.erpweb.domain.academy.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.help.global.chat.ChatIdentities;
 import com.help.global.discord.identity.DiscordUser;
 import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.global.guild.GuildContext;
+import com.help.global.jwt.CustomUser;
 import com.help.erpweb.domain.academy.authorization.AcademyAuthorization;
 import com.help.erpweb.domain.academy.dto.request.LessonRecordCreateRequest;
 import com.help.erpweb.domain.academy.dto.request.LessonRecordUpdateRequest;
@@ -75,11 +77,12 @@ public class LessonRecordService {
         }
         // ê·¸ ì¸
         else {
-            String discordId = authentication.getName();
+            // 2026-09-26: discordId(전역)가 아니라 sk(방 스코프 신원)로 조회한다.
+            String sk = resolveSk(authentication);
             // TEACHERë ìì²­ teacherIdì ìê´ìì´ ìê¸° ìì ì¼ë¡ ê°•ì 
             targetTeacherId = academyMemberRepository
                     .findTeacherSk(
-                            discordId,
+                            sk,
                             academyId
                     )
                     .orElse(null);
@@ -227,11 +230,18 @@ public class LessonRecordService {
         }
 
         return academyMemberRepository.findTeacherSk(
-                        authentication.getName(),
+                        resolveSk(authentication),
                         academyId
                 )
                 .filter(mainTeacherId::equals)
                 .isPresent();
+    }
+
+    private String resolveSk(final Authentication authentication) {
+        final CustomUser user = (CustomUser) authentication.getPrincipal();
+        return membershipRepository.findSkByChatUser(
+                ChatIdentities.fromPrincipal(user)
+        );
     }
 
     private String convertSubjectIdToName(String subjectId) {

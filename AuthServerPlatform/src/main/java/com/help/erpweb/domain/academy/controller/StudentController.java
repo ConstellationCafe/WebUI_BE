@@ -1,21 +1,38 @@
 package com.help.erpweb.domain.academy.controller;
 
+import com.help.erpweb.domain.academy.service.AcademyService;
 import com.help.erpweb.domain.academy.service.StudentStatusService;
 import com.help.global.common.response.ApiResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 2026-09-26: StudentStatusController에서 이름을 바꾸고(학생 상태 이력 조회만
+ * 다루던 컨트롤러 -> "학생" 리소스 전반을 다루는 컨트롤러), AcademyController의
+ * getStudents를 이 컨트롤러로 옮겼다. 그에 맞춰 URL도 리소스 기준으로
+ * 재정리했다 — API 명세가 일부 바뀐다(FE/Notion 갱신 필요).
+ *
+ *   (기존) GET /api/academy/student-status/options
+ *        -> GET /api/academy/students/options
+ *   (기존) GET /api/academy/student-status
+ *        -> GET /api/academy/students
+ *   (기존) GET /api/academy/{academyId}/classes/{classId}/students
+ *        -> GET /api/academy/students/{academyId}/classes/{classId}
+ */
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/academy/student-status")
+@RequestMapping("/api/academy/students")
 @Validated
-public class StudentStatusController {
+public class StudentController {
     private final StudentStatusService studentStatusService;
+    private final AcademyService academyService;
+
     /**
      * 학생 상태 처리 화면의 선택 옵션 조회
      *
@@ -34,7 +51,7 @@ public class StudentStatusController {
             @RequestParam(required = false) Integer classId
     ) {
         log.info(
-                "[GET] /api/academy/student-status/options academyId={}, classId={}",
+                "[GET] /api/academy/students/options academyId={}, classId={}",
                 academyId,
                 classId
         );
@@ -65,7 +82,7 @@ public class StudentStatusController {
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size
     ) {
         log.info(
-                "[GET] /api/academy/student-status " +
+                "[GET] /api/academy/students " +
                         "academyId={}, classId={}, academyMemberId={}, status={}, page={}, size={}",
                 academyId,
                 classId,
@@ -83,6 +100,27 @@ public class StudentStatusController {
                         status,
                         page,
                         size
+                )
+        );
+    }
+
+    /**
+     * 특정 분반의 학생 목록 조회 (AcademyController.getStudents에서 이관됨)
+     */
+    @PreAuthorize("@academyAuth.canManageClass(authentication, #academyId, #classId)")
+    @GetMapping("/{academyId}/classes/{classId}")
+    public ApiResponse<?> getStudents(
+            @PathVariable Integer academyId,
+            @PathVariable Integer classId
+    ) {
+        log.info(
+                "[GET] /api/academy/students/{}/classes/{}",
+                academyId, classId
+        );
+        return ApiResponse.success(
+                academyService.getStudents(
+                        academyId,
+                        classId
                 )
         );
     }
