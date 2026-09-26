@@ -28,12 +28,12 @@ import java.util.Map;
 	basePackages = {
 		"com.help.global.discord.identity",
 		"com.help.erpweb.domain.academy.repository",
-		"com.help.erpweb.domain.content.repository",
-		"com.help.erpweb.domain.learning.repository",
+		"com.help.erpweb.domain.modules.chatbot.content.repository",
+		"com.help.erpweb.domain.modules.chatbot.learning.repository",
 		"com.help.erpweb.domain.membership.repository",
-		"com.help.erpweb.domain.menu.repository",
+		"com.help.erpweb.domain.modules.chatbot.menu.repository",
 		"com.help.erpweb.domain.metadata.repository",
-		"com.help.erpweb.domain.music.repository"
+		"com.help.erpweb.domain.modules.chatbot.music.repository"
 	},
 	entityManagerFactoryRef = "constellationEntityManagerFactory",
 	transactionManagerRef = "constellationTransactionManager"
@@ -86,12 +86,12 @@ public class ConstellationDBDataSourceConfig {
 			.packages(
 				"com.help.global.discord.identity",
 				"com.help.erpweb.domain.academy.entity",
-				"com.help.erpweb.domain.content.entity",
-				"com.help.erpweb.domain.learning.entity",
+				"com.help.erpweb.domain.modules.chatbot.content.entity",
+				"com.help.erpweb.domain.modules.chatbot.learning.entity",
 				"com.help.erpweb.domain.membership.entity",
-				"com.help.erpweb.domain.menu.entity",
+				"com.help.erpweb.domain.modules.chatbot.menu.entity",
 				"com.help.erpweb.domain.metadata.entity",
-				"com.help.erpweb.domain.music.entity"
+				"com.help.erpweb.domain.modules.chatbot.music.entity"
 			)
 			.persistenceUnit("constellation")
 			.properties(properties)
