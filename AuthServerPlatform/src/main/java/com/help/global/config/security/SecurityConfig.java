@@ -74,6 +74,7 @@ public class SecurityConfig {
 		http.sessionManagement(session ->
 				session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 		);
+		http.cors(cors -> cors.configurationSource(configurationSource()));
 
 		http.addFilterBefore(backEndJwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -129,7 +130,7 @@ public class SecurityConfig {
 		// íë¡ í¸ìë ìë² ì£¼ì
 		configuration.setAllowedOriginPatterns(List.of(redirectUri));
 
-		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 		configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 		configuration.setExposedHeaders(List.of("Authorization"));
 		configuration.setAllowCredentials(true);
