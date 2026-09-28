@@ -4,12 +4,12 @@
 > 적용 범위: `ConstellationCafe/WebUI_BE` 백엔드 서비스  
 > 문서 담당자·마지막 운영 검증일: 프로젝트에서 지정 필요
 
-[빗자루](https://github.com/ConstellationCafe/DiscordBot)의 WebUI가 사용하는 Spring Boot API 서버입니다. Discord OAuth 2.0 인증, JWT 기반 인증 상태, 콘텐츠·학습 자료·메뉴·음악 추천, 아카데미 관리 및 채팅방 알림(관리자·내부 기능·외부 시스템 발행, 실시간 전달) 기능을 제공합니다.
+[빗자루](https://github.com/ConstellationCafe/DiscordBot)의 WebUI가 사용하는 Spring Boot API 서버입니다. Discord OAuth 2.0 인증, JWT 기반 인증 상태, 콘텐츠·학습 자료·메뉴·음악 추천, 아카데미 관리 및 채팅방 알림(관리자·내부 기능·외부 시스템 발행, 아카데미 관리 및 길드별 벌점 관리 기능, 실시간 전달) 기능을 제공합니다.
 
 ## 기술 스택과 요구사항
 
 - Java 17
-- Gradle 8.13 Wrapper
+- Gradle 9.7.1 Wrapper
 - Spring Boot 3.4.3
 - MySQL 8+
 - Redis 7.4+
@@ -70,6 +70,7 @@ client가 여러 개면 `_1_`, `_2_`처럼 번호를 늘립니다. 값이 형식
 Development는 편의를 위해 primary schema를 `update`할 수 있지만 production은 `validate`만 수행합니다. 운영 schema 변경은 별도 검토·백업·복구 계획을 가진 migration으로 수행해야 합니다.
 
 알림 기능을 배포하기 전 운영자가 [0005 수동 migration](docs/migrations/0005_notification.sql)을 검증·적용해야 합니다. `Notification`, `NotificationReadCursor` 테이블 추가만 포함합니다. 관리자 포인트 입·출금도 알림을 저장하므로 migration 없이 배포하면 입·출금이 실패합니다. 설계는 [ADR-0004](docs/adr/0004-notification.md)를 참고합니다.
+벌점 API를 배포하기 전 운영자가 [0003 수동 migration](docs/migrations/0003_penalty.sql)으로 테이블을 생성하고 [0004 수동 migration](docs/migrations/0004_penalty_discord_identity.sql)으로 `sk`를 제거해야 합니다. 0003을 이미 적용했다면 0004만 적용합니다. 벌점은 현재 방의 재적 Discord 회원 `(botId, discordId)`로 식별하며 `Users.sk`를 요구하지 않습니다. 기존 데이터 백업 후 애플리케이션을 배포하고, 롤백 시 이전 코드가 요구하는 `sk`와 각 행의 값을 먼저 복원해야 합니다.
 
 ## 구조와 요청 흐름
 

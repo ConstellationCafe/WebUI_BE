@@ -9,6 +9,7 @@ import com.help.erpweb.domain.modules.erp.point.exception.PointLogConflictExcept
 import com.help.erpweb.domain.modules.erp.point.exception.PointLogNotFoundException;
 import com.help.global.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -118,6 +119,12 @@ public class GlobalExceptionHandler {
 		return ResponseEntity
 			.status(HttpStatus.BAD_REQUEST)
 			.body(ApiResponse.error(errorMessage, HttpStatus.BAD_REQUEST));
+	}
+
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity<ApiResponse<?>> handleUnreadableJson(final HttpMessageNotReadableException ex) {
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+			.body(ApiResponse.error("요청 JSON 형식을 확인해 주세요", HttpStatus.BAD_REQUEST));
 	}
 
 	@ExceptionHandler(ConstraintViolationException.class)

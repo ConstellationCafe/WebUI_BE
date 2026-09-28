@@ -14,19 +14,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 class AdminPointControllerRouteTest {
 
     @Test
-    void adminPointControllerIsMountedUnderAdminPrefixWithTemporaryLegacyPath() {
+    void adminPointControllerIsMountedOnlyUnderAdminPrefix() {
         RequestMapping mapping = AdminPointController.class.getAnnotation(RequestMapping.class);
 
         assertNotNull(mapping);
         assertArrayEquals(
-                new String[] {"/api/admin/points", "/api/repository/membership/admin/points"},
+                new String[] {"/api/admin/points"},
                 mapping.value()
         );
     }
 
     @Test
     void adminPointControllerKeepsMethodLevelAdminGuard() {
-        // 호환 경로는 /api/admin/** URL 규칙 밖이므로 이 어노테이션이 유일한 관리자 검사다.
+        // SecurityConfig URL 규칙과 함께 이중으로 관리자 권한을 확인한다.
         assertNotNull(AdminPointController.class.getAnnotation(PreAuthorize.class));
     }
 }

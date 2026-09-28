@@ -28,22 +28,17 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 관리자 포인트 API.
  * <p>
- * ADR-0002: 기준 경로는 {@value #BASE_PATH}다. {@value #DEPRECATED_BASE_PATH}는
- * BE/FE 배포 순서가 어긋나도 깨지지 않도록 남겨 둔 호환 경로이며, 새 경로를 쓰는
- * WebUI_FE가 운영에 배포된 뒤 제거한다. 호환 경로는 SecurityConfig의
- * /api/admin/** URL 규칙 밖에 있으므로 이 클래스의 {@code @PreAuthorize}가
- * 유일한 관리자 검사다. 제거 전까지 이 어노테이션을 지우지 않는다.
+ * ADR-0002: 관리자 API는 {@value #BASE_PATH} 등 /api/admin/** 아래에만 둔다.
+ * SecurityConfig의 URL 규칙(ROLE_ADMIN)과 이 클래스의 {@code @PreAuthorize}로
+ * 이중 확인한다.
  */
 @RestController
-@RequestMapping({AdminPointController.BASE_PATH, AdminPointController.DEPRECATED_BASE_PATH})
+@RequestMapping(AdminPointController.BASE_PATH)
 @RequiredArgsConstructor
 @Validated
 @PreAuthorize("@authorization.isAdmin(authentication)")
 public class AdminPointController {
     static final String BASE_PATH = "/api/admin/points";
-    /** @deprecated ADR-0002. WebUI_FE 배포 후 제거한다. */
-    @Deprecated
-    static final String DEPRECATED_BASE_PATH = "/api/repository/membership/admin/points";
 
     private final PointService pointService;
 
