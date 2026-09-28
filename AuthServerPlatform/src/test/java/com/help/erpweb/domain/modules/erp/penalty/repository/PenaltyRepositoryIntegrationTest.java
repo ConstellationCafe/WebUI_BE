@@ -130,7 +130,7 @@ class PenaltyRepositoryIntegrationTest {
 				(id, bot_id, sk, target_discord_id, target_username, channel_id,
 				 reason, score, issuer_discord_id, occurred_at, created_at, status, request_id)
 				VALUES (?, ?, ?, ?, '별', '999', '도배', 1, '900', ?, ?, ?, ?)
-				"", id, botId, sk, target, timestamp, timestamp, status,
+				""", id, botId, sk, target, timestamp, timestamp, status,
 				UUID.randomUUID().toString());
 	}
 }
