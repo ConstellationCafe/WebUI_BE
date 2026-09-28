@@ -63,7 +63,7 @@ cd AuthServerPlatform
 
 Development는 편의를 위해 primary schema를 `update`할 수 있지만 production은 `validate`만 수행합니다. 운영 schema 변경은 별도 검토·백업·복구 계획을 가진 migration으로 수행해야 합니다.
 
-벌점 API를 배포하기 전 운영자가 [0003 수동 migration](docs/migrations/0003_penalty.sql)을 검증·적용해야 합니다. 변경은 `PenaltyLog` 테이블 추가만 포함하며 취소 감사 기록을 보존합니다. 백업 확인 후 애플리케이션을 배포하고, 롤백할 때는 먼저 애플리케이션을 이전 버전으로 되돌립니다.
+벌점 API를 배포하기 전 운영자가 [0003 수동 migration](docs/migrations/0003_penalty.sql)으로 테이블을 생성하고 [0004 수동 migration](docs/migrations/0004_penalty_discord_identity.sql)으로 `sk`를 제거해야 합니다. 0003을 이미 적용했다면 0004만 적용합니다. 벌점은 현재 방의 재적 Discord 회원 `(botId, discordId)`로 식별하며 `Users.sk`를 요구하지 않습니다. 기존 데이터 백업 후 애플리케이션을 배포하고, 롤백 시 이전 코드가 요구하는 `sk`와 각 행의 값을 먼저 복원해야 합니다.
 
 ## 구조와 요청 흐름
 

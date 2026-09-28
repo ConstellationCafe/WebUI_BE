@@ -62,7 +62,7 @@
 
 ### 벌점 API
 
-상세 계약은 Notion `/명세서/API 명세서/Penalty API 명세`에서 관리합니다. 모든 벌점은 현재 토큰의 길드(`botId`)로 제한하고 UTC ISO-8601(`Z`)로 반환합니다. 관리자 경로는 `ROLE_ADMIN`만 사용하며 비관리자에게는 ADR-0002 규칙에 따라 404를 반환합니다. `page` 기본값은 1, `size` 기본값은 20입니다.
+상세 계약은 Notion `/명세서/API 명세서/Penalty API 명세`에서 관리합니다. 모든 벌점은 현재 토큰의 길드(`botId`)로 제한하고 UTC ISO-8601(`Z`)로 반환합니다. 대상은 `(botId, discordId)`로 식별하는 `DiscordUsers`의 재적 회원이며 `Users.sk` 발급은 요구하지 않습니다. 관리자 경로는 `ROLE_ADMIN`만 사용하며 비관리자에게는 ADR-0002 규칙에 따라 404를 반환합니다. `page` 기본값은 1, `size` 기본값은 20입니다.
 
 | Method | Endpoint | 설명 |
 |--------|----------|------|
@@ -77,4 +77,4 @@
 
 이력 쿼리는 `channelId`, `discordId`(정확히 일치), `sort=OCCURRED_AT_DESC|OCCURRED_AT_ASC`, `page`, `size`입니다. 동일 발생 시각은 `id`로 정렬합니다. 순위 쿼리의 `discordId`는 부분 검색입니다. 취소 본문은 필수 `reason`(255자 이하)이고 응답은 대상 최신 상세입니다. 이미 취소한 내역을 다시 취소하면 기존 감사 정보가 유지됩니다. 다른 길드의 ID나 비재적 대상 상세는 404입니다.
 
-목록 응답은 `items, page, size, totalElements, totalPages, hasNext`, 대상 상세는 `discordId, username, state, cumulativeScore30d, history` 구조입니다. 이력 item에는 `penaltyId, channelId, channelName, targetDiscordId, targetUsername, reason, score, issuerDiscordId, occurredAt, createdAt, status, targetCumulativeScore30d, canceledByDiscordId, canceledAt, cancellationReason`이 포함됩니다. 순위 item은 `discordId, username, cumulativeScore30d, penaltyCount30d, lastOccurredAt`입니다. `history`도 같은 페이지 구조입니다. 공통 `ApiResponse(success, response, error)`로 감싸고 성공 시 200입니다. DB 변경은 [0003 migration](migrations/0003_penalty.sql)과 [ADR-0003](adr/0003-penalty-log.md)을 참고합니다.
+목록 응답은 `items, page, size, totalElements, totalPages, hasNext`, 대상 상세는 `discordId, username, state, cumulativeScore30d, history` 구조입니다. 이력 item에는 `penaltyId, channelId, channelName, targetDiscordId, targetUsername, reason, score, issuerDiscordId, occurredAt, createdAt, status, targetCumulativeScore30d, canceledByDiscordId, canceledAt, cancellationReason`이 포함됩니다. 순위 item은 `discordId, username, cumulativeScore30d, penaltyCount30d, lastOccurredAt`입니다. `history`도 같은 페이지 구조입니다. 공통 `ApiResponse(success, response, error)`로 감싸고 성공 시 200입니다. DB 변경은 [0003 migration](migrations/0003_penalty.sql), [0004 migration](migrations/0004_penalty_discord_identity.sql), [ADR-0003](adr/0003-penalty-log.md)을 참고합니다.
