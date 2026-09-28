@@ -35,7 +35,7 @@ import com.help.global.guild.GuildContext;
 class PenaltyServiceTest {
 	private static final Instant NOW = Instant.parse("2026-09-28T00:44:00Z");
 	private static final String REQUEST_ID = "3f2b8c1e-7b0c-4036-8a9d-29947cbe1691";
-	private static final PenaltyMember MEMBER = new PenaltyMember("123", "별", "재적", "sk");
+	private static final PenaltyMember MEMBER = new PenaltyMember("123", "별", "재적");
 
 	@Mock
 	private PenaltyRepository repository;

@@ -38,17 +38,13 @@ class PenaltyRepositoryIntegrationTest {
 		jdbc = new JdbcTemplate(source);
 		jdbc.execute("CREATE SCHEMA Constellation_Network");
 		jdbc.execute("""
-				CREATE TABLE Constellation_Network.Users (
-					bot_id VARCHAR(30), discordID VARCHAR(20), sk VARCHAR(36))
-				""");
-		jdbc.execute("""
 				CREATE TABLE Constellation_Network.DiscordUsers (
 					bot_id VARCHAR(30), discordID VARCHAR(20), username VARCHAR(100), state VARCHAR(16))
 				""");
 		jdbc.execute("""
 				CREATE TABLE Constellation_Network.PenaltyLog (
 					id BIGINT AUTO_INCREMENT PRIMARY KEY, bot_id VARCHAR(30) NOT NULL,
-					sk VARCHAR(36) NOT NULL, target_discord_id VARCHAR(20) NOT NULL,
+					target_discord_id VARCHAR(20) NOT NULL,
 					target_username VARCHAR(100) NOT NULL, channel_id VARCHAR(20) NOT NULL,
 					channel_name VARCHAR(100), reason VARCHAR(255) NOT NULL,
 					score INT NOT NULL, issuer_discord_id VARCHAR(20) NOT NULL,
@@ -77,14 +73,14 @@ class PenaltyRepositoryIntegrationTest {
 
 	@Test
 	void thirtyDayWindowIncludesStartExcludesOlderAndNowAndOtherGuild() {
-		member("bot-a", "123", "sk-a", "재적");
-		member("bot-b", "123", "sk-b", "재적");
-		log(1, "bot-a", "sk-a", "123", START.minusMillis(1), "ACTIVE");
-		log(2, "bot-a", "sk-a", "123", START, "ACTIVE");
-		log(3, "bot-a", "sk-a", "123", NOW.minusMillis(1), "ACTIVE");
-		log(4, "bot-a", "sk-a", "123", NOW, "ACTIVE");
-		log(5, "bot-a", "sk-a", "123", START, "CANCELED");
-		log(6, "bot-b", "sk-b", "123", START, "ACTIVE");
+		member("bot-a", "123", "재적");
+		member("bot-b", "123", "재적");
+		log(1, "bot-a", "123", START.minusMillis(1), "ACTIVE");
+		log(2, "bot-a", "123", START, "ACTIVE");
+		log(3, "bot-a", "123", NOW.minusMillis(1), "ACTIVE");
+		log(4, "bot-a", "123", NOW, "ACTIVE");
+		log(5, "bot-a", "123", START, "CANCELED");
+		log(6, "bot-b", "123", START, "ACTIVE");
 
 		assertThat(repository.findCumulativeScores("bot-a", List.of("123"), START, NOW))
 				.containsEntry("123", 2L).hasSize(1);
@@ -96,14 +92,14 @@ class PenaltyRepositoryIntegrationTest {
 
 	@Test
 	void rankingContainsOnlyActiveMembersAndOrdersByScoreThenDiscordId() {
-		member("bot-a", "123", "sk-123", "재적");
-		member("bot-a", "456", "sk-456", "재적");
-		member("bot-a", "789", "sk-789", "탈퇴");
-		log(1, "bot-a", "sk-123", "123", START, "ACTIVE");
-		log(2, "bot-a", "sk-123", "123", NOW.minusMillis(1), "ACTIVE");
-		log(3, "bot-a", "sk-456", "456", START, "ACTIVE");
-		log(4, "bot-a", "sk-456", "456", NOW.minusMillis(1), "ACTIVE");
-		log(5, "bot-a", "sk-789", "789", START, "ACTIVE");
+		member("bot-a", "123", "재적");
+		member("bot-a", "456", "재적");
+		member("bot-a", "789", "탈퇴");
+		log(1, "bot-a", "123", START, "ACTIVE");
+		log(2, "bot-a", "123", NOW.minusMillis(1), "ACTIVE");
+		log(3, "bot-a", "456", START, "ACTIVE");
+		log(4, "bot-a", "456", NOW.minusMillis(1), "ACTIVE");
+		log(5, "bot-a", "789", START, "ACTIVE");
 
 		assertThat(repository.countRankedMembers("bot-a", null, START, NOW)).isEqualTo(2);
 		var items = repository.findRankedMembers("bot-a", null, START, NOW, 1, 20);
@@ -113,24 +109,46 @@ class PenaltyRepositoryIntegrationTest {
 		assertThat(repository.countRankedMembers("bot-a", "45", START, NOW)).isEqualTo(1);
 	}
 
-	private void member(String botId, String discordId, String sk, String state) {
-		jdbc.update("INSERT INTO Constellation_Network.Users (bot_id, discordID, sk) VALUES (?, ?, ?)",
-				botId, discordId, sk);
+	@Test
+	void activeDiscordMemberWithoutUsersRowCanReceivePenalty() {
+		member("bot-a", "123", "재적");
+		member("bot-b", "456", "재적");
+		member("bot-a", "789", "탈퇴");
+
+		assertThat(repository.findActiveMember("bot-a", "123", false))
+				.extracting(PenaltyMember::discordId).isEqualTo("123");
+		assertThat(repository.findActiveMember("bot-a", "456", false)).isNull();
+		assertThat(repository.findActiveMember("bot-a", "789", false)).isNull();
+
+		entityManager.getTransaction().begin();
+		PenaltyMember target = repository.findActiveMember("bot-a", "123", true);
+		repository.insertIfAbsent("bot-a", target, UUID.randomUUID().toString(),
+				"999", "자유채팅", "도배", 1, "900", NOW.minusSeconds(1), null, NOW);
+		entityManager.getTransaction().commit();
+
+		assertThat(repository.findHistory("bot-a", null, "123",
+				PenaltySort.OCCURRED_AT_DESC, 1, 20)).hasSize(1);
+		assertThat(repository.findCumulativeScores("bot-a", List.of("123"), START, NOW))
+				.containsEntry("123", 1L);
+		assertThat(repository.countRankedMembers("bot-a", null, START, NOW)).isEqualTo(1);
+	}
+
+	private void member(String botId, String discordId, String state) {
 		jdbc.update("""
 				INSERT INTO Constellation_Network.DiscordUsers
 				(bot_id, discordID, username, state) VALUES (?, ?, ?, ?)
 				""", botId, discordId, "별", state);
 	}
 
-	private void log(long id, String botId, String sk, String target,
+	private void log(long id, String botId, String target,
 					 Instant occurredAt, String status) {
 		Timestamp timestamp = Timestamp.from(occurredAt);
 		jdbc.update("""
 				INSERT INTO Constellation_Network.PenaltyLog
-				(id, bot_id, sk, target_discord_id, target_username, channel_id,
+				(id, bot_id, target_discord_id, target_username, channel_id,
 				 reason, score, issuer_discord_id, occurred_at, created_at, status, request_id)
-				VALUES (?, ?, ?, ?, '별', '999', '도배', 1, '900', ?, ?, ?, ?)
-				""", id, botId, sk, target, timestamp, timestamp, status,
+				VALUES (?, ?, ?, '별', '999', '도배', 1, '900', ?, ?, ?, ?)
+				""", id, botId, target, timestamp, timestamp, status,
 				UUID.randomUUID().toString());
 	}
 }
