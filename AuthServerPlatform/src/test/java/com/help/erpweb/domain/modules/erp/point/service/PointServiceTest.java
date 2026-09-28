@@ -21,12 +21,20 @@ import com.help.erpweb.domain.modules.erp.point.exception.InsufficientCoinExcept
 import com.help.erpweb.domain.modules.erp.point.repository.AdminPointRepository;
 import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;
 import com.help.erpweb.domain.modules.erp.point.repository.PointRepository;
+import com.help.erpweb.domain.notification.entity.NotificationCategory;
+import com.help.erpweb.domain.notification.entity.NotificationSource;
+import com.help.erpweb.domain.notification.entity.NotificationTargetType;
+import com.help.erpweb.domain.notification.exception.NotificationTargetNotFoundException;
+import com.help.erpweb.domain.notification.service.NotificationCommand;
+import com.help.erpweb.domain.notification.service.NotificationPublisher;
 import com.help.global.chat.ChatUser;
 import com.help.global.common.response.ApiResponse;
+import com.help.global.guild.GuildContext;
 import com.help.global.jwt.CustomUser;
 import java.util.List;
 import java.util.Map;
 import java.time.LocalDateTime;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,11 +63,20 @@ class PointServiceTest {
     @Mock
     private MembershipRepository membershipRepository;
 
+    @Mock
+    private NotificationPublisher notificationPublisher;
+
     private PointService service;
 
     @BeforeEach
     void setUp() {
-        service = new PointService(repository, pointRepository, membershipRepository);
+        service = new PointService(repository, pointRepository, membershipRepository, notificationPublisher);
+        GuildContext.setBotId("1001");
+    }
+
+    @AfterEach
+    void tearDown() {
+        GuildContext.clear();
     }
 
     @Test
@@ -93,6 +110,35 @@ class PointServiceTest {
         assertThat(response.coin()).isEqualTo(1500);
         verify(repository).updateCoin("member-sk", 1500);
         verify(repository).insertLog(eq("member-sk"), eq(500), any(), eq("이벤트 지급"));
+
+        ArgumentCaptor<NotificationCommand> notification = ArgumentCaptor.forClass(NotificationCommand.class);
+        verify(notificationPublisher).publish(notification.capture());
+        assertThat(notification.getValue().botId()).isEqualTo("1001");
+        assertThat(notification.getValue().targetType()).isEqualTo(NotificationTargetType.USER);
+        assertThat(notification.getValue().targetDiscordId()).isEqualTo("123");
+        assertThat(notification.getValue().category()).isEqualTo(NotificationCategory.POINT);
+        assertThat(notification.getValue().source()).isEqualTo(NotificationSource.INTERNAL);
+        assertThat(notification.getValue().body()).isEqualTo("500포인트 입금 · 이벤트 지급");
+        assertThat(notification.getValue().link()).isEqualTo("/point_log");
+    }
+
+    @Test
+    void pointTransactionContinuesWhenNotificationTargetIsNotInGuild() {
+        when(repository.lockActiveMemberAndGetSk("123")).thenReturn("member-sk");
+        when(repository.findCoin("member-sk")).thenReturn(1000);
+        when(repository.findActiveMember("123"))
+                .thenReturn(new AdminPointMemberResponse("123", "별자리", "재적", 2000));
+        when(repository.countLogs("123")).thenReturn(1L);
+        when(repository.findLogs("123", 0, 20)).thenReturn(List.of());
+        when(notificationPublisher.publish(any())).thenThrow(new NotificationTargetNotFoundException());
+
+        var response = service.transact(
+                "123",
+                new AdminPointTransactionRequest(TransactionType.DEPOSIT, 1000, "정산")
+        );
+
+        assertThat(response.coin()).isEqualTo(2000);
+        verify(repository).updateCoin("member-sk", 2000);
     }
 
     @Test
@@ -110,6 +156,7 @@ class PointServiceTest {
                 .isInstanceOf(InsufficientCoinException.class);
         verify(repository, never()).updateCoin(any(), eq(-100));
         verify(repository, never()).insertLog(any(), eq(-200), any(), any());
+        verify(notificationPublisher, never()).publish(any());
     }
 
     @Test
