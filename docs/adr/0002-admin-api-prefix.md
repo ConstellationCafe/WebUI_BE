@@ -4,7 +4,7 @@
 - 날짜: 2026-09-28
 - 적용 범위: WebUI_BE, WebUI_FE
 - 담당자: 미정 (프로젝트 문서 담당자 지정 필요)
-- 관련: ADR-0001(길드 스코프), `docs/api.md` 경로 규칙
+- 관련: [ADR-0001](0001-guild-scope.md)(길드 스코프), [API 개요](../api.md) 경로 규칙
 
 ## Context
 
