@@ -27,6 +27,7 @@ import java.util.Map;
 @EnableJpaRepositories(
 	basePackages = {
 		"com.help.global.discord.identity",
+		"com.help.erpweb.domain.notification.repository",
 		"com.help.erpweb.domain.academy.repository",
 		"com.help.erpweb.domain.modules.chatbot.content.repository",
 		"com.help.erpweb.domain.modules.chatbot.learning.repository",
@@ -86,6 +87,7 @@ public class ConstellationDBDataSourceConfig {
 			.dataSource(dataSource)
 			.packages(
 				"com.help.global.discord.identity",
+				"com.help.erpweb.domain.notification.entity",
 				"com.help.erpweb.domain.academy.entity",
 				"com.help.erpweb.domain.modules.chatbot.content.entity",
 				"com.help.erpweb.domain.modules.chatbot.learning.entity",

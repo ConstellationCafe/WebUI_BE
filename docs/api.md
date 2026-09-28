@@ -1,4 +1,4 @@
-## 📱 API 엔드포인트
+## API 엔드포인트
 
 ### 공통 pagination 규칙
 
@@ -6,7 +6,7 @@
 - `size`는 1 이상 100 이하입니다.
 - 범위를 벗어난 값은 `400 Bad Request`로 응답합니다.
 
-### 🔑 인증 API (`/auth`)
+### 인증 API (`/auth`)
 | Method | Endpoint | 설명 |
 |--------|----------|------|
 | `GET` | `/auth/discord_login` | Discord OAuth 로그인 |
@@ -15,7 +15,7 @@
 | `GET` | `/auth/check` | 로그인 상태 확인 |
 | `POST` | `/auth/logout` | 로그아웃 |
 
-### 📚 콘텐츠 API (`/api/repository`)
+### 콘텐츠 API (`/api/repository`)
 | 도메인 | Endpoint | 설명 |
 |--------|----------|------|
 | **Content** | `/content/list` | 추천 콘텐츠 목록 |
@@ -46,7 +46,7 @@
 - 버전 접두사(`/v1`)는 두지 않습니다. 외부 클라이언트에 공개할 때 도입합니다.
 - 기존 일반 API(`/api/repository/...`, `/api/academy/...`)는 이번 변경 범위가 아니며 별도로 이전합니다.
 
-### 🪙 관리자 포인트 API (`/api/admin/points`)
+### 관리자 포인트 API (`/api/admin/points`)
 
 > 2026-09-28: `/api/repository/membership/admin/points`에서 이전했습니다(ADR-0002). 이전 경로는 제거되어 더 이상 응답하지 않습니다(`404`).
 
@@ -64,6 +64,35 @@
 
 내역 수정 요청은 `amount`, `description` 중 하나 이상을 사용합니다. 금액 수정 시 `새 금액 - 기존 금액`만큼 `CoinTable` 잔액을 보정하고, 삭제 시 `현재 잔액 - 삭제 내역 금액`으로 롤백합니다. 내역 변경과 잔액 보정은 하나의 트랜잭션으로 처리됩니다.
 
+### 알림 API (ADR-0004)
+
+상세 계약은 Notion `/명세서/API 명세서/Notification API 명세`에서 관리합니다. 모든 알림은 채팅방(`botId`) 단위이며 시간은 UTC ISO-8601(`Z`)입니다. 응답은 공통 `ApiResponse(success, response, error)`로 감쌉니다. DB 변경은 [0005 migration](migrations/0005_notification.sql)을 참고합니다.
+
+**회원 본인** (`/api/me/notifications`, 로그인 완료 토큰 필요)
+
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| `GET` | `?beforeId=&size=20` | 채팅방 전체 + 본인 대상 알림을 최신순 커서 페이지로 조회 (`size` 1~50) |
+| `GET` | `/unread-count` | 읽지 않은 개수, 최신 알림 ID, 현재 읽음 위치 |
+| `PUT` | `/read-cursor` | `{"lastReadId": n}`까지 읽음 처리. 멱등이며 뒤로 가지 않음 |
+| `GET` | `/stream` | SSE(`text/event-stream`). `ready`(읽지 않은 요약) → `notification`(새 알림) |
+
+**관리자** (`/api/admin/notifications`, `ROLE_ADMIN`, 비관리자는 404)
+
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| `POST` | `/` | 로그인한 채팅방에 발행. `requestId` 필수(재전송 멱등) |
+| `GET` | `?page=1&size=20` | 발행 이력 최신순 (`size` 1~100) |
+
+**외부 시스템** (`/api/integrations/notifications`, `X-Api-Key` 헤더)
+
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| `POST` | `/` | 본문의 `botId`로 발행. API Key에 허용된 botId만 가능(아니면 403) |
+
+발행 본문: `requestId`(영문·숫자·`._:-` 64자 이하), `targetType`(`GUILD`|`USER`), `targetDiscordId`(USER일 때만), `category`(`ANNOUNCEMENT`|`EVENT`|`POINT`|`SYSTEM`), `title`(100자), `body`(1000자), `link`(선택, `/`로 시작하는 앱 내부 경로). 같은 `requestId`·다른 내용은 `409`, USER 대상이 채팅방 재적 회원이 아니면 `404`입니다.
+
+**내부 기능**: `NotificationPublisher.publish(NotificationCommand.internal(...))`. 호출자 트랜잭션에 참여합니다. 관리자 포인트 입·출금 시 대상 회원에게 `POINT` 개인 알림이 발행됩니다.
 ### 벌점 API
 
 상세 계약은 Notion `/명세서/API 명세서/Penalty API 명세`에서 관리합니다. 모든 벌점은 현재 토큰의 길드(`botId`)로 제한하고 UTC ISO-8601(`Z`)로 반환합니다. 대상은 `(botId, discordId)`로 식별하는 `DiscordUsers`의 재적 회원이며 `Users.sk` 발급은 요구하지 않습니다. 관리자 경로는 `ROLE_ADMIN`만 사용하며 비관리자에게는 ADR-0002 규칙에 따라 404를 반환합니다. `page` 기본값은 1, `size` 기본값은 20입니다.

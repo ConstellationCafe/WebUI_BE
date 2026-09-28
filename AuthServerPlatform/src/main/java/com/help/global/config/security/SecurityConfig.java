@@ -3,6 +3,7 @@ package com.help.global.config.security;
 import com.help.authserver.security.AuthServerJwtAuthFilter;
 import com.help.global.data.Authority;
 import com.help.global.jwt.BackEndJwtAuthFilter;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -82,6 +83,10 @@ public class SecurityConfig {
 		// @PreAuthorize와 별개로 여기서 한 번 더 막아, 어노테이션을 빠뜨려도
 		// 관리자 API가 일반 사용자에게 열리지 않게 한다.
 		http.authorizeHttpRequests(auth -> auth
+			// ADR-0004: SSE(/api/me/notifications/stream)는 비동기 dispatch로 응답을 이어 쓴다.
+			// JWT 필터는 비동기 dispatch에서 다시 돌지 않으므로, 최초 요청에서 이미 인가된
+			// 응답의 후속 dispatch를 여기서 다시 막지 않는다.
+			.dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
 			.requestMatchers("/api/admin/**").hasAuthority(Authority.ADMIN)
 			.anyRequest().authenticated()
 		);
