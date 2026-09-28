@@ -2,11 +2,11 @@ package com.help.global.common.exception;
 
 import java.util.List;
 
-import com.help.erpweb.domain.membership.exception.ActiveMemberNotFoundException;
-import com.help.erpweb.domain.membership.exception.InsufficientCoinException;
-import com.help.erpweb.domain.membership.exception.PointBalanceLimitException;
-import com.help.erpweb.domain.membership.exception.PointLogConflictException;
-import com.help.erpweb.domain.membership.exception.PointLogNotFoundException;
+import com.help.erpweb.domain.modules.erp.point.exception.ActiveMemberNotFoundException;
+import com.help.erpweb.domain.modules.erp.point.exception.InsufficientCoinException;
+import com.help.erpweb.domain.modules.erp.point.exception.PointBalanceLimitException;
+import com.help.erpweb.domain.modules.erp.point.exception.PointLogConflictException;
+import com.help.erpweb.domain.modules.erp.point.exception.PointLogNotFoundException;
 import com.help.global.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

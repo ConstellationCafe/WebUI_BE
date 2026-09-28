@@ -1,18 +1,22 @@
 package com.help.erpweb.domain.academy.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-// FIXME : AuthServer 패키지에서 ERPWeb 패키지로 이동 필요
-import com.help.authserver.domain.user.entity.config.ErpSubscriber;
-import com.help.authserver.domain.user.entity.constellation.DiscordUser;
-import com.help.authserver.domain.user.repository.config.ERPSubscriberRepository;
-import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
+// authserver/erpweb 서비스 분리 준비: DiscordUser/ErpSubscriber는 로그인과
+// erpweb 양쪽에서 쓰이는 공용 식별 데이터라 com.help.global.discord로 옮겼다
+// (기존 FIXME였던 "AuthServer -> ERPWeb 이동"은 이 방향으로 해결됨).
+import com.help.global.discord.config.ERPSubscriberRepository;
+import com.help.global.discord.config.ErpSubscriber;
+import com.help.global.discord.identity.DiscordUser;
+import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.erpweb.domain.academy.authorization.AcademyAuthorization;
 import com.help.erpweb.domain.academy.dto.response.*;
 import com.help.erpweb.domain.academy.entity.*;
 import com.help.erpweb.domain.academy.repository.*;
 import com.help.erpweb.domain.config.entity.ModuleConfig;
 import com.help.erpweb.domain.config.repository.ModuleConfigRepository;
-import com.help.erpweb.domain.membership.repository.MembershipRepository;
+import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;
+import com.help.global.chat.ChatIdentities;
+import com.help.global.guild.GuildContext;
 import com.help.global.jwt.CustomUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -48,9 +52,13 @@ public class AcademyService {
         boolean isAdmin = academyAuthorization
                 .hasGlobalAccess(authentication);
         // academies
-        String discordId = authentication.getName();
+        // 2026-09-26: discordId(전역)가 아니라 sk(=(botId, discordId), 방 스코프)로
+        // 조회한다 — 같은 사람이 다른 방에서 가진 멤버십까지 섞여 나오는 것을 막는다.
+        String sk = membershipRepository.findSkByChatUser(
+                ChatIdentities.fromPrincipal((CustomUser) authentication.getPrincipal())
+        );
         List<AcademyMember> members = academyMemberRepository
-                .findAllByDiscordId(discordId);
+                .findAllBySk(sk);
         Map<String, List<AcademyMember>> grouped = members
                 .stream()
                 .collect(
@@ -92,8 +100,28 @@ public class AcademyService {
         );
     }
 
-    public List<AcademyResponse> getAcademies() {
-        return academyRepository.findAll()
+    /**
+     * 2026-09-26: 기존에는 academyId 무관하게 모든 Academy를 반환했다 — 방(봇)
+     * 경계가 전혀 없어서, 어떤 방으로 로그인했든 다른 방의 Academy 목록까지
+     * 그대로 노출되는 문제가 있었다. ADMIN은 기존처럼 전체를 보고, 그 외에는
+     * 본인 sk(=현재 방 스코프 신원)가 속한 Academy만 보이도록 스코프한다.
+     */
+    public List<AcademyResponse> getAcademies(
+            Authentication authentication
+    ) {
+        final List<Academy> academies;
+        if (academyAuthorization.hasGlobalAccess(authentication)) {
+            academies = academyRepository.findAll();
+        } else {
+            String sk = membershipRepository.findSkByChatUser(
+                    ChatIdentities.fromPrincipal((CustomUser) authentication.getPrincipal())
+            );
+            List<Integer> accessibleAcademyIds =
+                    academyMemberRepository.findAccessibleAcademyIds(sk);
+            academies = academyRepository.findAllByIdIn(accessibleAcademyIds);
+        }
+
+        return academies
                 .stream()
                 .map(academy ->
                         new AcademyResponse(
@@ -173,7 +201,7 @@ public class AcademyService {
                         .distinct()
                         .toList();
         Map<String, DiscordUser> discordUserById = discordUserRepository
-                        .findActiveByDiscordIDIn(discordIds)
+                        .findActiveByBotIdAndDiscordIDIn(GuildContext.requireBotId(), discordIds)
                         .stream()
                         .collect(
                                 Collectors.toMap(
@@ -221,7 +249,7 @@ public class AcademyService {
                         .distinct()
                         .toList();
         Map<String, DiscordUser> discordUserById = discordUserRepository
-                        .findActiveByDiscordIDIn(discordIds)
+                        .findActiveByBotIdAndDiscordIDIn(GuildContext.requireBotId(), discordIds)
                         .stream()
                         .collect(
                                 Collectors.toMap(
@@ -319,7 +347,7 @@ public class AcademyService {
 
         String username =
                 discordUserRepository
-                        .findByDiscordID(discordId)
+                        .findByBotIdAndDiscordID(GuildContext.requireBotId(), discordId)
                         .map(DiscordUser::getNickname)
                         .orElse(null);
 
@@ -348,8 +376,8 @@ public class AcademyService {
             CustomUser user
     ) {
         return membershipRepository
-                .findSkByDiscordId(
-                        user.getUsername()
+                .findSkByChatUser(
+                        ChatIdentities.fromPrincipal(user)
                 );
     }
 

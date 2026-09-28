@@ -49,16 +49,33 @@ public class JwtUtil {
 		return Duration.ofMillis(REFRESH_TOKEN_EXP);
 	}
 
+	/**
+	 * ADR-0001: 로그인은 discordId 인증만으로는 완료되지 않는다.
+	 * botId(=선택한 채팅방)가 없는 토큰은 "선택 대기" 상태이며,
+	 * /api/**는 이 상태의 토큰을 거부한다(BackEndJwtAuthFilter 참고).
+	 * /auth/guild/select에서 guildId를 확정한 뒤에만 botId가 채워진
+	 * 토큰이 발급된다.
+	 */
 	public String createAccessToken(final CustomUser user) {
+		return createAccessToken(user, null);
+	}
+
+	public String createAccessToken(final CustomUser user, final String botId) {
 		final var authorities = user.getAuthorities()
 			.stream()
 			.map(GrantedAuthority::getAuthority)
 			.collect(Collectors.joining(","));
 
-		return Jwts.builder()
+		final var builder = Jwts.builder()
 			.claim("username", user.getUsername())
 			.claim("nickname", user.getNickname())
-			.claim("authorities", authorities)
+			.claim("authorities", authorities);
+
+		if (botId != null) {
+			builder.claim("botId", botId);
+		}
+
+		return builder
 			.subject(ACCESS_TOKEN)
 			.issuedAt(new Date(System.currentTimeMillis()))
 			.expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXP))
@@ -67,8 +84,24 @@ public class JwtUtil {
 	}
 
 	public String createRefreshToken(final CustomUser user) {
-		return Jwts.builder()
-			.claim("username", user.getUsername())
+		return createRefreshToken(user, null);
+	}
+
+	/**
+	 * botId도 RefreshToken에 함께 실어야 한다. AccessToken은 30초로 매우
+	 * 짧게 만료되므로, RefreshToken에 botId가 없으면 재발급마다 "선택 대기"
+	 * 상태로 되돌아가 사용자가 몇십 초마다 채팅방을 다시 선택해야 하는
+	 * 문제가 생긴다.
+	 */
+	public String createRefreshToken(final CustomUser user, final String botId) {
+		final var builder = Jwts.builder()
+			.claim("username", user.getUsername());
+
+		if (botId != null) {
+			builder.claim("botId", botId);
+		}
+
+		return builder
 			.subject(REFRESH_TOKEN)
 			.issuedAt(new Date(System.currentTimeMillis()))
 			.expiration(new Date(System.currentTimeMillis() + REFRESH_TOKEN_EXP))
@@ -89,6 +122,18 @@ public class JwtUtil {
 		// JWT Claims에서 username 필드를 꺼냄
 		try {
 			return Optional.ofNullable(parseToken(token).get("username", String.class));
+		} catch (final JwtException e) {
+			return Optional.empty();
+		}
+	}
+
+	/**
+	 * 토큰에 botId claim이 없으면(=아직 채팅방을 선택하지 않은 "선택 대기" 토큰)
+	 * 빈 Optional을 반환한다.
+	 */
+	public Optional<String> extractBotId(String token) {
+		try {
+			return Optional.ofNullable(parseToken(token).get("botId", String.class));
 		} catch (final JwtException e) {
 			return Optional.empty();
 		}

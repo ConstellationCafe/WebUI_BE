@@ -1,7 +1,8 @@
 package com.help.erpweb.domain.academy.service;
 
-import com.help.authserver.domain.user.entity.constellation.DiscordUser;
-import com.help.authserver.domain.user.repository.constellation.DiscordUserRepository;
+import com.help.global.discord.identity.DiscordUser;
+import com.help.global.discord.identity.DiscordUserRepository;
+import com.help.global.guild.GuildContext;
 import com.help.erpweb.domain.academy.dto.response.AcademyOptionResponse;
 import com.help.erpweb.domain.academy.dto.response.AcademyResponse;
 import com.help.erpweb.domain.academy.dto.response.ClassOptionResponse;
@@ -19,7 +20,7 @@ import com.help.erpweb.domain.academy.entity.Student;
 import com.help.erpweb.domain.academy.repository.AcademyClassRepository;
 import com.help.erpweb.domain.academy.repository.AcademyRepository;
 import com.help.erpweb.domain.academy.repository.StudentRepository;
-import com.help.erpweb.domain.membership.repository.MembershipRepository;
+import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -360,7 +361,7 @@ public class StudentStatusService {
                 .toList();
         Map<String, String> discordIds = membershipRepository.findDiscordIdsBySk(sks);
         List<String> ids = discordIds.values().stream().distinct().toList();
-        Map<String, String> usernames = discordUserRepository.findActiveByDiscordIDIn(ids)
+        Map<String, String> usernames = discordUserRepository.findActiveByBotIdAndDiscordIDIn(GuildContext.requireBotId(), ids)
                 .stream()
                 .collect(Collectors.toMap(DiscordUser::getDiscordID, DiscordUser::getNickname,
                         (first, ignored) -> first));
@@ -469,7 +470,7 @@ public class StudentStatusService {
             String discordId
     ) {
         return discordUserRepository
-                .findAllByDiscordID(discordId)
+                .findAllByBotIdAndDiscordID(GuildContext.requireBotId(), discordId)
                 .map(DiscordUser::getNickname)
                 .orElse(null);
     }

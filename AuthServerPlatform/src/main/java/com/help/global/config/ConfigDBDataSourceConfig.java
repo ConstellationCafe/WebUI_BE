@@ -25,7 +25,7 @@ import java.util.Map;
 @EnableTransactionManagement
 @EnableJpaRepositories(
 	basePackages = {
-		"com.help.authserver.domain.user.repository.config",
+		"com.help.global.discord.config",
 		"com.help.erpweb.domain.config.repository"
 	},
 	entityManagerFactoryRef = "configDBEntityManagerFactory",
@@ -75,7 +75,7 @@ public class ConfigDBDataSourceConfig {
 		return builder
 			.dataSource(dataSource)
 			.packages(
-				"com.help.authserver.domain.user.entity.config",
+				"com.help.global.discord.config",
 				"com.help.erpweb.domain.config.entity"
 			)
 			.persistenceUnit("configDB")

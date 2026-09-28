@@ -1,6 +1,6 @@
 package com.help.global.config.security;
 
-import com.help.global.jwt.AuthServerJwtAuthFilter;
+import com.help.authserver.security.AuthServerJwtAuthFilter;
 import com.help.global.jwt.BackEndJwtAuthFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,7 +32,8 @@ import java.util.List;
 public class SecurityConfig {
 	private final AuthServerJwtAuthFilter authServerJwtAuthFilter;
 	private final BackEndJwtAuthFilter backEndJwtAuthFilter;
-	private final EmailVerificationFilter emailVerificationFilter;
+//	private final EmailVerificationFilter emailVerificationFilter; // 사용되지 않는 코드 - 주석 처리됨 (EmailVerificationFilter.java 참고)
+	private final JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint;
 
 	@Value("${front.redirect-uri}")
 	private String redirectUri;
@@ -57,8 +58,8 @@ public class SecurityConfig {
 		http.formLogin(AbstractHttpConfigurer::disable);  // login í¼ ê¸°ë° ì¸ì¦ x
 
 		http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());  // ì¸ê° ì¤ì 
-		http.addFilterBefore(authServerJwtAuthFilter, ExceptionTranslationFilter.class)
-			.addFilterBefore(emailVerificationFilter, AuthServerJwtAuthFilter.class);  // ì¸ì¦ íí° êµ¬ì±
+		http.addFilterBefore(authServerJwtAuthFilter, ExceptionTranslationFilter.class);
+//			.addFilterBefore(emailVerificationFilter, AuthServerJwtAuthFilter.class); // 사용되지 않는 코드 - 주석 처리됨 (EmailVerificationFilter.java 참고)  // ì¸ì¦ íí° êµ¬ì±
 		return http.build();
 	}
 
@@ -75,6 +76,16 @@ public class SecurityConfig {
 		http.addFilterBefore(backEndJwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
 		http.authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
+
+		// ADR-0001 부수 수정: 커스텀 AuthenticationEntryPoint가 없으면 Spring
+		// Security 기본값(Http403ForbiddenEntryPoint)이 인증 실패를 본문 없는
+		// 403으로 응답해서, AccessToken 만료가 컨트롤러/GlobalExceptionHandler
+		// 로그도 없이 조용히 403으로 나가버린다(FE AuthInterceptor의 401-only
+		// refresh-retry와 충돌). 인증 실패는 항상 401로 통일한다.
+		http.exceptionHandling(exceptionHandling ->
+			exceptionHandling.authenticationEntryPoint(jsonAuthenticationEntryPoint)
+		);
+
 		return http.build();
 	}
 
