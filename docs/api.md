@@ -34,7 +34,17 @@
 | `GET` | `/membership/list` | 멤버십 정보 목록 |
 | `POST` | `/membership/save_all` | 멤버십 정보 저장 |
 
-### 🪙 관리자 포인트 API (`/api/repository/membership/admin/points`)
+### 🧭 경로 규칙 (ADR-0002)
+
+- 관리자 전용 API는 모두 `/api/admin/**` 아래에 둡니다. `SecurityConfig`가 이 경로 전체를 `ROLE_ADMIN`으로 막고, 컨트롤러의 `@PreAuthorize`로 한 번 더 확인합니다.
+- 인증은 됐지만 관리자가 아닌 사용자가 `/api/admin/**`을 호출하면 `404 Not Found`(`NOT_FOUND` 래퍼)를 받습니다. 인증이 안 된 요청은 기존처럼 `401`입니다.
+- 새 API의 경로는 kebab-case와 복수형 명사를 쓰고, 동작은 HTTP method로 표현합니다. 내부 계층·패키지 이름(`repository`, `erp` 등)은 경로에 넣지 않습니다.
+- 버전 접두사(`/v1`)는 두지 않습니다. 외부 클라이언트에 공개할 때 도입합니다.
+- 기존 일반 API(`/api/repository/...`, `/api/academy/...`)는 이번 변경 범위가 아니며 별도로 이전합니다.
+
+### 🪙 관리자 포인트 API (`/api/admin/points`)
+
+> 2026-09-28: `/api/repository/membership/admin/points`에서 이전했습니다(ADR-0002). 이전 경로는 BE/FE 배포 순서가 어긋나도 깨지지 않도록 **호환 경로로 잠시 유지**하며, 새 경로를 쓰는 WebUI_FE가 운영에 배포된 뒤 제거합니다. 신규 호출은 반드시 `/api/admin/points`를 사용합니다.
 
 모든 API는 `ROLE_ADMIN` 권한이 필요하며, `state='재적'`인 Discord 회원만 대상으로 합니다.
 
