@@ -2,11 +2,16 @@ package com.help.global.config.security;
 
 import com.help.authserver.security.AuthServerJwtAuthFilter;
 import com.help.global.jwt.BackEndJwtAuthFilter;
+import com.help.global.data.Authority;
+import com.help.global.common.exception.ErrorCode;
+import com.help.global.common.response.ApiResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -34,6 +39,7 @@ public class SecurityConfig {
 	private final BackEndJwtAuthFilter backEndJwtAuthFilter;
 //	private final EmailVerificationFilter emailVerificationFilter; // 사용되지 않는 코드 - 주석 처리됨 (EmailVerificationFilter.java 참고)
 	private final JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint;
+	private final ObjectMapper objectMapper;
 
 	@Value("${front.redirect-uri}")
 	private String redirectUri;
@@ -72,10 +78,13 @@ public class SecurityConfig {
 		http.sessionManagement(session ->
 				session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 		);
+		http.cors(cors -> cors.configurationSource(configurationSource()));
 
 		http.addFilterBefore(backEndJwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-		http.authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
+		http.authorizeHttpRequests(auth -> auth
+			.requestMatchers("/api/admin/**").hasAuthority(Authority.ADMIN)
+			.anyRequest().authenticated());
 
 		// ADR-0001 부수 수정: 커스텀 AuthenticationEntryPoint가 없으면 Spring
 		// Security 기본값(Http403ForbiddenEntryPoint)이 인증 실패를 본문 없는
@@ -84,6 +93,11 @@ public class SecurityConfig {
 		// refresh-retry와 충돌). 인증 실패는 항상 401로 통일한다.
 		http.exceptionHandling(exceptionHandling ->
 			exceptionHandling.authenticationEntryPoint(jsonAuthenticationEntryPoint)
+				.accessDeniedHandler((request, response, exception) -> {
+					response.setStatus(ErrorCode.NOT_FOUND.getStatus());
+					response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+					objectMapper.writeValue(response.getOutputStream(), ApiResponse.error(ErrorCode.NOT_FOUND));
+				})
 		);
 
 		return http.build();
@@ -120,7 +134,7 @@ public class SecurityConfig {
 		// íë¡ í¸ìë ìë² ì£¼ì
 		configuration.setAllowedOriginPatterns(List.of(redirectUri));
 
-		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 		configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 		configuration.setExposedHeaders(List.of("Authorization"));
 		configuration.setAllowCredentials(true);
