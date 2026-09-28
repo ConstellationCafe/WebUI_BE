@@ -49,3 +49,22 @@
 거래 요청 본문은 `type`(`DEPOSIT` 또는 `WITHDRAW`), 양수 `amount`, 255자 이하 `description`을 사용합니다. 잔액 변경과 `PayLog` 기록은 하나의 트랜잭션으로 처리하며 잔액보다 큰 출금은 `409 Conflict`로 거부합니다.
 
 내역 수정 요청은 `amount`, `description` 중 하나 이상을 사용합니다. 금액 수정 시 `새 금액 - 기존 금액`만큼 `CoinTable` 잔액을 보정하고, 삭제 시 `현재 잔액 - 삭제 내역 금액`으로 롤백합니다. 내역 변경과 잔액 보정은 하나의 트랜잭션으로 처리됩니다.
+
+### 벌점 API
+
+상세 계약은 Notion `/명세서/API 명세서/Penalty API 명세`에서 관리합니다. 모든 벌점은 현재 토큰의 길드(`botId`)로 제한하고 UTC ISO-8601(`Z`)로 반환합니다. 관리자 경로는 `ROLE_ADMIN`만 사용하며 비관리자에게는 ADR-0002 규칙에 따라 404를 반환합니다. `page` 기본값은 1, `size` 기본값은 20입니다.
+
+| Method | Endpoint | 설명 |
+|--------|----------|------|
+| `POST` | `/api/admin/penalties` | 벌점 부여, 동일 `requestId` 재전송 처리 |
+| `GET` | `/api/admin/penalties` | 채널·대상 필터가 있는 이력 페이지 |
+| `GET` | `/api/admin/penalties/members` | 재적 회원의 최근 30일 누적 순위 |
+| `GET` | `/api/admin/penalties/members/{discordId}` | 대상자의 누적 및 이력 상세 |
+| `PATCH` | `/api/admin/penalties/{penaltyId}/cancel` | 취소 이력 보존, 누적에서 제외 |
+| `GET` | `/api/me/penalties` | 인증된 회원 본인의 누적 및 이력 상세 |
+
+부여 본문: `requestId`(UUID), `targetDiscordId`, `channelId`, 선택 `channelName`, `reason`, `score=1`, 선택 `occurredAt`. 발생 시각을 생략하면 서버 현재 UTC 시각을 사용하며 미래 시각은 400입니다. 같은 길드의 같은 `requestId`를 같은 내용으로 재전송하면 현재 대상 상세(이력 첫 페이지)를 반환하고, 내용이 다르면 409입니다. 입력 시각은 밀리초로 정규화합니다.
+
+이력 쿼리는 `channelId`, `discordId`(정확히 일치), `sort=OCCURRED_AT_DESC|OCCURRED_AT_ASC`, `page`, `size`입니다. 동일 발생 시각은 `id`로 정렬합니다. 순위 쿼리의 `discordId`는 부분 검색입니다. 취소 본문은 필수 `reason`(255자 이하)이고 응답은 대상 최신 상세입니다. 이미 취소한 내역을 다시 취소하면 기존 감사 정보가 유지됩니다. 다른 길드의 ID나 비재적 대상 상세는 404입니다.
+
+목록 응답은 `items, page, size, totalElements, totalPages, hasNext`, 대상 상세는 `discordId, username, state, cumulativeScore30d, history` 구조입니다. 이력 item에는 `penaltyId, channelId, channelName, targetDiscordId, targetUsername, reason, score, issuerDiscordId, occurredAt, createdAt, status, targetCumulativeScore30d, canceledByDiscordId, canceledAt, cancellationReason`이 포함됩니다. 순위 item은 `discordId, username, cumulativeScore30d, penaltyCount30d, lastOccurredAt`입니다. `history`도 같은 페이지 구조입니다. 공통 `ApiResponse(success, response, error)`로 감싸고 성공 시 200입니다. DB 변경은 [0003 migration](migrations/0003_penalty.sql)과 [ADR-0003](adr/0003-penalty-log.md)을 참고합니다.

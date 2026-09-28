@@ -4,12 +4,12 @@
 > 적용 범위: `ConstellationCafe/WebUI_BE` 백엔드 서비스  
 > 문서 담당자·마지막 운영 검증일: 프로젝트에서 지정 필요
 
-[빗자루](https://github.com/ConstellationCafe/DiscordBot)의 WebUI가 사용하는 Spring Boot API 서버입니다. Discord OAuth 2.0 인증, JWT 기반 인증 상태, 콘텐츠·학습 자료·메뉴·음악 추천 및 아카데미 관리 기능을 제공합니다.
+[빗자루](https://github.com/ConstellationCafe/DiscordBot)의 WebUI가 사용하는 Spring Boot API 서버입니다. Discord OAuth 2.0 인증, JWT 기반 인증 상태, 콘텐츠·학습 자료·메뉴·음악 추천, 아카데미 관리 및 길드별 벌점 관리 기능을 제공합니다.
 
 ## 기술 스택과 요구사항
 
 - Java 17
-- Gradle 8.13 Wrapper
+- Gradle 9.7.1 Wrapper
 - Spring Boot 3.4.3
 - MySQL 8+
 - Redis 7.4+
@@ -62,6 +62,8 @@ cd AuthServerPlatform
 | `SPRING_DATA_REDIS_HOST` | 아니요 | Redis host | 기본값 `redis` |
 
 Development는 편의를 위해 primary schema를 `update`할 수 있지만 production은 `validate`만 수행합니다. 운영 schema 변경은 별도 검토·백업·복구 계획을 가진 migration으로 수행해야 합니다.
+
+벌점 API를 배포하기 전 운영자가 [0003 수동 migration](docs/migrations/0003_penalty.sql)을 검증·적용해야 합니다. 변경은 `PenaltyLog` 테이블 추가만 포함하며 취소 감사 기록을 보존합니다. 백업 확인 후 애플리케이션을 배포하고, 롤백할 때는 먼저 애플리케이션을 이전 버전으로 되돌립니다.
 
 ## 구조와 요청 흐름
 
