@@ -26,11 +26,9 @@ public class PenaltyRepository {
 
 	public PenaltyMember findActiveMember(String botId, String discordId, boolean lock) {
 		String sql = """
-				SELECT u.discordID, d.username, d.state, u.sk
-				FROM Constellation_Network.Users u
-				JOIN Constellation_Network.DiscordUsers d
-					ON d.bot_id = u.bot_id AND d.discordID = u.discordID
-				WHERE u.bot_id = :botId AND u.discordID = :discordId AND d.state = :state
+				SELECT d.discordID, d.username, d.state
+				FROM Constellation_Network.DiscordUsers d
+				WHERE d.bot_id = :botId AND d.discordID = :discordId AND d.state = :state
 				""" + (lock ? " FOR UPDATE" : "");
 		@SuppressWarnings("unchecked")
 		List<Object[]> rows = entityManager.createNativeQuery(sql)
@@ -44,7 +42,7 @@ public class PenaltyRepository {
 		}
 		Object[] row = rows.get(0);
 		return new PenaltyMember(row[0].toString(), row[1] == null ? "" : row[1].toString(),
-				row[2].toString(), row[3].toString());
+				row[2].toString());
 	}
 
 	/** MySQL's unique key serializes concurrent retries even when they name different members. */
@@ -53,16 +51,15 @@ public class PenaltyRepository {
 								String issuer, Instant occurredAt, Instant requestedAt, Instant now) {
 		entityManager.createNativeQuery("""
 						INSERT INTO Constellation_Network.PenaltyLog
-							(bot_id, sk, target_discord_id, target_username, channel_id, channel_name,
+						(bot_id, target_discord_id, target_username, channel_id, channel_name,
 							reason, score, issuer_discord_id, occurred_at, requested_occurred_at,
 							created_at, status, request_id)
-						VALUES (:botId, :sk, :targetId, :username, :channelId, :channelName,
+						VALUES (:botId, :targetId, :username, :channelId, :channelName,
 								:reason, :score, :issuer, :occurredAt, :requestedAt,
 								:createdAt, 'ACTIVE', :requestId)
 						ON DUPLICATE KEY UPDATE id = id
 						""")
 				.setParameter("botId", botId)
-				.setParameter("sk", member.sk())
 				.setParameter("targetId", member.discordId())
 				.setParameter("username", member.username())
 				.setParameter("channelId", channelId)
@@ -163,10 +160,8 @@ public class PenaltyRepository {
 		return ((Number) entityManager.createNativeQuery("""
 						SELECT COUNT(DISTINCT p.target_discord_id)
 						FROM Constellation_Network.PenaltyLog p
-						JOIN Constellation_Network.Users u
-							ON u.bot_id = p.bot_id AND u.sk = p.sk
 						JOIN Constellation_Network.DiscordUsers d
-							ON d.bot_id = u.bot_id AND d.discordID = u.discordID
+							ON d.bot_id = p.bot_id AND d.discordID = p.target_discord_id
 						WHERE p.bot_id = :botId AND p.status = 'ACTIVE'
 							AND p.occurred_at >= :since AND p.occurred_at < :now
 							AND d.state = :state AND p.target_discord_id LIKE CONCAT('%', :search, '%')
@@ -187,10 +182,8 @@ public class PenaltyRepository {
 		List<Object[]> rows = entityManager.createNativeQuery("""
 						SELECT p.target_discord_id, d.username, SUM(p.score), COUNT(*), MAX(p.occurred_at)
 						FROM Constellation_Network.PenaltyLog p
-						JOIN Constellation_Network.Users u
-							ON u.bot_id = p.bot_id AND u.sk = p.sk
 						JOIN Constellation_Network.DiscordUsers d
-							ON d.bot_id = u.bot_id AND d.discordID = u.discordID
+							ON d.bot_id = p.bot_id AND d.discordID = p.target_discord_id
 						WHERE p.bot_id = :botId AND p.status = 'ACTIVE'
 							AND p.occurred_at >= :since AND p.occurred_at < :now
 							AND d.state = :state AND p.target_discord_id LIKE CONCAT('%', :search, '%')

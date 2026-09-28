@@ -27,8 +27,6 @@ public class PenaltyLog {
 
 	@Column(name = "bot_id", nullable = false, length = 30)
 	private String botId;
-	@Column(name = "sk", nullable = false, length = 36)
-	private String sk;
 	@Column(name = "target_discord_id", nullable = false, length = 20)
 	private String targetDiscordId;
 	@Column(name = "target_username", nullable = false, length = 100)
