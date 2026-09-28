@@ -2,8 +2,9 @@ package com.help.authserver.domain.user.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.help.authserver.api.LoginAPI;
+import com.help.authserver.api.DiscordAPI;
 import com.help.authserver.domain.user.dto.discord.DiscordGuildDto;
+import com.help.authserver.domain.user.dto.discord.DiscordMeDto;
 import com.help.authserver.domain.user.dto.user.CurrentUserDto;
 import com.help.authserver.domain.user.dto.user.DiscordUserDto;
 import com.help.authserver.domain.user.entity.SessionInfo;
@@ -28,6 +29,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Discord OAuth 전용 로그인/프로필 조회. JWT 발급·Redis 세션·쿠키 같은
@@ -43,7 +45,7 @@ import java.util.List;
 public class DiscordLoginService implements OAuthLoginService, UserDetailsService {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
-    private final LoginAPI<DiscordUserDto> loginAPI;
+    private final DiscordAPI discordAPI;
     private final DiscordUserRepository userRepository;
     private final SessionRepository sessionRepository;
     private final ERPSubscriberRepository erpSubscriberRepository;
@@ -72,8 +74,8 @@ public class DiscordLoginService implements OAuthLoginService, UserDetailsServic
     @Override
     public String login(final String code, final HttpServletResponse response) {
         try {
-            final String discordAccessToken = loginAPI.exchangeCodeForToken(code);
-            final DiscordUserDto userDto = loginAPI.getUserInfo(discordAccessToken);
+            final String discordAccessToken = discordAPI.exchangeCodeForToken(code);
+            final DiscordUserDto userDto = discordAPI.getUserInfo(discordAccessToken);
 
             final CustomUser identity =
                     (CustomUser) loadUserByUsername(userDto.discordId());
@@ -103,7 +105,7 @@ public class DiscordLoginService implements OAuthLoginService, UserDetailsServic
             throw new CustomException(ErrorCode.SESSION_EXPIRED);
         }
 
-        final DiscordUserDto userDto = getUserInfo(discordAccessToken);
+        final DiscordMeDto me = callDiscordWithRetry(() -> discordAPI.getMe(discordAccessToken));
 
         final List<String> roles =
                 user.getAuthorities()
@@ -112,10 +114,10 @@ public class DiscordLoginService implements OAuthLoginService, UserDetailsServic
                         .toList();
 
         final CurrentUserDto meDto = new CurrentUserDto(
-                userDto.discordId(),
-                userDto.username(),
-                userDto.globalName(),
-                userDto.avatar(),
+                me.id(),
+                me.username(),
+                me.globalName(),
+                me.avatar(),
                 roles
         );
 
@@ -132,19 +134,20 @@ public class DiscordLoginService implements OAuthLoginService, UserDetailsServic
         final String discordAccessToken = sessionInfo.getDiscordAccessToken();
 
         try {
-            final DiscordUserDto userDto = getUserInfo(discordAccessToken);
+            final List<DiscordGuildDto> discordGuilds =
+                    callDiscordWithRetry(() -> discordAPI.getGuilds(discordAccessToken));
 
             final List<String> registeredGuildIds =
                     erpSubscriberRepository
                             .findByGuildIdIn(
-                                    userDto.guilds().stream().map(DiscordGuildDto::id).toList()
+                                    discordGuilds.stream().map(DiscordGuildDto::id).toList()
                             )
                             .stream()
                             .map(ErpSubscriber::getGuildId)
                             .toList();
 
             final List<DiscordGuildDto> guilds =
-                    userDto.guilds().stream()
+                    discordGuilds.stream()
                             .filter(guild -> registeredGuildIds.contains(guild.id()))
                             .toList();
 
@@ -165,11 +168,11 @@ public class DiscordLoginService implements OAuthLoginService, UserDetailsServic
         }
     }
 
-    private DiscordUserDto getUserInfo(final String discordAccessToken) {
+    private <T> T callDiscordWithRetry(final Supplier<T> request) {
         final int maxRetries = 1;
         for (int attempt = 0; attempt <= maxRetries; attempt++) {
             try {
-                return loginAPI.getUserInfo(discordAccessToken);
+                return request.get();
             } catch (HttpClientErrorException.TooManyRequests exception) {
                 if (attempt == maxRetries) {
                     throw new CustomException(ErrorCode.EXTERNAL_SERVICE_UNAVAILABLE);
