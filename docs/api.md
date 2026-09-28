@@ -23,16 +23,20 @@
 | | `/content/delete_all` | 콘텐츠 일괄 삭제 |
 | **Learning** | `/learning/list` | 학습 자료 목록 |
 | | `/learning/save_all` | 학습 자료 일괄 저장 |
+| | `/learning/delete_all` | 학습 자료 일괄 삭제 |
 | **Menu** | `/menu/list` | 메뉴 추천 목록 |
 | | `/menu/save_all` | 메뉴 일괄 저장 |
+| | `/menu/delete_all` | 메뉴 일괄 삭제 |
 | **Music** | `/music/list` | 음악 추천 목록 |
 | | `/music/save_all` | 음악 일괄 저장 |
+| | `/music/delete_all` | 음악 일괄 삭제 |
 
 ### 👥 멤버십 API
 | Method | Endpoint | 설명 |
 |--------|----------|------|
-| `GET` | `/membership/list` | 멤버십 정보 목록 |
-| `POST` | `/membership/save_all` | 멤버십 정보 저장 |
+| `GET` | `/api/repository/membership/point_log?page=1&size=20` | 본인 포인트 내역 조회 |
+
+> 이전 문서의 `/membership/list`, `/membership/save_all`은 활성 엔드포인트가 아니어서 제거했습니다.
 
 ### 🧭 경로 규칙 (ADR-0002)
 
@@ -44,7 +48,7 @@
 
 ### 🪙 관리자 포인트 API (`/api/admin/points`)
 
-> 2026-09-28: `/api/repository/membership/admin/points`에서 이전했습니다(ADR-0002). 이전 경로는 BE/FE 배포 순서가 어긋나도 깨지지 않도록 **호환 경로로 잠시 유지**하며, 새 경로를 쓰는 WebUI_FE가 운영에 배포된 뒤 제거합니다. 신규 호출은 반드시 `/api/admin/points`를 사용합니다.
+> 2026-09-28: `/api/repository/membership/admin/points`에서 이전했습니다(ADR-0002). 이전 경로는 제거되어 더 이상 응답하지 않습니다(`404`).
 
 모든 API는 `ROLE_ADMIN` 권한이 필요하며, `state='재적'`인 Discord 회원만 대상으로 합니다.
 
