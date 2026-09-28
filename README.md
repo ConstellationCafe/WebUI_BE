@@ -69,7 +69,7 @@ client가 여러 개면 `_1_`, `_2_`처럼 번호를 늘립니다. 값이 형식
 
 Development는 편의를 위해 primary schema를 `update`할 수 있지만 production은 `validate`만 수행합니다. 운영 schema 변경은 별도 검토·백업·복구 계획을 가진 migration으로 수행해야 합니다.
 
-알림 기능을 배포하기 전 운영자가 [0004 수동 migration](docs/migrations/0004_notification.sql)을 검증·적용해야 합니다. `Notification`, `NotificationReadCursor` 테이블 추가만 포함합니다. 관리자 포인트 입·출금도 알림을 저장하므로 migration 없이 배포하면 입·출금이 실패합니다. 설계는 [ADR-0004](docs/adr/0004-notification.md)를 참고합니다.
+알림 기능을 배포하기 전 운영자가 [0005 수동 migration](docs/migrations/0005_notification.sql)을 검증·적용해야 합니다. `Notification`, `NotificationReadCursor` 테이블 추가만 포함합니다. 관리자 포인트 입·출금도 알림을 저장하므로 migration 없이 배포하면 입·출금이 실패합니다. 설계는 [ADR-0004](docs/adr/0004-notification.md)를 참고합니다.
 
 ## 구조와 요청 흐름
 

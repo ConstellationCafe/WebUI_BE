@@ -62,7 +62,7 @@
 
 ### 🔔 알림 API (ADR-0004)
 
-상세 계약은 Notion `/명세서/API 명세서/Notification API 명세`에서 관리합니다. 모든 알림은 채팅방(`botId`) 단위이며 시간은 UTC ISO-8601(`Z`)입니다. 응답은 공통 `ApiResponse(success, response, error)`로 감쌉니다. DB 변경은 [0004 migration](migrations/0004_notification.sql)을 참고합니다.
+상세 계약은 Notion `/명세서/API 명세서/Notification API 명세`에서 관리합니다. 모든 알림은 채팅방(`botId`) 단위이며 시간은 UTC ISO-8601(`Z`)입니다. 응답은 공통 `ApiResponse(success, response, error)`로 감쌉니다. DB 변경은 [0005 migration](migrations/0005_notification.sql)을 참고합니다.
 
 **회원 본인** (`/api/me/notifications`, 로그인 완료 토큰 필요)
 
