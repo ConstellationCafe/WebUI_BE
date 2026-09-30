@@ -13,7 +13,7 @@ import jakarta.validation.constraints.Size;
  */
 public record IntegrationNotificationPublishRequest(
         @NotBlank @Pattern(regexp = "[A-Za-z0-9._:-]{1,64}") String requestId,
-        @NotBlank @Pattern(regexp = "[0-9]{1,30}") String botId,
+        @NotBlank @Size(max = 30) String botId,
         @NotNull NotificationTargetType targetType,
         @Pattern(regexp = "[0-9]{1,20}") String targetDiscordId,
         @NotNull NotificationCategory category,

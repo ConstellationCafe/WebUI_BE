@@ -29,7 +29,7 @@
 | `DISCORD_BOT_API_URI` | 아니요 | 대회 공지 게시에 쓰는 Discord REST API 기준 주소 (기본 `https://discord.com/api/v10`). 봇 토큰은 환경 변수가 아니라 config DB `bot_env`에서 읽음 | HTTPS URI |
 | `INTEGRATION_CLIENTS_0_ID` | 아니요 | 외부 알림 발행 client 식별자(비밀 아님). 미설정 시 외부 발행 API는 모두 401 | `discord-bot` |
 | `INTEGRATION_CLIENTS_0_KEYSHA256` | client 설정 시 | client API Key의 SHA-256 hex(소문자 64자). **원문 키는 넣지 않음** | secret manager에서 주입 |
-| `INTEGRATION_CLIENTS_0_BOTIDS` | client 설정 시 | client가 발행할 수 있는 botId(쉼표 구분) | `123456789012345678` |
+| `INTEGRATION_CLIENTS_0_BOTIDS` | client 설정 시 | client가 발행할 수 있는 botId(쉼표 구분). config DB `bots.bot_id`(VARCHAR(30)) 값 그대로 | `constellation_bot` |
 | `NOTIFICATION_REALTIME_EMITTERTIMEOUTMILLIS` | 아니요 | SSE 연결 최대 유지 시간 (기본 30분) | `1800000` |
 | `NOTIFICATION_REALTIME_HEARTBEATMILLIS` | 아니요 | SSE heartbeat 주기 (기본 25초) | `25000` |
 | `NOTIFICATION_REALTIME_MAXCONNECTIONSPERUSER` | 아니요 | 회원당 SSE 연결 수 (기본 5) | `5` |
