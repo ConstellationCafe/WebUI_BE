@@ -26,9 +26,10 @@
 | `REGISTER_URI` | 예 | 채팅방 미가입자에게 안내할 가입 링크 | HTTPS URI |
 | `SPRING_DATA_REDIS_HOST` | 아니요 | Redis host (기본 `redis`) | `redis` |
 | `SPRING_DATA_REDIS_PORT` | 아니요 | Redis port (기본 `6379`) | `6379` |
+| `DISCORD_BOT_API_URI` | 아니요 | 대회 공지 게시에 쓰는 Discord REST API 기준 주소 (기본 `https://discord.com/api/v10`). 봇 토큰은 환경 변수가 아니라 config DB `bot_env`에서 읽음 | HTTPS URI |
 | `INTEGRATION_CLIENTS_0_ID` | 아니요 | 외부 알림 발행 client 식별자(비밀 아님). 미설정 시 외부 발행 API는 모두 401 | `discord-bot` |
 | `INTEGRATION_CLIENTS_0_KEYSHA256` | client 설정 시 | client API Key의 SHA-256 hex(소문자 64자). **원문 키는 넣지 않음** | secret manager에서 주입 |
-| `INTEGRATION_CLIENTS_0_BOTIDS` | client 설정 시 | client가 발행할 수 있는 botId(쉼표 구분) | `123456789012345678` |
+| `INTEGRATION_CLIENTS_0_BOTIDS` | client 설정 시 | client가 발행할 수 있는 botId(쉼표 구분). config DB `bots.bot_id`(VARCHAR(30)) 값 그대로 | `constellation_bot` |
 | `NOTIFICATION_REALTIME_EMITTERTIMEOUTMILLIS` | 아니요 | SSE 연결 최대 유지 시간 (기본 30분) | `1800000` |
 | `NOTIFICATION_REALTIME_HEARTBEATMILLIS` | 아니요 | SSE heartbeat 주기 (기본 25초) | `25000` |
 | `NOTIFICATION_REALTIME_MAXCONNECTIONSPERUSER` | 아니요 | 회원당 SSE 연결 수 (기본 5) | `5` |
@@ -36,7 +37,7 @@
 | `NOTIFICATION_REALTIME_CHANNEL` | 아니요 | Redis Pub/Sub channel (기본 `webui:notifications`) | `webui:notifications` |
 
 - 외부 client가 여러 개면 `_1_`, `_2_`처럼 번호를 늘립니다. 형식이 맞지 않으면 애플리케이션이 기동하지 않습니다.
-- `docker-compose.yml`과 CD workflow에는 `INTEGRATION_CLIENTS_*`, `NOTIFICATION_REALTIME_*`이 아직 없습니다. 외부 발행을 켜려면 `webui_be.environment`와 `CD.yml`의 `env`·`envs`에 같은 이름으로 추가합니다.
+- `docker-compose.yml`은 빗자루 봇용 client 하나(`INTEGRATION_CLIENTS_0_*`, id `discord-bot`)를 **필수로** 받습니다. 값이 비어 있으면 client 검증에 걸려 기동하지 못하므로, 빈 값 대신 `docker compose config` 단계에서 실패하게 했습니다. `KEYSHA256`과 `BOTIDS`는 GitHub Actions secrets(`INTEGRATION_CLIENTS_0_KEYSHA256`, `INTEGRATION_CLIENTS_0_BOTIDS`)로 주입합니다. `NOTIFICATION_REALTIME_*`은 아직 없으며 기본값을 씁니다.
 - `kis.*`(`KisProperties`)는 bean만 있고 사용하지 않으므로 설정하지 않아도 됩니다.
 
 ## 2. 주입 방식

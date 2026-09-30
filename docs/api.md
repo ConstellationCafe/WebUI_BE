@@ -21,6 +21,7 @@ Notion `섀버 별자리 Cafe 개발 본부 / 명세서 / API 명세서`
 | Shadowverse API 명세 | 빗자루 봇 router 경유 기능(WebUI_BE endpoint 없음) |
 | Penalty API 명세 | `/api/admin/penalties/**`, `/api/me/penalties` |
 | Notification API 명세 | `/api/me/notifications/**`, `/api/admin/notifications`, `/api/integrations/notifications` |
+| Competition API 명세 | `/api/competitions/**` |
 
 ## 2. 공통 규칙
 
@@ -185,6 +186,28 @@ Academy 권한은 채팅방 단위 식별자 `sk`(=`(botId, discordId)`)로 판�
 - 같은 `requestId`·다른 내용은 409, USER 대상이 채팅방 재적 회원이 아니면 404입니다.
 - 내부 기능: `NotificationPublisher.publish(NotificationCommand.internal(...))`. 호출자 transaction에 참여합니다.
 
+### 대회 (`/api/competitions`, 대회 매니저)
+
+권한: 현재 채팅방 `RoleTable`에 `대회 매니저`가 **들어간** 역할(예: `섀버 대회 매니저`)이 있거나 서버장(`ROLE_ADMIN`)이면 쓸 수 있습니다(`@competitionAuth.isManager`, 아카데미의 `@academyAuth`와 같은 방식). 서버장 전용이 아니므로 `/api/admin/**` 밖에 둡니다. 권한이 없으면 공통 규칙대로 404입니다.
+
+WebUI_BE는 로그인한 채팅방(`botId`)의 대회 게시판에 **봇 계정으로 평문 공지만 게시**합니다. 대회 등록(스케줄러), 참가 이모지·참가자 역할·대회방 생성, WebUI 알림 발행은 빗자루 봇이 게시판 글을 감지해 처리합니다.
+
+| Method | Endpoint | 설명 |
+|---|---|---|
+| `GET` | `/me/permissions` | 로그인한 회원 누구나. `{manager}` — 화면의 대회 메뉴 표시용(최종 판단은 서버) |
+| `GET` | `/boards` | 게시판 목록 `[{key, channelId, name, joinable}]`. `joinable`은 참가 이모지 등이 자동 생성되는 게시판(`inner_board`) |
+| `POST` | `/notices/preview` | 게시하지 않고 검증과 평문 조립만 함 → `{content}` |
+| `POST` | `/notices` | `{requestId, boardKey, notice}` 게시 → `{boardKey, channelId, messageId, messageUrl, content}` |
+| `POST` | `/winners` | 우승 칭호 부여 `{competitionName, version, winnerDiscordId, acquisition}` → `{competitionName, version, winnerDiscordId, winnerName, acquisition}` |
+| `GET` | `/winners?page=1&size=20` | 현재 채팅방 칭호 부여 이력(대회 날짜 최신순) |
+
+- `notice` 본문: `title`(100자, 큰따옴표 불가), `participantWay`, `format`, `registrationStart`, `registrationEnd`, `eventStart`(UTC ISO-8601 `2026-10-02T13:00:00Z`. 게시글에는 한국 시간으로 분 단위까지 적음), 선택 `prizes[{rank, content}]`, 선택 `extraFields[{key, value}]`(각 10개 이하).
+- 봇 파서(`InfoExtractor`) 규칙에 맞게 검증합니다. 모든 값은 한 줄이어야 하고, `참가 방법 : `·`접수 기간 : `·`진행 기간 : ` 표시와 `개최되었습니다`를 넣을 수 없습니다. 추가 입력란 이름은 예약어(`참가 방법`, `진행 형식`, `접수 기간`, `진행 기간`, `우승 상품`)나 `:`를 쓸 수 없고 중복될 수 없습니다. 접수 시작 < 접수 마감 ≤ 진행 시작이어야 하고, 접수 마감은 현재보다 뒤여야 합니다. 전체 2000자 이하입니다. 어기면 400입니다.
+- 진행 기간은 항상 `시작 ~ 종료시까지`로 게시합니다. 봇 파서가 진행 기간 줄에서 날짜를 하나만 읽기 때문입니다.
+- 게시판 목록은 config DB `module_config(botId, network_operations)`의 `add_on.competition.notice_channel.boards`(`{키: 채널 ID}`)에서, 봇 토큰은 `bot_env.discord_token`에서 읽습니다. 설정이 없으면 404, 디스코드 게시 실패는 502입니다.
+- 멘션은 모두 비활성화(`allowed_mentions.parse=[]`)해 입력의 `@everyone` 등이 발동하지 않습니다.
+- 우승 칭호(`Competition.Winners`, [migration 0006](migrations/0006_competition_winners_bot_id.sql)): `version`은 `GameVersion` 값(`s1`·`s2`, WebUI_FE `GameVersionType`과 같음), `acquisition`은 대회 개최 날짜(`2026-10-02`, 시각이 아닌 한국 날짜라 UTC로 바꾸지 않음, 오늘 이후 불가), `winnerDiscordId`는 현재 채팅방 재적 회원(아니면 404). 같은 채팅방·대회명·버전·회원이 이미 있으면 409입니다.
+
 ## 4. idempotency 요약
 
 | Endpoint | key | 같은 key 재전송 |
@@ -192,6 +215,8 @@ Academy 권한은 채팅방 단위 식별자 `sk`(=`(botId, discordId)`)로 판�
 | `POST /api/admin/penalties` | `requestId`(UUID), 길드 단위 | 같은 내용이면 현재 상세, 다른 내용이면 409 |
 | `POST /api/admin/notifications`, `POST /api/integrations/notifications` | `requestId`, `(botId, source, sourceRef)` 단위 | 같은 내용이면 기존 결과(재전달 없음), 다른 내용이면 409 |
 | `PUT /api/me/notifications/read-cursor` | 요청 자체가 멱등 | 읽음 위치는 뒤로 가지 않음 |
+| `POST /api/competitions/notices` | `requestId`, 채팅방 단위 (Discord `nonce`) | 몇 분 안의 재전송은 디스코드가 기존 메시지를 반환. 그 이후 재전송은 중복 게시될 수 있음 |
+| `POST /api/competitions/winners` | (bot_id, 대회명, 버전, 우승자) PK | 이미 부여됐으면 409(재부여 없음) |
 | `POST /api/admin/points/members/{discordId}/transactions` | **없음** | 중복 반영 가능 (후속 작업) |
 
 key는 해당 행이 DB에 남아 있는 동안 유효합니다. 벌점 기록은 운영자가 삭제하기 전까지 보존하고, 알림 보존 기간은 미정입니다.

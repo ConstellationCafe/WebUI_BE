@@ -41,6 +41,10 @@ services:
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       SPRING_DATA_REDIS_HOST: redis
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      # 봇의 WebUI 알림 발행용 integration client. 값이 비면 기동에 실패하므로 필수로 둔다.
+      INTEGRATION_CLIENTS_0_ID: discord-bot
+      INTEGRATION_CLIENTS_0_KEYSHA256: ${INTEGRATION_CLIENTS_0_KEYSHA256:?INTEGRATION_CLIENTS_0_KEYSHA256 is required}
+      INTEGRATION_CLIENTS_0_BOTIDS: ${INTEGRATION_CLIENTS_0_BOTIDS:?INTEGRATION_CLIENTS_0_BOTIDS is required}
     depends_on:
       redis:
         condition: service_healthy

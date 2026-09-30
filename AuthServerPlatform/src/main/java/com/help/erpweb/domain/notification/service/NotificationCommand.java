@@ -29,18 +29,16 @@ public record NotificationCommand(
     public static final int LINK_MAX = 255;
     public static final int SOURCE_REF_MAX = 64;
     public static final int REQUEST_KEY_MAX = 64;
+    /** config DB bots.bot_id, Notification.bot_id와 같은 VARCHAR(30). 형식은 제한하지 않는다. */
+    public static final int BOT_ID_MAX = 30;
 
-    private static final Pattern BOT_ID = Pattern.compile("[0-9]{1,30}");
     private static final Pattern DISCORD_ID = Pattern.compile("[0-9]{1,20}");
     private static final Pattern REQUEST_KEY = Pattern.compile("[A-Za-z0-9._:-]{1,64}");
     // 앱 내부 경로만 허용한다. 외부 URL과 프로토콜 상대 경로(//host)는 open redirect가 된다.
     private static final Pattern LINK = Pattern.compile("/(?!/)[A-Za-z0-9\\-._~/?=&%]*");
 
     public NotificationCommand {
-        botId = require(botId, "botId");
-        if (!BOT_ID.matcher(botId).matches()) {
-            throw new InvalidNotificationException("botId 형식이 올바르지 않습니다.");
-        }
+        botId = requireWithin(botId, "botId", BOT_ID_MAX);
         if (targetType == null) {
             throw new InvalidNotificationException("알림 대상 유형을 지정하세요.");
         }
@@ -94,14 +92,6 @@ public record NotificationCommand(
                 feature,
                 null
         );
-    }
-
-    private static String require(String value, String name) {
-        String normalized = blankToNull(value);
-        if (normalized == null) {
-            throw new InvalidNotificationException(name + " 값이 필요합니다.");
-        }
-        return normalized;
     }
 
     private static String requireWithin(String value, String name, int max) {

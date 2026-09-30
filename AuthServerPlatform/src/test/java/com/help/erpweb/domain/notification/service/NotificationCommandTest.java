@@ -45,6 +45,32 @@ class NotificationCommandTest {
     }
 
     @Test
+    void botIdFollowsDatabaseColumnNotNumericFormat() {
+        assertThat(commandForBot(" constellation_bot ").botId()).isEqualTo("constellation_bot");
+        assertThat(commandForBot("a".repeat(30)).botId()).hasSize(30);
+
+        assertThatThrownBy(() -> commandForBot("a".repeat(31)))
+                .isInstanceOf(InvalidNotificationException.class);
+        assertThatThrownBy(() -> commandForBot("  "))
+                .isInstanceOf(InvalidNotificationException.class);
+    }
+
+    private static NotificationCommand commandForBot(String botId) {
+        return new NotificationCommand(
+                botId,
+                NotificationTargetType.GUILD,
+                null,
+                NotificationCategory.EVENT,
+                "제목",
+                "본문",
+                null,
+                NotificationSource.EXTERNAL,
+                "discord-bot",
+                "competition:1"
+        );
+    }
+
+    @Test
     void userNotificationRequiresNumericTargetDiscordId() {
         assertThatThrownBy(() -> command(NotificationTargetType.USER, null, "제목", null, null))
                 .isInstanceOf(InvalidNotificationException.class);
