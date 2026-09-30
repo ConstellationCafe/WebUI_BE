@@ -72,7 +72,7 @@ public class CompetitionWinnerService {
 		}
 		log.info("대회 우승 칭호 부여 - botId={}, competition={}, version={}, winner={}, managerId={}",
 			botId, name, gameVersion.value(), winner, managerId);
-		return new CompetitionWinnerResponse(name, gameVersion.value(), winner, member.getUsername(), acquisition);
+		return new CompetitionWinnerResponse(name, gameVersion.value(), winner, member.getNickname(), acquisition);
 	}
 
 	@Transactional(transactionManager = "constellationTransactionManager", readOnly = true)
@@ -95,7 +95,7 @@ public class CompetitionWinnerService {
 					winner.getId().getCompetitionName(),
 					winner.getId().getVersion(),
 					winner.getId().getWinner(),
-					member == null ? null : member.getUsername(),
+					member == null ? null : member.getNickname(),
 					winner.getAcquisition());
 			})
 			.toList();
