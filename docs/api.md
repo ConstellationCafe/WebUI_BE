@@ -196,7 +196,7 @@ WebUI_BE는 로그인한 채팅방(`botId`)의 대회 게시판에 **봇 계정�
 | `POST` | `/preview` | 게시하지 않고 검증과 평문 조립만 함 → `{content}` |
 | `POST` | `/` | `{requestId, boardKey, notice}` 게시 → `{boardKey, channelId, messageId, messageUrl, content}` |
 
-- `notice` 본문: `title`(100자, 큰따옴표 불가), `participantWay`, `format`, `registrationStart`, `registrationEnd`, `eventStart`(한국 시간, `2026-10-02T22:00`), 선택 `prizes[{rank, content}]`, 선택 `extraFields[{key, value}]`(각 10개 이하).
+- `notice` 본문: `title`(100자, 큰따옴표 불가), `participantWay`, `format`, `registrationStart`, `registrationEnd`, `eventStart`(UTC ISO-8601 `2026-10-02T13:00:00Z`. 게시글에는 한국 시간으로 분 단위까지 적음), 선택 `prizes[{rank, content}]`, 선택 `extraFields[{key, value}]`(각 10개 이하).
 - 봇 파서(`InfoExtractor`) 규칙에 맞게 검증합니다. 모든 값은 한 줄이어야 하고, `참가 방법 : `·`접수 기간 : `·`진행 기간 : ` 표시와 `개최되었습니다`를 넣을 수 없습니다. 추가 입력란 이름은 예약어(`참가 방법`, `진행 형식`, `접수 기간`, `진행 기간`, `우승 상품`)나 `:`를 쓸 수 없고 중복될 수 없습니다. 접수 시작 < 접수 마감 ≤ 진행 시작이어야 하고, 접수 마감은 현재보다 뒤여야 합니다. 전체 2000자 이하입니다. 어기면 400입니다.
 - 진행 기간은 항상 `시작 ~ 종료시까지`로 게시합니다. 봇 파서가 진행 기간 줄에서 날짜를 하나만 읽기 때문입니다.
 - 게시판 목록은 config DB `module_config(botId, network_operations)`의 `add_on.competition.notice_channel.boards`(`{키: 채널 ID}`)에서, 봇 토큰은 `bot_env.discord_token`에서 읽습니다. 설정이 없으면 404, 디스코드 게시 실패는 502입니다.

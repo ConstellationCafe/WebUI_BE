@@ -28,7 +28,7 @@ public class CompetitionExceptionHandler {
 
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	public ResponseEntity<ApiResponse<?>> unreadable(HttpMessageNotReadableException ex) {
-		return error(HttpStatus.BAD_REQUEST, "요청 JSON 형식이나 날짜 형식(예: 2026-10-02T22:00)을 확인해 주세요.");
+		return error(HttpStatus.BAD_REQUEST, "요청 JSON 형식이나 시각 형식(UTC ISO-8601, 예: 2026-10-02T13:00:00Z)을 확인해 주세요.");
 	}
 
 	@ExceptionHandler(CompetitionConfigNotFoundException.class)

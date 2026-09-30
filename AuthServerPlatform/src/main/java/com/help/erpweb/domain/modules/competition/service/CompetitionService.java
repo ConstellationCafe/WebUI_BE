@@ -5,7 +5,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,7 +42,6 @@ public class CompetitionService {
 	static final String MODULE_ID = "network_operations";
 	/** 봇이 참가 이모지·역할·대회방을 만드는 게시판. 봇 정책과 같다. */
 	static final String JOINABLE_BOARD = "inner_board";
-	static final ZoneId KST = ZoneId.of("Asia/Seoul");
 	private static final int NONCE_LENGTH = 25; // Discord nonce 최대 길이
 
 	private final ModuleConfigRepository moduleConfigRepository;
@@ -156,6 +154,6 @@ public class CompetitionService {
 	}
 
 	private LocalDateTime now() {
-		return LocalDateTime.ofInstant(clock.instant(), KST);
+		return LocalDateTime.ofInstant(clock.instant(), CompetitionNotice.ZONE);
 	}
 }
