@@ -35,7 +35,8 @@ import java.util.Map;
 		"com.help.erpweb.domain.modules.erp.penalty.repository",
 		"com.help.erpweb.domain.modules.chatbot.menu.repository",
 		"com.help.erpweb.domain.metadata.repository",
-		"com.help.erpweb.domain.modules.chatbot.music.repository"
+		"com.help.erpweb.domain.modules.chatbot.music.repository",
+		"com.help.erpweb.domain.modules.competition.repository"
 	},
 	entityManagerFactoryRef = "constellationEntityManagerFactory",
 	transactionManagerRef = "constellationTransactionManager"
@@ -95,7 +96,8 @@ public class ConstellationDBDataSourceConfig {
 				"com.help.erpweb.domain.modules.erp.penalty.entity",
 				"com.help.erpweb.domain.modules.chatbot.menu.entity",
 				"com.help.erpweb.domain.metadata.entity",
-				"com.help.erpweb.domain.modules.chatbot.music.entity"
+				"com.help.erpweb.domain.modules.chatbot.music.entity",
+				"com.help.erpweb.domain.modules.competition.entity"
 			)
 			.persistenceUnit("constellation")
 			.properties(properties)

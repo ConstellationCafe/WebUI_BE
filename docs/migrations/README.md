@@ -21,6 +21,7 @@ Flyway/Liquibase를 쓰지 않습니다. 이 폴더의 SQL은 변경 이력이�
 | 2 | [0003_penalty.sql](0003_penalty.sql) | `PenaltyLog` 생성 | [ADR-0003](../adr/0003-penalty-log.md) | 이미 적용했다면 건너뜀 |
 | 3 | [0004_penalty_discord_identity.sql](0004_penalty_discord_identity.sql) | `PenaltyLog.sk` 제거 | [ADR-0003](../adr/0003-penalty-log.md) | 0003 다음에 적용 |
 | 4 | [0005_notification.sql](0005_notification.sql) | `Notification`, `NotificationReadCursor` 추가 | [ADR-0004](../adr/0004-notification.md) | 미적용 시 알림 API와 **관리자 포인트 입·출금이 실패** |
+| 5 | [0006_competition_winners_bot_id.sql](0006_competition_winners_bot_id.sql) | `Competition.Winners`에 `bot_id` 추가(맨 앞), 백필 후 PK에 포함 | [ADR-0001](../adr/0001-guild-scope.md) | 미적용 시 prod validate로 **WebUI_BE가 기동하지 못함**. 백필 값은 운영자가 치환 |
 
 0002 번호는 사용하지 않았습니다(ADR-0002는 경로 규칙이라 schema 변경이 없음).
 

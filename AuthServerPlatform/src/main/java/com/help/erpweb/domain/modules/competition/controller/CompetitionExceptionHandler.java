@@ -9,8 +9,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.help.erpweb.domain.modules.competition.exception.CompetitionConfigNotFoundException;
+import com.help.erpweb.domain.modules.competition.exception.CompetitionMemberNotFoundException;
 import com.help.erpweb.domain.modules.competition.exception.CompetitionPostFailedException;
+import com.help.erpweb.domain.modules.competition.exception.CompetitionWinnerConflictException;
 import com.help.erpweb.domain.modules.competition.exception.InvalidCompetitionNoticeException;
+import com.help.erpweb.domain.modules.competition.exception.InvalidCompetitionWinnerException;
 import com.help.global.common.response.ApiResponse;
 
 /**
@@ -21,9 +24,19 @@ import com.help.global.common.response.ApiResponse;
 @RestControllerAdvice(basePackageClasses = CompetitionExceptionHandler.class)
 public class CompetitionExceptionHandler {
 
-	@ExceptionHandler(InvalidCompetitionNoticeException.class)
-	public ResponseEntity<ApiResponse<?>> invalid(InvalidCompetitionNoticeException ex) {
+	@ExceptionHandler({InvalidCompetitionNoticeException.class, InvalidCompetitionWinnerException.class})
+	public ResponseEntity<ApiResponse<?>> invalid(IllegalArgumentException ex) {
 		return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+	}
+
+	@ExceptionHandler(CompetitionMemberNotFoundException.class)
+	public ResponseEntity<ApiResponse<?>> memberNotFound(CompetitionMemberNotFoundException ex) {
+		return error(HttpStatus.NOT_FOUND, ex.getMessage());
+	}
+
+	@ExceptionHandler(CompetitionWinnerConflictException.class)
+	public ResponseEntity<ApiResponse<?>> winnerConflict(CompetitionWinnerConflictException ex) {
+		return error(HttpStatus.CONFLICT, ex.getMessage());
 	}
 
 	@ExceptionHandler(HttpMessageNotReadableException.class)
