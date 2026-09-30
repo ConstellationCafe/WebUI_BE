@@ -37,7 +37,7 @@
 | `NOTIFICATION_REALTIME_CHANNEL` | 아니요 | Redis Pub/Sub channel (기본 `webui:notifications`) | `webui:notifications` |
 
 - 외부 client가 여러 개면 `_1_`, `_2_`처럼 번호를 늘립니다. 형식이 맞지 않으면 애플리케이션이 기동하지 않습니다.
-- `docker-compose.yml`과 CD workflow에는 `INTEGRATION_CLIENTS_*`, `NOTIFICATION_REALTIME_*`이 아직 없습니다. 외부 발행을 켜려면 `webui_be.environment`와 `CD.yml`의 `env`·`envs`에 같은 이름으로 추가합니다.
+- `docker-compose.yml`은 빗자루 봇용 client 하나(`INTEGRATION_CLIENTS_0_*`, id `discord-bot`)를 **필수로** 받습니다. 값이 비어 있으면 client 검증에 걸려 기동하지 못하므로, 빈 값 대신 `docker compose config` 단계에서 실패하게 했습니다. `KEYSHA256`과 `BOTIDS`는 GitHub Actions secrets(`INTEGRATION_CLIENTS_0_KEYSHA256`, `INTEGRATION_CLIENTS_0_BOTIDS`)로 주입합니다. `NOTIFICATION_REALTIME_*`은 아직 없으며 기본값을 씁니다.
 - `kis.*`(`KisProperties`)는 bean만 있고 사용하지 않으므로 설정하지 않아도 됩니다.
 
 ## 2. 주입 방식
