@@ -13,9 +13,9 @@ import com.help.global.guild.GuildContext;
 
 import lombok.RequiredArgsConstructor;
 
-/** JWT 필터가 검증한 채팅방만 조회한다. 클라이언트의 botId는 받지 않는다. */
+/** current는 JWT로 선택한 봇이다. 설정은 사용자·역할과 무관하게 botId만으로 결정된다. */
 @RestController
-@RequestMapping("/api/me/module-configs")
+@RequestMapping("/api/bots/current/module-configs")
 @RequiredArgsConstructor
 public class ModuleConfigController {
 	private final ModuleConfigService service;

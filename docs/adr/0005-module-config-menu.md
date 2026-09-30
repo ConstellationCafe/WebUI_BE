@@ -12,7 +12,7 @@
 
 ## Decision
 
-1. `GET /api/me/module-configs`는 기존 JWT 필터가 검증한 `GuildContext.botId`만 사용한다. 일반 인증 회원도 조회할 수 있다.
+1. `GET /api/bots/current/module-configs`는 기존 JWT 필터가 검증한 `GuildContext.botId`만 사용한다. 일반 인증 회원도 조회할 수 있다.
 2. 메뉴에서 사용하는 세 모듈(`chatbot`, `shadowverse`, `network_operations`)만 모듈 ID 오름차순으로 조회한다. 복합 PK 기준 최대 3행이므로 pagination을 두지 않는다.
 3. 원본 JSON 대신 `moduleId`와 메뉴용 `addOns` 이름 목록을 반환한다. `network_operations.config.add_on`의 `academy`·`competition`이 객체인 경우만 해당 메뉴가 활성화된다. 누락·null·잘못된 타입은 비활성으로 취급한다.
 4. FE는 모듈을 조회한 뒤 활성화된 아카데미·대회만 기존 서버 권한 API를 조회한다. 교사·학원장·대회 매니저·서버장 판단은 서버가 유지한다.
@@ -27,3 +27,9 @@
 ## 호환성과 운영 영향
 
 신규 조회 API만 추가하며 기존 API 계약·DB 스키마는 바꾸지 않는다. BE를 먼저 배포하고 FE를 배포한다. FE만 먼저 배포되면 조회 실패 안내가 표시되며 모듈 메뉴가 숨겨진다. rollback은 FE를 먼저 이전 버전으로 되돌리고 필요하면 BE를 되돌린다. 설정 원문은 계속 서버에서만 읽는다.
+
+### 봇 설정 리소스 계약 (2026-09-30)
+
+`GET /api/bots/current/module-configs`의 `current`는 인증된 요청에서 선택된 JWT `botId`를 뜻한다. 모듈 설정의 소유자는 사용자(`me`)가 아닌 봇/채팅방이다. 인증·재적 여부는 접근 조건이며, 조회 결과는 오직 `botId`로 결정된다. 같은 봇의 사용자·역할이 달라도 설정 응답은 같으며, 다른 봇의 설정은 섞이지 않는다. 사용자별 아카데미·대회 권한은 기존 권한 API에서 별도로 조회한다.
+
+기존 `/api/me/module-configs`는 미병합 초안 경로로 폐기하며 호환 alias를 제공하지 않는다. BE의 새 경로를 먼저 배포한 뒤 FE를 배포한다.

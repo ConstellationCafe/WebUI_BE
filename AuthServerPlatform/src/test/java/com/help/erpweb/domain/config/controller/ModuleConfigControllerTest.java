@@ -1,5 +1,6 @@
 package com.help.erpweb.domain.config.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.reset;
@@ -76,7 +77,7 @@ class ModuleConfigControllerTest {
 
 	@Test
 	void unauthenticatedRequestIsUnauthorized() throws Exception {
-		mvc.perform(get("/api/me/module-configs")).andExpect(status().isUnauthorized());
+		mvc.perform(get("/api/bots/current/module-configs")).andExpect(status().isUnauthorized());
 		verifyNoInteractions(service);
 	}
 
@@ -84,7 +85,7 @@ class ModuleConfigControllerTest {
 	void tokenWithoutSelectedBotIsUnauthorized() throws Exception {
 		when(jwtUtil.isTokenValidate("pending-token")).thenReturn(true);
 		when(jwtUtil.extractBotId("pending-token")).thenReturn(Optional.empty());
-		mvc.perform(get("/api/me/module-configs").cookie(new Cookie("AccessToken", "pending-token")))
+		mvc.perform(get("/api/bots/current/module-configs").cookie(new Cookie("AccessToken", "pending-token")))
 				.andExpect(status().isUnauthorized());
 		verifyNoInteractions(service);
 	}
@@ -94,7 +95,7 @@ class ModuleConfigControllerTest {
 		when(service.getMenuConfigs("bot-a"))
 				.thenReturn(List.of(new ModuleConfigResponse("network_operations", List.of("competition"))));
 
-		mvc.perform(get("/api/me/module-configs")
+		mvc.perform(get("/api/bots/current/module-configs")
 						.cookie(new Cookie("AccessToken", "scoped-token"))
 						.param("botId", "bot-b").param("bot_id", "bot-b"))
 				.andExpect(status().isOk())
@@ -107,9 +108,60 @@ class ModuleConfigControllerTest {
 	}
 
 	@Test
+	void sameBotReturnsSameConfigurationForDifferentUsersAndRoles() throws Exception {
+		when(jwtUtil.isTokenValidate("other-user-token")).thenReturn(true);
+		when(jwtUtil.extractBotId("other-user-token")).thenReturn(Optional.of("bot-a"));
+		when(jwtUtil.extractUsername("other-user-token")).thenReturn(Optional.of("456"));
+		when(users.findByBotIdAndDiscordID("bot-a", "456"))
+				.thenReturn(Optional.of(DiscordUser.of("bot-a", "456", List.of("서버장"))));
+		when(service.getMenuConfigs("bot-a"))
+				.thenReturn(List.of(new ModuleConfigResponse("chatbot", List.of())));
+
+		String memberResponse = mvc.perform(get("/api/bots/current/module-configs")
+						.cookie(new Cookie("AccessToken", "scoped-token")))
+				.andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+		String adminResponse = mvc.perform(get("/api/bots/current/module-configs")
+						.cookie(new Cookie("AccessToken", "other-user-token")))
+				.andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+
+		assertThat(adminResponse).isEqualTo(memberResponse);
+	}
+
+	@Test
+	void sameUserReceivesConfigurationOfSelectedBotOnly() throws Exception {
+		when(jwtUtil.isTokenValidate("other-bot-token")).thenReturn(true);
+		when(jwtUtil.extractBotId("other-bot-token")).thenReturn(Optional.of("bot-b"));
+		when(jwtUtil.extractUsername("other-bot-token")).thenReturn(Optional.of("123"));
+		when(users.findByBotIdAndDiscordID("bot-b", "123"))
+				.thenReturn(Optional.of(DiscordUser.of("bot-b", "123", List.of())));
+		when(service.getMenuConfigs("bot-a"))
+				.thenReturn(List.of(new ModuleConfigResponse("chatbot", List.of())));
+		when(service.getMenuConfigs("bot-b"))
+				.thenReturn(List.of(new ModuleConfigResponse("shadowverse", List.of())));
+
+		mvc.perform(get("/api/bots/current/module-configs")
+						.cookie(new Cookie("AccessToken", "scoped-token")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.response[0].moduleId").value("chatbot"));
+		mvc.perform(get("/api/bots/current/module-configs")
+						.cookie(new Cookie("AccessToken", "other-bot-token")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.response[0].moduleId").value("shadowverse"));
+		verify(service).getMenuConfigs("bot-a");
+		verify(service).getMenuConfigs("bot-b");
+	}
+
+	@Test
+	void previousUserResourcePathIsNotExposed() throws Exception {
+		mvc.perform(get("/api/me/module-configs").cookie(new Cookie("AccessToken", "scoped-token")))
+				.andExpect(status().isNotFound());
+		verifyNoInteractions(service);
+	}
+
+	@Test
 	void userOutsideSelectedRoomCannotReadModuleConfig() throws Exception {
 		when(users.findByBotIdAndDiscordID("bot-a", "123")).thenReturn(Optional.empty());
-		mvc.perform(get("/api/me/module-configs").cookie(new Cookie("AccessToken", "scoped-token")))
+		mvc.perform(get("/api/bots/current/module-configs").cookie(new Cookie("AccessToken", "scoped-token")))
 				.andExpect(status().isUnauthorized());
 		verifyNoInteractions(service);
 	}

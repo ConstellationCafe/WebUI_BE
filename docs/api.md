@@ -22,7 +22,7 @@ Notion `섀버 별자리 Cafe 개발 본부 / 명세서 / API 명세서`
 | Penalty API 명세 | `/api/admin/penalties/**`, `/api/me/penalties` |
 | Notification API 명세 | `/api/me/notifications/**`, `/api/admin/notifications`, `/api/integrations/notifications` |
 | Competition API 명세 | `/api/competitions/**` |
-| ModuleConfig API 명세 | `/api/me/module-configs` |
+| ModuleConfig API 명세 | `/api/bots/current/module-configs` |
 
 ## 2. 공통 규칙
 
@@ -91,11 +91,11 @@ Notion `섀버 별자리 Cafe 개발 본부 / 명세서 / API 명세서`
 | `GET` | `/auth/check` | 로그인 상태와 `roomSelected` 여부 |
 | `POST` | `/auth/logout` | 세션 폐기, 쿠키 만료 |
 
-### 메뉴용 모듈 설정 (`/api/me/module-configs`)
+### 메뉴용 모듈 설정 (`/api/bots/current/module-configs`)
 
 | Method | Endpoint | 권한 | 설명 |
 |---|---|---|---|
-| `GET` | `/api/me/module-configs` | 채팅방 선택을 마친 인증 회원 | 현재 JWT의 `botId`로 config DB `module_config` 조회 |
+| `GET` | `/api/bots/current/module-configs` | 채팅방 선택을 마친 인증 회원 | 현재 JWT의 `botId`로 config DB `module_config` 조회 |
 
 - 요청 본문·path/query 식별자는 없습니다. 클라이언트가 전달한 `botId`·`bot_id`는 사용하지 않고 `GuildContext.requireBotId()`만 조회 범위로 씁니다.
 - 성공: `ApiResponse`의 `response`는 `[{moduleId, addOns}]` 배열. `moduleId` 오름차순이며 `chatbot`, `network_operations`, `shadowverse` 세 종류만 조회하므로 복합 PK 기준 최대 3행입니다. pagination은 없습니다. 설정이 없으면 `200`, `response: []`입니다.
@@ -235,3 +235,9 @@ WebUI_BE는 로그인한 채팅방(`botId`)의 대회 게시판에 **봇 계정�
 | `POST /api/admin/points/members/{discordId}/transactions` | **없음** | 중복 반영 가능 (후속 작업) |
 
 key는 해당 행이 DB에 남아 있는 동안 유효합니다. 벌점 기록은 운영자가 삭제하기 전까지 보존하고, 알림 보존 기간은 미정입니다.
+
+### 봇 설정 리소스 계약 (2026-09-30)
+
+`GET /api/bots/current/module-configs`의 `current`는 인증된 요청에서 선택된 JWT `botId`를 뜻한다. 모듈 설정의 소유자는 사용자(`me`)가 아닌 봇/채팅방이다. 인증·재적 여부는 접근 조건이며, 조회 결과는 오직 `botId`로 결정된다. 같은 봇의 사용자·역할이 달라도 설정 응답은 같으며, 다른 봇의 설정은 섞이지 않는다. 사용자별 아카데미·대회 권한은 기존 권한 API에서 별도로 조회한다.
+
+기존 `/api/me/module-configs`는 미병합 초안 경로로 폐기하며 호환 alias를 제공하지 않는다. BE의 새 경로를 먼저 배포한 뒤 FE를 배포한다.
