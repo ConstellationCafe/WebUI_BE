@@ -3,7 +3,7 @@
 > 상태: Active  
 > 적용 범위: `ConstellationCafe/WebUI_BE` 백엔드 서비스 (`develope` 기준)  
 > 문서 담당자: 미정 — 프로젝트 책임자가 지정 필요  
-> 마지막 검토일: 2026-09-28
+> 마지막 검토일: 2026-09-30
 
 ## 1. 프로젝트 개요
 
@@ -12,6 +12,7 @@
 주요 기능
 
 - **인증**: Discord OAuth 2.0 로그인, JWT(HttpOnly 쿠키) + Redis 세션, 채팅방(`botId`) 선택 후 방 단위 권한 적용([ADR-0001](docs/adr/0001-guild-scope.md))
+- **메뉴 설정**: 현재 JWT의 `botId`로 ModuleConfig를 조회해 모듈 ID와 아카데미·대회 활성 여부만 반환. FE는 활성 기능에 한해서 서버 권한을 조회([ADR-0005](docs/adr/0005-module-config-menu.md))
 - **ChatBot 저장소**: 콘텐츠·학습 자료·메뉴·음악 추천 데이터 조회와 일괄 저장·삭제
 - **Academy**: 아카데미·반·과목, 학생·강사 현황, 수업 기록 작성·조회·수정·삭제
 - **ERP 포인트**: 본인 포인트 내역, 관리자 포인트 입·출금과 내역 수정·삭제
@@ -30,7 +31,7 @@
 | [docs/deploy.md](docs/deploy.md) | 로컬·Compose 실행, CI/CD, 배포 순서, rollback |
 | [docs/migrations/README.md](docs/migrations/README.md) | 수동 DB migration 원칙·목록·적용 순서 |
 | [docs/operations.md](docs/operations.md) | 외부 연동 timeout·retry, 관측성, 로그, 보안 운영(미정 항목 포함) |
-| [docs/adr/README.md](docs/adr/README.md) | ADR 목록(0001~0004) |
+| [docs/adr/README.md](docs/adr/README.md) | ADR 목록(0001~0005) |
 
 ## 3. 개발 환경
 

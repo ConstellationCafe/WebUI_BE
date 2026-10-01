@@ -10,3 +10,4 @@
 | [0002](0002-admin-api-prefix.md) | 관리자 API 경로를 `/api/admin/**`로 통일 | Accepted |
 | [0003](0003-penalty-log.md) | 벌점 이력과 재전송 처리 | Active |
 | [0004](0004-notification.md) | 알림 저장·실시간 전달 구조 (DB inbox + Redis Pub/Sub + SSE) | Accepted |
+| [0005](0005-module-config-menu.md) | 채팅방 모듈 설정을 조회한 뒤 메뉴별 권한을 확인한다 | Accepted |

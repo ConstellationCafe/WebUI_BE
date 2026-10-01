@@ -1,16 +1,23 @@
 package com.help.erpweb.domain.config.repository;
 
-import com.help.erpweb.domain.config.entity.ModuleConfig;
-import com.help.erpweb.domain.config.entity.ModuleConfigId;
-import org.springframework.data.jpa.repository.JpaRepository;
-
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
-public interface ModuleConfigRepository
-        extends JpaRepository<ModuleConfig, ModuleConfigId> {
+import org.springframework.data.jpa.repository.JpaRepository;
 
-    Optional<ModuleConfig> findByIdBotIdAndIdModuleId(
-            String botId,
-            String moduleId
-    );
+import com.help.erpweb.domain.config.entity.ModuleConfig;
+import com.help.erpweb.domain.config.entity.ModuleConfigId;
+
+public interface ModuleConfigRepository
+		extends JpaRepository<ModuleConfig, ModuleConfigId> {
+
+	List<ModuleConfig> findByIdBotIdAndIdModuleIdInOrderByIdModuleIdAsc(
+			String botId, Collection<String> moduleIds
+	);
+
+	Optional<ModuleConfig> findByIdBotIdAndIdModuleId(
+			String botId,
+			String moduleId
+	);
 }

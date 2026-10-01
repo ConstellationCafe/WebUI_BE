@@ -2,7 +2,7 @@
 
 > 상태: Active  
 > 적용 범위: WebUI_BE HTTP API (`develope` 기준)  
-> 마지막 검토일: 2026-09-28  
+> 마지막 검토일: 2026-09-30
 > 상위 문서: [README](../README.md)
 
 이 문서는 저장소 안에서 API를 빠르게 찾기 위한 요약입니다. **request/response·권한·오류 계약의 기준은 Notion 명세**이며, API를 바꾸면 같은 작업에서 Notion 해당 페이지를 먼저 갱신하고 이 문서도 맞춥니다.
@@ -22,6 +22,7 @@ Notion `섀버 별자리 Cafe 개발 본부 / 명세서 / API 명세서`
 | Penalty API 명세 | `/api/admin/penalties/**`, `/api/me/penalties` |
 | Notification API 명세 | `/api/me/notifications/**`, `/api/admin/notifications`, `/api/integrations/notifications` |
 | Competition API 명세 | `/api/competitions/**` |
+| ModuleConfig API 명세 | `/api/bots/current/module-configs` |
 
 ## 2. 공통 규칙
 
@@ -89,6 +90,20 @@ Notion `섀버 별자리 Cafe 개발 본부 / 명세서 / API 명세서`
 | `POST` | `/auth/refresh` | RefreshToken으로 AccessToken 재발급 |
 | `GET` | `/auth/check` | 로그인 상태와 `roomSelected` 여부 |
 | `POST` | `/auth/logout` | 세션 폐기, 쿠키 만료 |
+
+### 메뉴용 모듈 설정 (`/api/bots/current/module-configs`)
+
+| Method | Endpoint | 권한 | 설명 |
+|---|---|---|---|
+| `GET` | `/api/bots/current/module-configs` | 채팅방 선택을 마친 인증 회원 | 현재 JWT의 `botId`로 config DB `module_config` 조회 |
+
+- 요청 본문·path/query 식별자는 없습니다. 클라이언트가 전달한 `botId`·`bot_id`는 사용하지 않고 `GuildContext.requireBotId()`만 조회 범위로 씁니다.
+- 성공: `ApiResponse`의 `response`는 `[{moduleId, addOns}]` 배열. `moduleId` 오름차순이며 `chatbot`, `network_operations`, `shadowverse` 세 종류만 조회하므로 복합 PK 기준 최대 3행입니다. pagination은 없습니다. 설정이 없으면 `200`, `response: []`입니다.
+- `chatbot`·`shadowverse`는 해당 모듈 행의 존재로 활성화합니다. `network_operations`는 원본 JSON `config.add_on.academy`·`config.add_on.competition`이 객체일 때 해당 이름을 `addOns`에 포함합니다(빈 객체도 포함). 누락·null·다른 타입은 활성화하지 않습니다.
+- 응답에는 원본 config, `botId`, 채널·역할·회원 정보와 기타 설정을 넣지 않습니다. `addOns`는 항상 배열이며 아카데미·대회 이외의 부가 기능은 포함하지 않습니다.
+- FE는 이 응답을 받은 뒤 활성화된 아카데미·대회에 한해서 기존 권한 API를 조회합니다. 모듈 활성 여부는 사용자의 기능 권한을 대신하지 않습니다.
+- 미인증·유효하지 않은 토큰·채팅방 미선택·해당 채팅방 비회원은 기존 `/api/**` 규칙대로 `401`입니다.
+- 배포: BE 신규 API를 먼저 배포한 뒤 FE를 배포합니다. FE에서 조회 실패 시 해당 모듈 메뉴를 숨기고 재시도를 제공합니다. DB migration은 없습니다. 근거: [ADR-0005](adr/0005-module-config-menu.md).
 
 ### Academy (`/api/academy`)
 
@@ -220,3 +235,9 @@ WebUI_BE는 로그인한 채팅방(`botId`)의 대회 게시판에 **봇 계정�
 | `POST /api/admin/points/members/{discordId}/transactions` | **없음** | 중복 반영 가능 (후속 작업) |
 
 key는 해당 행이 DB에 남아 있는 동안 유효합니다. 벌점 기록은 운영자가 삭제하기 전까지 보존하고, 알림 보존 기간은 미정입니다.
+
+### 봇 설정 리소스 계약 (2026-09-30)
+
+`GET /api/bots/current/module-configs`의 `current`는 인증된 요청에서 선택된 JWT `botId`를 뜻한다. 모듈 설정의 소유자는 사용자(`me`)가 아닌 봇/채팅방이다. 인증·재적 여부는 접근 조건이며, 조회 결과는 오직 `botId`로 결정된다. 같은 봇의 사용자·역할이 달라도 설정 응답은 같으며, 다른 봇의 설정은 섞이지 않는다. 사용자별 아카데미·대회 권한은 기존 권한 API에서 별도로 조회한다.
+
+기존 `/api/me/module-configs`는 미병합 초안 경로로 폐기하며 호환 alias를 제공하지 않는다. BE의 새 경로를 먼저 배포한 뒤 FE를 배포한다.
