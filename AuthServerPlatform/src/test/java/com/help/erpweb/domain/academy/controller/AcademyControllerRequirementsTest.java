@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import com.help.erpweb.domain.academy.service.AcademyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.security.core.Authentication;
 
 class AcademyControllerRequirementsTest {
 
@@ -21,9 +22,11 @@ class AcademyControllerRequirementsTest {
 
     @Test
     void academyListEndpointDelegatesToService() {
-        assertNotNull(academyController.getAcademies());
+        Authentication authentication = mock(Authentication.class);
 
-        verify(academyService).getAcademies();
+        assertNotNull(academyController.getAcademies(authentication));
+
+        verify(academyService).getAcademies(authentication);
     }
 
     @Test

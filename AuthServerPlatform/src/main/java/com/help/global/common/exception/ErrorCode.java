@@ -6,6 +6,8 @@ import lombok.Getter;
 public enum ErrorCode {
 	INVALID_CREDENTIALS(400, "아이디나 패스워드가 일치하지 않습니다."),
 	INVALID_PASSWORD(400, "잘못된 비밀번호입니다"),
+	PENALTY_INVALID_OCCURRED_AT(400, "벌점 발생 시각은 유효한 현재 또는 과거 UTC 시각이어야 합니다"),
+	PENALTY_INVALID_SCORE(400, "현재 벌점은 1점만 허용합니다"),
 
 	EXPIRED_TOKEN(401, "인증 토큰이 만료되었습니다"),
 	INVALID_TOKEN(401, "유효하지 않은 토큰입니다"),
@@ -14,11 +16,16 @@ public enum ErrorCode {
 	UNAUTHORIZED(401, "로그인이 필요합니다"),
 	UNAUTHORIZED_PASSWORD_CHANGE(401, "비밀번호 변경 권한이 없습니다"),
 	UNTRUSTED_EMAIL_SERVER(403, "신뢰할 수 없는 이메일 서버입니다"),
+	GUILD_NOT_REGISTERED(403, "등록되지 않은 채팅방입니다"),
+	GUILD_MEMBER_NOT_FOUND(403, "해당 채팅방의 멤버가 아닙니다"),
 
 	USER_NOT_FOUND(404, "사용자를 찾을 수 없습니다"),
+	PENALTY_MEMBER_NOT_FOUND(404, "현재 채팅방의 재적 회원을 찾을 수 없습니다"),
+	PENALTY_NOT_FOUND(404, "벌점 내역을 찾을 수 없습니다"),
 	NOT_FOUND(404, "페이지를 찾을 수 없습니다"),
 
 	EMAIL_ALREADY_EXISTS(409, "이미 존재하는 이메일입니다"),
+	PENALTY_REQUEST_CONFLICT(409, "동일한 요청 ID에 다른 벌점 내용이 등록되어 있습니다"),
 	EXTERNAL_SERVICE_UNAVAILABLE(503, "외부 서비스에 일시적으로 연결할 수 없습니다"),
 
 	JSON_PARSING_FAILURE(500, "JSON 매핑에 실패했습니다"),

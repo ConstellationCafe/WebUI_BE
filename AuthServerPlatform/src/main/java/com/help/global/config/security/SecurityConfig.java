@@ -1,7 +1,9 @@
 package com.help.global.config.security;
 
-import com.help.global.jwt.AuthServerJwtAuthFilter;
+import com.help.authserver.security.AuthServerJwtAuthFilter;
+import com.help.global.data.Authority;
 import com.help.global.jwt.BackEndJwtAuthFilter;
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -32,7 +34,9 @@ import java.util.List;
 public class SecurityConfig {
 	private final AuthServerJwtAuthFilter authServerJwtAuthFilter;
 	private final BackEndJwtAuthFilter backEndJwtAuthFilter;
-	private final EmailVerificationFilter emailVerificationFilter;
+//	private final EmailVerificationFilter emailVerificationFilter; // 사용되지 않는 코드 - 주석 처리됨 (EmailVerificationFilter.java 참고)
+	private final JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint;
+	private final JsonAccessDeniedHandler jsonAccessDeniedHandler;
 
 	@Value("${front.redirect-uri}")
 	private String redirectUri;
@@ -57,8 +61,8 @@ public class SecurityConfig {
 		http.formLogin(AbstractHttpConfigurer::disable);  // login í¼ ê¸°ë° ì¸ì¦ x
 
 		http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());  // ì¸ê° ì¤ì 
-		http.addFilterBefore(authServerJwtAuthFilter, ExceptionTranslationFilter.class)
-			.addFilterBefore(emailVerificationFilter, AuthServerJwtAuthFilter.class);  // ì¸ì¦ íí° êµ¬ì±
+		http.addFilterBefore(authServerJwtAuthFilter, ExceptionTranslationFilter.class);
+//			.addFilterBefore(emailVerificationFilter, AuthServerJwtAuthFilter.class); // 사용되지 않는 코드 - 주석 처리됨 (EmailVerificationFilter.java 참고)  // ì¸ì¦ íí° êµ¬ì±
 		return http.build();
 	}
 
@@ -71,10 +75,32 @@ public class SecurityConfig {
 		http.sessionManagement(session ->
 				session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 		);
+		http.cors(cors -> cors.configurationSource(configurationSource()));
 
 		http.addFilterBefore(backEndJwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-		http.authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
+		// ADR-0002: 관리자 전용 API는 /api/admin/** 아래에만 둔다. 컨트롤러의
+		// @PreAuthorize와 별개로 여기서 한 번 더 막아, 어노테이션을 빠뜨려도
+		// 관리자 API가 일반 사용자에게 열리지 않게 한다.
+		http.authorizeHttpRequests(auth -> auth
+			// ADR-0004: SSE(/api/me/notifications/stream)는 비동기 dispatch로 응답을 이어 쓴다.
+			// JWT 필터는 비동기 dispatch에서 다시 돌지 않으므로, 최초 요청에서 이미 인가된
+			// 응답의 후속 dispatch를 여기서 다시 막지 않는다.
+			.dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
+			.requestMatchers("/api/admin/**").hasAuthority(Authority.ADMIN)
+			.anyRequest().authenticated()
+		);
+
+		// ADR-0001 부수 수정: 커스텀 AuthenticationEntryPoint가 없으면 Spring
+		// Security 기본값(Http403ForbiddenEntryPoint)이 인증 실패를 본문 없는
+		// 403으로 응답해서, AccessToken 만료가 컨트롤러/GlobalExceptionHandler
+		// 로그도 없이 조용히 403으로 나가버린다(FE AuthInterceptor의 401-only
+		// refresh-retry와 충돌). 인증 실패는 항상 401로 통일한다.
+		http.exceptionHandling(exceptionHandling -> exceptionHandling
+			.authenticationEntryPoint(jsonAuthenticationEntryPoint)
+			.accessDeniedHandler(jsonAccessDeniedHandler)
+		);
+
 		return http.build();
 	}
 
@@ -109,7 +135,7 @@ public class SecurityConfig {
 		// íë¡ í¸ìë ìë² ì£¼ì
 		configuration.setAllowedOriginPatterns(List.of(redirectUri));
 
-		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+		configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 		configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
 		configuration.setExposedHeaders(List.of("Authorization"));
 		configuration.setAllowCredentials(true);

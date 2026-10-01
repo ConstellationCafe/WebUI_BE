@@ -74,8 +74,8 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
 
     @Override
     public DiscordUserDto getUserInfo(String accessTokenForDiscord) {
-        DiscordMeDto me = this.getMeDto(accessTokenForDiscord);
-        List<DiscordGuildDto> guilds = this.getGuildsDto(accessTokenForDiscord);
+        DiscordMeDto me = getMe(accessTokenForDiscord);
+        List<DiscordGuildDto> guilds = getGuilds(accessTokenForDiscord);
         return new DiscordUserDto(
                 me.id(),
                 me.username(),
@@ -85,7 +85,7 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
         );
     }
 
-    private DiscordMeDto getMeDto(String accessTokenForDiscord) {
+    public DiscordMeDto getMe(String accessTokenForDiscord) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessTokenForDiscord);
         HttpEntity<Void> request = new HttpEntity<>(headers);
@@ -120,7 +120,7 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
         );
     }
 
-    private List<DiscordGuildDto> getGuildsDto(String accessTokenForDiscord) {
+    public List<DiscordGuildDto> getGuilds(String accessTokenForDiscord) {
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessTokenForDiscord);
         HttpEntity<Void> request = new HttpEntity<>(headers);
