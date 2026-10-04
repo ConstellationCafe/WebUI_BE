@@ -37,8 +37,8 @@ class PenaltyValidationTest {
 	void size101IsRejectedAtControllerBoundary() throws NoSuchMethodException {
 		try (var factory = Validation.buildDefaultValidatorFactory()) {
 			var validator = factory.getValidator().forExecutables();
-			var controller = new AdminPenaltyController(mock(PenaltyService.class));
-			Method method = AdminPenaltyController.class.getMethod("history", String.class,
+			var controller = new PenaltyController(mock(PenaltyService.class));
+			Method method = PenaltyController.class.getMethod("history", String.class,
 					String.class, PenaltySort.class, int.class, int.class);
 			assertThat(validator.validateParameters(controller, method,
 					new Object[]{null, null, PenaltySort.OCCURRED_AT_DESC, 1, 101})).isNotEmpty();
