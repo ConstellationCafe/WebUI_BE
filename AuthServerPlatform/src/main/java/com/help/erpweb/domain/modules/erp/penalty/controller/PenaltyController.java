@@ -36,12 +36,22 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 벌점 관리 API(ADR-0006). 서버장 전용이 아니라 운영 매니저·운영 본부원도 쓰므로
+ * {@value #BASE_PATH}에 두고 {@code @penaltyAuth}로 권한을 확인한다.
+ *
+ * <p>{@value #DEPRECATED_BASE_PATH}는 구버전 FE를 위한 호환 경로다. {@code /api/admin/**} URL 규칙(ADR-0002)으로
+ * 계속 서버장만 통과하며, 신규 FE 배포 후 호출이 없음을 확인하면 제거한다.
+ */
 @RestController
-@RequestMapping("/api/admin/penalties")
-@PreAuthorize("@authorization.isAdmin(authentication)")
+@RequestMapping({PenaltyController.BASE_PATH, PenaltyController.DEPRECATED_BASE_PATH})
+@PreAuthorize("@penaltyAuth.isManager(authentication)")
 @Validated
 @RequiredArgsConstructor
-public class AdminPenaltyController {
+public class PenaltyController {
+	static final String BASE_PATH = "/api/penalties";
+	static final String DEPRECATED_BASE_PATH = "/api/admin/penalties";
+
 	private final PenaltyService service;
 
 	@PostMapping

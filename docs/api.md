@@ -2,7 +2,7 @@
 
 > 상태: Active  
 > 적용 범위: WebUI_BE HTTP API (`develope` 기준)  
-> 마지막 검토일: 2026-09-30
+> 마지막 검토일: 2026-10-04
 > 상위 문서: [README](../README.md)
 
 이 문서는 저장소 안에서 API를 빠르게 찾기 위한 요약입니다. **request/response·권한·오류 계약의 기준은 Notion 명세**이며, API를 바꾸면 같은 작업에서 Notion 해당 페이지를 먼저 갱신하고 이 문서도 맞춥니다.
@@ -19,7 +19,7 @@ Notion `섀버 별자리 Cafe 개발 본부 / 명세서 / API 명세서`
 | ChatBot API 명세 | `/api/repository/{content,learning,menu,music}/**` |
 | Membership API 명세 | `/api/repository/membership/point_log`, `/api/admin/points/**` |
 | Shadowverse API 명세 | 빗자루 봇 router 경유 기능(WebUI_BE endpoint 없음) |
-| Penalty API 명세 | `/api/admin/penalties/**`, `/api/me/penalties` |
+| Penalty API 명세 | `/api/penalties/**`(호환: `/api/admin/penalties/**`), `/api/me/penalties` |
 | Notification API 명세 | `/api/me/notifications/**`, `/api/admin/notifications`, `/api/integrations/notifications` |
 | Competition API 명세 | `/api/competitions/**` |
 | ModuleConfig API 명세 | `/api/bots/current/module-configs` |
@@ -61,7 +61,7 @@ Notion `섀버 별자리 Cafe 개발 본부 / 명세서 / API 명세서`
 
 ### 경로 규칙 ([ADR-0002](adr/0002-admin-api-prefix.md))
 
-- 관리자 전용 API는 `/api/admin/**`, 본인 데이터는 `/api/me/**` 아래에 둡니다.
+- 관리자 전용 API는 `/api/admin/**`, 본인 데이터는 `/api/me/**` 아래에 둡니다. 서버장 외 역할도 쓰는 관리 기능(대회, 벌점)은 `/api/admin/**` 밖에 두고 기능별 `@PreAuthorize`로 확인합니다([ADR-0006](adr/0006-penalty-manager-role.md)).
 - 새 경로는 kebab-case와 복수형 명사, 동작은 HTTP method로 표현합니다. 내부 계층·패키지 이름(`repository`, `erp`, `modules`)은 경로에 넣지 않습니다.
 - version 접두사(`/v1`)는 두지 않습니다. 외부 client에 공개할 때 다시 결정합니다.
 - 기존 `/api/repository/...`, `/api/academy/...`는 아직 이전 규칙을 따르며 별도로 이전합니다.
@@ -154,16 +154,21 @@ Academy 권한은 채팅방 단위 식별자 `sk`(=`(botId, discordId)`)로 판�
 - 입·출금이 성공하면 대상 회원에게 `POINT` 개인 알림이 같은 transaction에서 발행됩니다.
 - 입·출금 요청에는 요청 ID가 없어, 결과를 모르는 채 재전송하면 중복 반영될 수 있습니다.
 
-### 벌점 ([ADR-0003](adr/0003-penalty-log.md))
+### 벌점 ([ADR-0003](adr/0003-penalty-log.md), [ADR-0006](adr/0006-penalty-manager-role.md))
+
+권한: 현재 채팅방 `RoleTable`에 `운영 매니저` 또는 `운영 본부원`이 **들어간** 역할이 있거나 서버장(`ROLE_ADMIN`)이면 관리 API를 쓸 수 있습니다(`@penaltyAuth.isManager`). 권한이 없으면 공통 규칙대로 404입니다.
 
 | Method | Endpoint | 설명 |
 |---|---|---|
-| `POST` | `/api/admin/penalties` | 벌점 부여, 같은 `requestId` 재전송 처리 |
-| `GET` | `/api/admin/penalties` | 채널·대상 필터 이력 |
-| `GET` | `/api/admin/penalties/members` | 재적 회원 최근 30일 누적 순위 |
-| `GET` | `/api/admin/penalties/members/{discordId}` | 대상자 누적과 이력 상세 |
-| `PATCH` | `/api/admin/penalties/{penaltyId}/cancel` | 취소(이력 보존, 누적에서 제외) |
+| `GET` | `/api/penalties/me/permissions` | 로그인한 회원 누구나. `{manager}` — 화면의 벌점 관리 메뉴 표시용(최종 판단은 서버) |
+| `POST` | `/api/penalties` | 벌점 부여, 같은 `requestId` 재전송 처리 |
+| `GET` | `/api/penalties` | 채널·대상 필터 이력 |
+| `GET` | `/api/penalties/members` | 재적 회원 최근 30일 누적 순위 |
+| `GET` | `/api/penalties/members/{discordId}` | 대상자 누적과 이력 상세 |
+| `PATCH` | `/api/penalties/{penaltyId}/cancel` | 취소(이력 보존, 누적에서 제외) |
 | `GET` | `/api/me/penalties` | 본인 누적과 이력 |
+
+- 호환 경로: `/api/admin/penalties/**`는 구버전 FE를 위해 같은 handler로 남겨 두었으며 `/api/admin/**` URL 규칙 때문에 서버장만 통과합니다. 새 FE 배포 후 호출이 없음을 확인하면 제거합니다(ADR-0006).
 
 - 모든 벌점은 현재 토큰의 `botId`로 제한하고, 대상은 `DiscordUsers`의 재적 회원 `(botId, discordId)`입니다. `Users.sk` 발급은 요구하지 않습니다.
 - 부여 본문: `requestId`(UUID), `targetDiscordId`, `channelId`, 선택 `channelName`, `reason`, `score=1`, 선택 `occurredAt`. 발생 시각을 생략하면 서버 현재 UTC 시각, 미래 시각은 400입니다. 같은 `requestId`·같은 내용은 현재 상세(이력 첫 페이지)를 반환하고, 다른 내용은 409입니다.
@@ -227,7 +232,7 @@ WebUI_BE는 로그인한 채팅방(`botId`)의 대회 게시판에 **봇 계정�
 
 | Endpoint | key | 같은 key 재전송 |
 |---|---|---|
-| `POST /api/admin/penalties` | `requestId`(UUID), 길드 단위 | 같은 내용이면 현재 상세, 다른 내용이면 409 |
+| `POST /api/penalties` (호환: `/api/admin/penalties`) | `requestId`(UUID), 길드 단위 | 같은 내용이면 현재 상세, 다른 내용이면 409 |
 | `POST /api/admin/notifications`, `POST /api/integrations/notifications` | `requestId`, `(botId, source, sourceRef)` 단위 | 같은 내용이면 기존 결과(재전달 없음), 다른 내용이면 409 |
 | `PUT /api/me/notifications/read-cursor` | 요청 자체가 멱등 | 읽음 위치는 뒤로 가지 않음 |
 | `POST /api/competitions/notices` | `requestId`, 채팅방 단위 (Discord `nonce`) | 몇 분 안의 재전송은 디스코드가 기존 메시지를 반환. 그 이후 재전송은 중복 게시될 수 있음 |

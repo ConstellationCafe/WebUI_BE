@@ -16,7 +16,7 @@
 - **ChatBot 저장소**: 콘텐츠·학습 자료·메뉴·음악 추천 데이터 조회와 일괄 저장·삭제
 - **Academy**: 아카데미·반·과목, 학생·강사 현황, 수업 기록 작성·조회·수정·삭제
 - **ERP 포인트**: 본인 포인트 내역, 관리자 포인트 입·출금과 내역 수정·삭제
-- **ERP 벌점**: 관리자 벌점 부여·취소·이력·30일 누적 순위, 본인 벌점 조회([ADR-0003](docs/adr/0003-penalty-log.md))
+- **ERP 벌점**: 운영 매니저·운영 본부원·서버장의 벌점 부여·취소·이력·30일 누적 순위, 본인 벌점 조회([ADR-0003](docs/adr/0003-penalty-log.md), [ADR-0006](docs/adr/0006-penalty-manager-role.md))
 - **알림**: 채팅방 전체/회원 대상 알림 발행(관리자·내부 기능·외부 시스템), SSE 실시간 전달([ADR-0004](docs/adr/0004-notification.md))
 
 기술 stack: Java 17, Spring Boot 3.4.3(Web, WebFlux, Data JPA, Security, Validation, Data Redis, Mail, Actuator), MySQL, Redis, JJWT 0.13.0, Micrometer Prometheus
@@ -116,7 +116,7 @@ Controller(검증·변환·인가) → Service(업무 규칙·transaction) → R
 ## 10. 테스트
 
 - **Unit**: JWT, 인증 세션, Discord API·로그인, 벌점 entity·service, 포인트 service, 알림 command·service, SSE registry·Redis 중계, Academy 권한·service
-- **Controller/MVC**: 입력 검증(ChatBot, 벌점), 관리자 경로·권한(포인트, 벌점, `JsonAccessDeniedHandler`), 알림 controller, 외부 API Key 필터
+- **Controller/MVC**: 입력 검증(ChatBot, 벌점), 관리자 경로·권한(포인트, `JsonAccessDeniedHandler`), 역할 기반 권한(대회, 벌점 운영 역할·경로), 알림 controller, 외부 API Key 필터
 - **Integration**: `LearningRepositoryTest`, `PenaltyRepositoryIntegrationTest` (H2)
 - **Contract**: Notion 명세와의 자동 contract test는 아직 없고 review로 확인합니다.
 - **보강 필요**: pagination 최대 크기 전 endpoint, timeout/retry/fallback, 관리자 포인트 중복 요청, transaction rollback, Academy·ChatBot 소유권 검증
