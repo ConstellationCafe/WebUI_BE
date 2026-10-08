@@ -133,6 +133,23 @@ class PenaltyRepositoryIntegrationTest {
 		assertThat(repository.countRankedMembers("bot-a", null, START, NOW)).isEqualTo(1);
 	}
 
+
+	@Test
+	void historyUsesIdAsStableTieBreakerWhenOccurrenceTimesMatch() {
+		member("bot-a", "123", "재적");
+		Instant sameTime = NOW.minusSeconds(10);
+		log(11, "bot-a", "123", sameTime, "ACTIVE");
+		log(12, "bot-a", "123", sameTime, "ACTIVE");
+
+		var descending = repository.findHistory("bot-a", null, "123",
+				PenaltySort.OCCURRED_AT_DESC, 1, 20);
+		var ascending = repository.findHistory("bot-a", null, "123",
+				PenaltySort.OCCURRED_AT_ASC, 1, 20);
+
+		assertThat(descending).extracting(item -> item.getId()).containsExactly(12L, 11L);
+		assertThat(ascending).extracting(item -> item.getId()).containsExactly(11L, 12L);
+	}
+
 	private void member(String botId, String discordId, String state) {
 		jdbc.update("""
 				INSERT INTO Constellation_Network.DiscordUsers
