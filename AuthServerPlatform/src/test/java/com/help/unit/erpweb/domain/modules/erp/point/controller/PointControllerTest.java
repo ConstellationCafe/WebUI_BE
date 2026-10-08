@@ -1,9 +1,9 @@
 package com.help.erpweb.domain.modules.erp.point.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.help.erpweb.domain.modules.erp.point.service.PointService;
 import com.help.global.common.response.ApiResponse;
@@ -25,7 +25,7 @@ class PointControllerTest {
 	void personalPointHistoryUsesAuthenticatedPrincipalAndRequestedPage() {
 		CustomUser user = mock(CustomUser.class);
 		ApiResponse<?> expected = ApiResponse.success("history");
-		when(pointService.getPointLog(user, 2, 50)).thenReturn(expected);
+		doReturn(expected).when(pointService).getPointLog(user, 2, 50);
 
 		assertThat(controller.getPointLog(user, 2, 50)).isSameAs(expected);
 		verify(pointService).getPointLog(user, 2, 50);

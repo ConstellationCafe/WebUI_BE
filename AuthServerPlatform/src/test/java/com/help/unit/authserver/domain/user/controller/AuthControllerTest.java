@@ -1,9 +1,9 @@
 package com.help.authserver.domain.user.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.help.authserver.domain.user.service.AuthSessionService;
 import com.help.global.common.response.ApiResponse;
@@ -28,7 +28,7 @@ class AuthControllerTest {
 		HttpServletRequest request = mock(HttpServletRequest.class);
 		HttpServletResponse response = mock(HttpServletResponse.class);
 		ApiResponse<?> expected = ApiResponse.success("refreshed");
-		when(authSessionService.refresh(request, response)).thenReturn(expected);
+		doReturn(expected).when(authSessionService).refresh(request, response);
 
 		assertThat(controller.refresh(request, response)).isSameAs(expected);
 		verify(authSessionService).refresh(request, response);
@@ -38,7 +38,7 @@ class AuthControllerTest {
 	void loginCheckDelegatesTheRequestToSessionService() {
 		HttpServletRequest request = mock(HttpServletRequest.class);
 		ApiResponse<?> expected = ApiResponse.success(true);
-		when(authSessionService.checkLogin(request)).thenReturn(expected);
+		doReturn(expected).when(authSessionService).checkLogin(request);
 
 		assertThat(controller.loginCheck(request)).isSameAs(expected);
 		verify(authSessionService).checkLogin(request);
