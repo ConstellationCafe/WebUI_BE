@@ -8,7 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
- * ADR-0002: 관리자 API는 /api/admin/** 아래에 있어야 SecurityConfig의
+ * ADR-0002: 관리자 API는 /api/admin/** 아래에 있어야 ErpWebSecurityConfig의
  * ROLE_ADMIN URL 규칙을 받는다. 경로가 이 규칙에서 벗어나는 회귀를 막는다.
  */
 class AdminPointControllerRouteTest {
@@ -26,7 +26,7 @@ class AdminPointControllerRouteTest {
 
     @Test
     void adminPointControllerKeepsMethodLevelAdminGuard() {
-        // SecurityConfig URL 규칙과 함께 이중으로 관리자 권한을 확인한다.
+        // ErpWebSecurityConfig URL 규칙과 함께 이중으로 관리자 권한을 확인한다.
         assertNotNull(AdminPointController.class.getAnnotation(PreAuthorize.class));
     }
 }

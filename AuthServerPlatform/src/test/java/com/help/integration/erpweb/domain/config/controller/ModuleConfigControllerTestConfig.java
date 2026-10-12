@@ -9,18 +9,21 @@ import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.help.authserver.security.AuthServerJwtAuthFilter;
+import com.help.authserver.security.AuthServerSecurityConfig;
 import com.help.erpweb.domain.config.service.ModuleConfigService;
+import com.help.erpweb.security.BackEndJwtAuthFilter;
+import com.help.erpweb.security.ErpWebSecurityConfig;
 import com.help.global.config.security.JsonAccessDeniedHandler;
 import com.help.global.config.security.JsonAuthenticationEntryPoint;
 import com.help.global.config.security.SecurityConfig;
 import com.help.global.discord.identity.DiscordUserRepository;
-import com.help.global.jwt.BackEndJwtAuthFilter;
 import com.help.global.jwt.JwtUtil;
 
 @Configuration
 @EnableWebMvc
 @Import({
-	SecurityConfig.class, ModuleConfigController.class,
+	SecurityConfig.class, AuthServerSecurityConfig.class, ErpWebSecurityConfig.class,
+	ModuleConfigController.class,
 	JsonAccessDeniedHandler.class, JsonAuthenticationEntryPoint.class
 })
 public class ModuleConfigControllerTestConfig {

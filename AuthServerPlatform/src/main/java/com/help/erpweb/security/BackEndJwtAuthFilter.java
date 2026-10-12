@@ -1,8 +1,10 @@
-package com.help.global.jwt;
+package com.help.erpweb.security;
 
 import com.help.global.discord.identity.DiscordUser;
 import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.global.guild.GuildContext;
+import com.help.global.jwt.CustomUser;
+import com.help.global.jwt.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,6 +24,13 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * erpweb {@code /api/**} 전용 JWT 인증 필터. 채팅방까지 선택된 토큰의 {@code botId}를
+ * {@link GuildContext}에 넣고 요청이 끝나면 비운다.
+ * <p>
+ * ADR-0007: {@code /api/**} 체인({@link ErpWebSecurityConfig})과 함께 erpweb 모듈이 소유한다.
+ * 토큰 파싱 도구({@link JwtUtil}, {@link CustomUser})는 authserver와 같이 쓰므로 global에 남는다.
+ */
 @RequiredArgsConstructor
 @Slf4j
 @Component

@@ -5,7 +5,7 @@ package com.help.global.guild;
  * <p>
  * ADR-0001: 로그인은 discordId 인증만으로는 완료되지 않고, {@code /auth/guild/select}로
  * 채팅방(guildId)을 선택해야 완료된다. 선택 시점에 botId가 AccessToken/RefreshToken
- * claim으로 발급되고, 이후 모든 {@code /api/**} 요청에서 {@link com.help.global.jwt.BackEndJwtAuthFilter}가
+ * claim으로 발급되고, 이후 모든 {@code /api/**} 요청에서 {@code erpweb.security.BackEndJwtAuthFilter}가
  * 그 토큰에서 botId를 꺼내 이곳에 저장한다. 서비스/리포지토리 계층은 이 값을 통해
  * "현재 요청이 어느 봇(=어느 채팅방)에 스코프되어 있는지"를 알 수 있다.
  * <p>
