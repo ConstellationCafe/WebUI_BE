@@ -50,7 +50,7 @@
 //    void getLearningListTest() throws Exception {
 //        // given
 //        List<String> authorities = new ArrayList<>();
-//        authorities.add("ìë²ì¥");
+//        authorities.add("서버장");
 //        DiscordUser discordUser = DiscordUser.of("434719628875399169", authorities);
 //        CustomUser customUser = CustomUser.from(discordUser);
 //
@@ -60,7 +60,7 @@
 //        );
 //        ApiResponse<?> mockResponse = ApiResponse.success(dtoList);
 //
-//        // <?> íì ì¶ë¡  ë¬¸ì ë¡ ì¸í´ ë¯¸ì¬ì©
+//        // <?> 타입 추론 문제로 인해 미사용
 ////        Mockito.when(learningService.getLearningList(user))
 ////               .thenReturn(mockResponse);
 //
@@ -75,11 +75,11 @@
 //                .andExpect(content().string(not(emptyOrNullString())))
 //                .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
 //                .andExpect(jsonPath("$.success").value(true))
-//                // ì²« ë²ì§¸ ìì
+//                // 첫 번째 요소
 //                .andExpect(jsonPath("$.response[0].lnKey").value("key1"))
 //                .andExpect(jsonPath("$.response[0].lnValue").value("value1"))
 //                .andExpect(jsonPath("$.response[0].teacher").value("1234"))
-//                // ë ë²ì§¸ ìì
+//                // 두 번째 요소
 //                .andExpect(jsonPath("$.response[1].lnKey").value("key2"))
 //                .andExpect(jsonPath("$.response[1].lnValue").value("value2"))
 //                .andExpect(jsonPath("$.response[1].teacher").value("5618"));

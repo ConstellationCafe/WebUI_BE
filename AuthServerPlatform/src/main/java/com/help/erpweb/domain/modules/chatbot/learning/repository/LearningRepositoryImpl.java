@@ -107,37 +107,37 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
                         && !sortColumn.isBlank();
 
         /*
-         * ëì  ì»¬ë¼ëª ê²ì¦
+         * 동적 컬럼명 검증
          */
         if (hasSearch && !allowedColumns.contains(searchColumn)) {
             throw new IllegalArgumentException(
-                    "ê²ìí  ì ìë ì»¬ë¼ìëë¤: " + searchColumn
+                    "검색할 수 없는 컬럼입니다: " + searchColumn
             );
         }
 
         if (hasSort && !allowedColumns.contains(sortColumn)) {
             throw new IllegalArgumentException(
-                    "ì ë ¬í  ì ìë ì»¬ë¼ìëë¤: " + sortColumn
+                    "정렬할 수 없는 컬럼입니다: " + sortColumn
             );
         }
 
         /*
-         * ì¼ë° ì¬ì©ìë ìì ì ë°ì´í°ë§ ì¡°ííê¸° ìí´
-         * ì¤ì  DB teacher(SK)ë¥¼ ì ë¬ë°ëë¤.
+         * 일반 사용자는 자신의 데이터만 조회하기 위해
+         * 실제 DB teacher(SK)를 전달받는다.
          *
-         * ê´ë¦¬ìë nullì´ë¯ë¡ ì ì²´ ì¡°ííë¤.
+         * 관리자는 null이므로 전체 조회한다.
          */
         boolean filterByTeacher =
                 teacher != null
                         && !teacher.isBlank();
 
         /*
-         * ì¤ì:
+         * 중요:
          *
-         * l.teacher(SK)ë FEë¡ ë³´ë´ì§ ìëë¤.
+         * l.teacher(SK)는 FE로 보내지 않는다.
          *
-         * Usersì JOINí´ì ì»ì discordIDë¥¼
-         * LearningProjection.teacherì ë£ëë¤.
+         * Users와 JOIN해서 얻은 discordID를
+         * LearningProjection.teacher에 넣는다.
          */
         StringBuilder sql = new StringBuilder("""
             SELECT
@@ -168,12 +168,12 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
 
         if (hasSearch) {
             /*
-             * teacher ê²ìì ì£¼ìí´ì¼ íë¤.
+             * teacher 검색은 주의해야 한다.
              *
-             * FEìì teacherë Discord IDì§ë§
-             * DB metadataì teacherë SK ì»¬ë¼ì´ë¤.
+             * FE에서 teacher는 Discord ID지만
+             * DB metadata의 teacher는 SK 컬럼이다.
              *
-             * ë°ë¼ì teacher ê²ìë§ JOINë discordIDë¥¼ ì¬ì©íë¤.
+             * 따라서 teacher 검색만 JOIN된 discordID를 사용한다.
              */
             if ("teacher".equals(searchColumn)) {
                 sql.append(
@@ -181,7 +181,7 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
                 );
 
                 /*
-                 * count ì¿¼ë¦¬ìë Users JOIN íì
+                 * count 쿼리에도 Users JOIN 필요
                  */
                 countSql = new StringBuilder("""
                     SELECT COUNT(*)
@@ -216,7 +216,7 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
         }
 
         /*
-         * ì ë ¬
+         * 정렬
          */
         if (hasSort) {
             String direction =
@@ -225,8 +225,8 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
                             : "DESC";
 
             /*
-             * teacherë FEìì Discord IDì´ë¯ë¡
-             * Discord ID ê¸°ì¤ ì ë ¬
+             * teacher는 FE에서 Discord ID이므로
+             * Discord ID 기준 정렬
              */
             if ("teacher".equals(sortColumn)) {
                 sql.append(
@@ -243,7 +243,7 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
             }
         } else {
             /*
-             * Pagination ê²°ê³¼ ìì ê³ ì 
+             * Pagination 결과 순서 고정
              */
             sql.append(
                     " ORDER BY l.`ln_key` ASC"
@@ -291,7 +291,7 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
         }
 
         /*
-         * Repository pageë 0-based
+         * Repository page는 0-based
          */
         query.setFirstResult(
                 page * size

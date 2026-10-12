@@ -153,7 +153,7 @@ public class MenuService {
 
             results.add(
                     dto.getMnValue()
-                            + " ì¶ì² ê²°ê³¼ : "
+                            + " 추천 결과 : "
                             + result
             );
         }
@@ -211,11 +211,11 @@ public class MenuService {
         int totalCount = menuList.size();
 
         String result =
-                "ì´ "
+                "총 "
                         + totalCount
-                        + "í ì¤ "
+                        + "행 중 "
                         + delCount
-                        + "í ì­ì ë¨";
+                        + "행 삭제됨";
 
         return ApiResponse.success(result);
     }
