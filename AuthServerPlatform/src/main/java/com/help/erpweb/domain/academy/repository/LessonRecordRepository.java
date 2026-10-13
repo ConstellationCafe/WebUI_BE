@@ -53,11 +53,11 @@ public interface LessonRecordRepository
                 :time IS NULL
                 OR :time = ''
                 OR (
-                    :time = 'ì¤ì '
+                    :time = '오전'
                     AND HOUR(lr.education_date) < 12
                 )
                 OR (
-                    :time = 'ì¤í'
+                    :time = '오후'
                     AND HOUR(lr.education_date) >= 12
                 )
                 OR DATE_FORMAT(

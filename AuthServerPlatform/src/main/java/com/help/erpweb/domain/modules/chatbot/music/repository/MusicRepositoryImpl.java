@@ -93,7 +93,7 @@ public class MusicRepositoryImpl
         if (hasSearch
                 && !allowedColumns.contains(searchColumn)) {
             throw new IllegalArgumentException(
-                    "ê²ìí  ì ìë ì»¬ë¼ìëë¤: "
+                    "검색할 수 없는 컬럼입니다: "
                             + searchColumn
             );
         }
@@ -101,7 +101,7 @@ public class MusicRepositoryImpl
         if (hasSort
                 && !allowedColumns.contains(sortColumn)) {
             throw new IllegalArgumentException(
-                    "ì ë ¬í  ì ìë ì»¬ë¼ìëë¤: "
+                    "정렬할 수 없는 컬럼입니다: "
                             + sortColumn
             );
         }

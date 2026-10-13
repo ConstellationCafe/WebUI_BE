@@ -52,12 +52,12 @@ public class LearningService {
         String teacher = null;
 
         /*
-         * ì¼ë° ì¬ì©ì:
-         * ìì ì ë°ì´í°ë§ ì¡°í
+         * 일반 사용자:
+         * 자신의 데이터만 조회
          *
-         * ê´ë¦¬ì:
+         * 관리자:
          * teacher = null
-         * ì ì²´ ì¡°í
+         * 전체 조회
          */
         if (!authorization.isAdmin(user)) {
             teacher = findSkByChatUser(
@@ -66,7 +66,7 @@ public class LearningService {
         }
 
         /*
-         * DB metadata ì¡°í
+         * DB metadata 조회
          */
         List<ColumnMetaDto> metadata =
                 learningRepository
@@ -91,7 +91,7 @@ public class LearningService {
                         .toList();
 
         /*
-         * ê²ì/ì ë ¬ íì© ì»¬ë¼
+         * 검색/정렬 허용 컬럼
          */
         Set<String> allowedColumns =
                 metadata.stream()
@@ -103,8 +103,8 @@ public class LearningService {
                         );
 
         /*
-         * API pageë 1-based
-         * Repository pageë 0-based
+         * API page는 1-based
+         * Repository page는 0-based
          */
         Page<LearningProjection> learningPage =
                 learningRepository.findPage(
@@ -119,8 +119,8 @@ public class LearningService {
                 );
 
         /*
-         * Projection.teacherìë
-         * SKê° ìëë¼ Discord IDê° ë¤ì´ ìë¤.
+         * Projection.teacher에는
+         * SK가 아니라 Discord ID가 들어 있다.
          */
         List<LearningDto> learningList =
                 learningPage
@@ -203,16 +203,16 @@ public class LearningService {
         for (LearningDto dto : learningList) {
 
             /*
-             * dto.teacherë Discord ID
+             * dto.teacher는 Discord ID
              *
-             * Stored Procedure ë´ë¶ìì:
+             * Stored Procedure 내부에서:
              *
              * search_sk(
              *     "discord",
              *     dto.teacher
              * )
              *
-             * ë¥¼ íµí´ SKë¡ ë³ííë¤.
+             * 를 통해 SK로 변환한다.
              */
             String result =
                     learningRepository.callLearningProcedure(
@@ -224,7 +224,7 @@ public class LearningService {
 
             results.add(
                     dto.getLnKey()
-                            + " íìµ ê²°ê³¼ : "
+                            + " 학습 결과 : "
                             + result
             );
         }
@@ -250,17 +250,17 @@ public class LearningService {
         int deleteCount = 0;
 
         /*
-         * teacherë¥¼ ì¬ì©ìê° ìì í  ì ìì¼ë¯ë¡
-         * ëª¨ë  íì teacherê° ê°ë¤ê³  ê°ì íë©´ ì ëë¤.
+         * teacher를 사용자가 수정할 수 있으므로
+         * 모든 행의 teacher가 같다고 가정하면 안 된다.
          *
-         * ê° ì­ì  ëìë§ë¤:
+         * 각 삭제 대상마다:
          *
          * Discord ID
-         *      â
+         *      ↓
          * search_sk()
-         *      â
+         *      ↓
          * SK
-         *      â
+         *      ↓
          * deleteByLnKey()
          */
         for (LearningDto dto : learningList) {
@@ -282,11 +282,11 @@ public class LearningService {
         }
 
         String result =
-                "ì´ "
+                "총 "
                         + learningList.size()
-                        + "í ì¤ "
+                        + "행 중 "
                         + deleteCount
-                        + "í ì­ì ë¨";
+                        + "행 삭제됨";
 
         return ApiResponse.success(
                 result

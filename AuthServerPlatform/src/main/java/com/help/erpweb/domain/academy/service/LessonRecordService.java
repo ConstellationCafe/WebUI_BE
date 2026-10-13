@@ -64,22 +64,22 @@ public class LessonRecordService {
         }
         String subjectName = convertSubjectIdToName(subject);
         String targetTeacherId = teacherId;
-        // ADMIN â ê¸°ì¡´ ì¡°í ì ì§
+        // ADMIN → 기존 조회 유지
         if (academyAuthorization.hasGlobalAccess(authentication)) {
-            // targetTeacherId ê·¸ëë¡ ì¬ì©
+            // targetTeacherId 그대로 사용
         }
-        // ACADEMY_OWNER â ê¸°ì¡´ ì¡°í ì ì§
+        // ACADEMY_OWNER → 기존 조회 유지
         else if (academyAuthorization.isOwner(
                 authentication,
                 academyId
         )) {
-            // targetTeacherId ê·¸ëë¡ ì¬ì©
+            // targetTeacherId 그대로 사용
         }
-        // ê·¸ ì¸
+        // 그 외
         else {
             // 2026-09-26: discordId(전역)가 아니라 sk(방 스코프 신원)로 조회한다.
             String sk = resolveSk(authentication);
-            // TEACHERë ìì²­ teacherIdì ìê´ìì´ ìê¸° ìì ì¼ë¡ ê°•ì 
+            // TEACHER는 요청 teacherId와 상관없이 자기 자신으로 강제
             targetTeacherId = academyMemberRepository
                     .findTeacherSk(
                             sk,
@@ -124,7 +124,7 @@ public class LessonRecordService {
             );
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(
-                    "ì¬ë°ë¥´ì§ ìì ë¶ë°ìëë¤. className="
+                    "올바르지 않은 분반입니다. className="
                             + request.className()
             );
         }
@@ -137,7 +137,7 @@ public class LessonRecordService {
                         )
                         .orElseThrow(() ->
                                 new IllegalArgumentException(
-                                        "ì¡´ì¬íì§ ìë ë¶ë°ìëë¤. academyId="
+                                        "존재하지 않는 분반입니다. academyId="
                                                 + request.academyId()
                                                 + ", className="
                                                 + request.className()
@@ -250,9 +250,9 @@ public class LessonRecordService {
         }
 
         return switch (subjectId.trim()) {
-            case "1" -> "ë¡íì´ì";
-            case "2" -> "ì¸ë¦¬ë¯¸í°ë";
-            case "3" -> "ì¤íí°";
+            case "1" -> "로테이션";
+            case "2" -> "언리미티드";
+            case "3" -> "스타터";
             default -> subjectId.trim();
         };
     }
