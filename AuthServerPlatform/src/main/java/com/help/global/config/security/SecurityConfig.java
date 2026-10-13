@@ -1,10 +1,5 @@
 package com.help.global.config.security;
 
-import com.help.authserver.security.AuthServerJwtAuthFilter;
-import com.help.global.data.Authority;
-import com.help.global.jwt.BackEndJwtAuthFilter;
-import jakarta.servlet.DispatcherType;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,8 +12,6 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.ExceptionTranslationFilter;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
 import org.springframework.web.cors.CorsConfiguration;
@@ -27,16 +20,25 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+/**
+ * 모듈 공용 보안 설정.
+ * <p>
+ * ADR-0007: 경로별 보안 체인은 그 경로를 소유한 모듈이 가진다.
+ * <ul>
+ *   <li>{@code @Order(0)} {@code /api/integrations/**} — {@code global.integration.IntegrationSecurityConfig}</li>
+ *   <li>{@code @Order(1)} {@code /auth/**} — {@code authserver.security.AuthServerSecurityConfig}</li>
+ *   <li>{@code @Order(2)} {@code /api/**} — {@code erpweb.security.ErpWebSecurityConfig}</li>
+ *   <li>{@code @Order(3)} {@code /actuator/**} — 이 클래스</li>
+ * </ul>
+ * 이 클래스는 authserver·erpweb에 의존하지 않고, 공용 bean(CORS, PasswordEncoder)과
+ * actuator 체인만 둔다.
+ */
 @Configuration
 @EnableMethodSecurity
 @EnableWebSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
-	private final AuthServerJwtAuthFilter authServerJwtAuthFilter;
-	private final BackEndJwtAuthFilter backEndJwtAuthFilter;
-//	private final EmailVerificationFilter emailVerificationFilter; // 사용되지 않는 코드 - 주석 처리됨 (EmailVerificationFilter.java 참고)
-	private final JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint;
-	private final JsonAccessDeniedHandler jsonAccessDeniedHandler;
+	/** 모듈별 체인이 {@code @Qualifier}로 주입받는 공용 CORS 설정 bean 이름. */
+	public static final String CORS_CONFIGURATION_SOURCE = "configurationSource";
 
 	@Value("${front.redirect-uri}")
 	private String redirectUri;
@@ -47,62 +49,6 @@ public class SecurityConfig {
 	 	repository.setHeaderName("X-XSRF-TOKEN");
 	 	return repository;
 	 }
-
-	@Bean
-	@Order(1)
-	public SecurityFilterChain filterChain(final HttpSecurity http) throws Exception {
-		http.securityMatcher("/auth/**");
-
-		http.csrf(AbstractHttpConfigurer::disable);  // CSRF 비활성화 (JWT 기반)
-		http.sessionManagement(session -> session
-			.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-		);  // 세션 생성 x, JWT로만 인증
-		http.cors(corsCustomizer -> corsCustomizer.configurationSource(configurationSource()));  // 커스텀 CORS
-		http.formLogin(AbstractHttpConfigurer::disable);  // login 폼 기반 인증 x
-
-		http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll());  // 인가 설정
-		http.addFilterBefore(authServerJwtAuthFilter, ExceptionTranslationFilter.class);
-//			.addFilterBefore(emailVerificationFilter, AuthServerJwtAuthFilter.class); // 사용되지 않는 코드 - 주석 처리됨 (EmailVerificationFilter.java 참고)  // 인증 필터 구성
-		return http.build();
-	}
-
-	@Bean
-	@Order(2)
-	public SecurityFilterChain backendChain(HttpSecurity http) throws Exception {
-		http.securityMatcher("/api/**");
-
-		http.csrf(AbstractHttpConfigurer::disable);
-		http.sessionManagement(session ->
-				session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-		);
-		http.cors(cors -> cors.configurationSource(configurationSource()));
-
-		http.addFilterBefore(backEndJwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
-
-		// ADR-0002: 관리자 전용 API는 /api/admin/** 아래에만 둔다. 컨트롤러의
-		// @PreAuthorize와 별개로 여기서 한 번 더 막아, 어노테이션을 빠뜨려도
-		// 관리자 API가 일반 사용자에게 열리지 않게 한다.
-		http.authorizeHttpRequests(auth -> auth
-			// ADR-0004: SSE(/api/me/notifications/stream)는 비동기 dispatch로 응답을 이어 쓴다.
-			// JWT 필터는 비동기 dispatch에서 다시 돌지 않으므로, 최초 요청에서 이미 인가된
-			// 응답의 후속 dispatch를 여기서 다시 막지 않는다.
-			.dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
-			.requestMatchers("/api/admin/**").hasAuthority(Authority.ADMIN)
-			.anyRequest().authenticated()
-		);
-
-		// ADR-0001 부수 수정: 커스텀 AuthenticationEntryPoint가 없으면 Spring
-		// Security 기본값(Http403ForbiddenEntryPoint)이 인증 실패를 본문 없는
-		// 403으로 응답해서, AccessToken 만료가 컨트롤러/GlobalExceptionHandler
-		// 로그도 없이 조용히 403으로 나가버린다(FE AuthInterceptor의 401-only
-		// refresh-retry와 충돌). 인증 실패는 항상 401로 통일한다.
-		http.exceptionHandling(exceptionHandling -> exceptionHandling
-			.authenticationEntryPoint(jsonAuthenticationEntryPoint)
-			.accessDeniedHandler(jsonAccessDeniedHandler)
-		);
-
-		return http.build();
-	}
 
 	@Bean
 	@Order(3)
@@ -128,7 +74,7 @@ public class SecurityConfig {
 		return PasswordEncoderFactories.createDelegatingPasswordEncoder();
 	}
 
-	@Bean
+	@Bean(CORS_CONFIGURATION_SOURCE)
 	public CorsConfigurationSource configurationSource() {
 		final CorsConfiguration configuration = new CorsConfiguration();
 
