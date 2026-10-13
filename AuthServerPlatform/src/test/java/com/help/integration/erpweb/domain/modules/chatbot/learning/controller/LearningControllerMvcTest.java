@@ -16,8 +16,8 @@
 //import com.help.backend.domain.learning.dto.request.repository.LearningDto;
 //import com.help.backend.domain.learning.service.LearningService;
 //import com.help.global.common.response.ApiResponse;
-//import com.help.global.jwt.AuthServerJwtAuthFilter;
-//import com.help.global.jwt.BackEndJwtAuthFilter;
+//import com.help.authserver.security.AuthServerJwtAuthFilter;
+//import com.help.erpweb.security.BackEndJwtAuthFilter;
 //import com.help.global.jwt.CustomUser;
 //import com.help.global.jwt.JwtUtil;
 //import org.junit.jupiter.api.Test;

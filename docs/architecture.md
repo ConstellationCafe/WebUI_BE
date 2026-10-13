@@ -32,15 +32,16 @@
 |---|---|
 | `authserver.api` | Discord OAuth/API 호출(`DiscordAPI`) |
 | `authserver.domain.user` | `/auth/**` controller, 로그인·세션(`DiscordLoginService`, `AuthSessionService`), Redis 세션 repository |
-| `authserver.security` | `/auth/**` 전용 JWT 필터 |
+| `authserver.security` | `/auth/**` 보안 체인(`AuthServerSecurityConfig`)과 전용 JWT 필터 |
 | `erpweb.domain.academy` | Academy API와 권한 판정(`AcademyAuthorization`, bean 이름 `academyAuth`) |
 | `erpweb.domain.modules.chatbot.{content,learning,menu,music}` | 추천 저장소 API, stored procedure 호출 |
 | `erpweb.domain.modules.erp.point` | 본인 포인트 내역(`PointController`), 관리자 포인트(`AdminPointController`), 공통 `PointService` |
 | `erpweb.domain.modules.erp.penalty` | 벌점 API (ADR-0003) |
 | `erpweb.domain.notification` | 알림 발행·조회, `realtime/`의 Redis 중계와 SSE registry (ADR-0004) |
 | `erpweb.domain.config`, `erpweb.domain.metadata` | config DB entity, 동적 metadata(검색·정렬 허용 컬럼) |
-| `global.config` | datasource 2개, Redis, Discord `RestTemplate`(timeout), `Clock`, security |
-| `global.jwt` | `JwtUtil`, `/api/**` JWT 필터(`BackEndJwtAuthFilter`) |
+| `erpweb.security` | `/api/**` 보안 체인(`ErpWebSecurityConfig`)과 JWT 필터(`BackEndJwtAuthFilter`) |
+| `global.config` | datasource 2개, Redis, Discord `RestTemplate`(timeout), `Clock`, 공용 security(CORS, JSON 401/404, actuator 체인) |
+| `global.jwt` | `JwtUtil`, `CustomUser` (authserver·erpweb 공용 토큰 도구) |
 | `global.guild`, `global.chat`, `global.discord` | 요청 단위 채팅방 context(`GuildContext`), 채팅방·회원 식별 |
 | `global.integration` | 외부 연동 `X-Api-Key` 인증 chain |
 | `global.common` | 공통 `ApiResponse`, `ErrorCode`, `GlobalExceptionHandler` |
@@ -68,11 +69,14 @@ Security chain → Controller → Service → Repository → MySQL
 
 ## 5. Security chain
 
-| 순서 | 대상 | 인증 방식 | 실패 |
-|---|---|---|---|
-| `@Order(0)` | `/api/integrations/**` | `X-Api-Key`의 SHA-256을 설정 해시와 constant-time 비교, client별 허용 botId | 401 / 403 |
-| — | `/auth/**` | 일부 공개, 나머지 AccessToken + Redis 세션 | 본문 없는 401 |
-| — | `/api/**` | AccessToken, `authenticated()`. `/api/admin/**`은 `ROLE_ADMIN` | 401 JSON, 비관리자 404 |
+| 순서 | 대상 | 설정 클래스 | 인증 방식 | 실패 |
+|---|---|---|---|---|
+| `@Order(0)` | `/api/integrations/**` | `global.integration.IntegrationSecurityConfig` | `X-Api-Key`의 SHA-256을 설정 해시와 constant-time 비교, client별 허용 botId | 401 / 403 |
+| `@Order(1)` | `/auth/**` | `authserver.security.AuthServerSecurityConfig` | 일부 공개, 나머지 AccessToken + Redis 세션 | 본문 없는 401 |
+| `@Order(2)` | `/api/**` | `erpweb.security.ErpWebSecurityConfig` | AccessToken, `authenticated()`. `/api/admin/**`은 `ROLE_ADMIN` | 401 JSON, 비관리자 404 |
+| `@Order(3)` | `/actuator/**` | `global.config.security.SecurityConfig` | health 계열만 공개 | 거부 |
+
+- 체인은 경로를 소유한 모듈이 가지고, global의 security 설정은 authserver·erpweb을 import하지 않습니다([ADR-0007](adr/0007-security-chain-per-module.md)).
 
 - 관리자 API는 URL 규칙과 controller `@PreAuthorize`로 이중 확인합니다([ADR-0002](adr/0002-admin-api-prefix.md)).
 - SSE의 비동기 dispatch(`DispatcherType.ASYNC`)는 다시 인가하지 않습니다(최초 요청에서 이미 인가됨).

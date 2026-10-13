@@ -12,3 +12,4 @@
 | [0004](0004-notification.md) | 알림 저장·실시간 전달 구조 (DB inbox + Redis Pub/Sub + SSE) | Accepted |
 | [0005](0005-module-config-menu.md) | 채팅방 모듈 설정을 조회한 뒤 메뉴별 권한을 확인한다 | Accepted |
 | [0006](0006-penalty-manager-role.md) | 벌점 관리를 운영 매니저·운영 본부원에게 열고 `/api/penalties`로 옮긴다 | Accepted |
+| [0007](0007-security-chain-per-module.md) | 보안 체인은 경로를 소유한 모듈이 가지고, global은 모듈에 의존하지 않는다 | Accepted |

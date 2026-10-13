@@ -29,12 +29,14 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * authserver/erpweb 서비스 분리 준비: 이 필터는 authserver의 로그인 세션
  * (SessionRepository/SessionInfo)에만 의존하고 /auth/** 에서만 쓰인다
- * (erpweb이 쓰는 /api/**의 인증/인가는 BackEndJwtAuthFilter가 담당,
- * 그건 authserver에 의존하지 않으므로 com.help.global.jwt에 남아있다).
+ * (erpweb이 쓰는 /api/**의 인증/인가는 com.help.erpweb.security.BackEndJwtAuthFilter가 담당).
  * 그래서 com.help.global이 아니라 com.help.authserver 아래로 옮겼다 —
  * 예전에는 global.jwt 패키지에 있으면서 authserver의 SessionRepository/
  * SessionInfo를 직접 import했는데, 이건 global -> authserver 방향의
  * 의존이라 서비스 분리에 방해가 됐다.
+ * <p>
+ * ADR-0007: 이 필터를 쓰는 /auth/** 체인도 {@link AuthServerSecurityConfig}로 옮겨,
+ * global이 authserver를 import하는 곳이 남지 않게 했다.
  */
 @RequiredArgsConstructor
 @Slf4j
