@@ -14,7 +14,7 @@
 └──────────────────┘               └───────────────────┘      └──────────────────────────┘
                                      │        │
                      X-Api-Key       │        ├──► Redis :6379
-┌──────────────────┐  ─────────────► │        │     - 인증 세션 session:user:{username}
+┌──────────────────┐  ─────────────► │        │     - 인증 세션 session:user:{discordId}
 │ 외부 시스템        │ /api/integrations        │     - 알림 Pub/Sub webui:notifications
 │ (Discord 봇 등)   │                          └──► Discord OAuth / API
 └──────────────────┘
@@ -40,10 +40,10 @@
 | `erpweb.domain.notification` | 알림 발행·조회, `realtime/`의 Redis 중계와 SSE registry (ADR-0004) |
 | `erpweb.domain.config`, `erpweb.domain.metadata` | config DB entity, 동적 metadata(검색·정렬 허용 컬럼) |
 | `erpweb.security` | `/api/**` 보안 체인(`ErpWebSecurityConfig`)과 JWT 필터(`BackEndJwtAuthFilter`) |
-| `global.config` | datasource 2개, Redis, Discord `RestTemplate`(timeout), `Clock`, 공용 security(CORS, JSON 401/404, actuator 체인) |
+| `global.config` | datasource 2개(`global.config.datasource`, 패키지 기준으로 엔티티를 DB에 연결), Redis, Discord `RestTemplate`(timeout), `Clock`, 공용 security(CORS, JSON 401/404, actuator 체인) |
 | `global.jwt` | `JwtUtil`, `CustomUser` (authserver·erpweb 공용 토큰 도구) |
-| `global.guild`, `global.chat`, `global.discord` | 요청 단위 채팅방 context(`GuildContext`), 채팅방·회원 식별 |
-| `global.integration` | 외부 연동 `X-Api-Key` 인증 chain |
+| `global.guild`, `global.chat`, `global.discord` | 요청 단위 채팅방 context(`GuildContext`), 채팅방 등록(`global.guild.subscriber`, config DB), 회원 식별(`global.discord.identity`) |
+| `global.external` | 외부 연동 `X-Api-Key` 인증 chain (`/api/integrations/**`) |
 | `global.common` | 공통 `ApiResponse`, `ErrorCode`, `GlobalExceptionHandler` |
 
 ## 3. 요청 흐름과 계층 책임
@@ -71,7 +71,7 @@ Security chain → Controller → Service → Repository → MySQL
 
 | 순서 | 대상 | 설정 클래스 | 인증 방식 | 실패 |
 |---|---|---|---|---|
-| `@Order(0)` | `/api/integrations/**` | `global.integration.IntegrationSecurityConfig` | `X-Api-Key`의 SHA-256을 설정 해시와 constant-time 비교, client별 허용 botId | 401 / 403 |
+| `@Order(0)` | `/api/integrations/**` | `global.external.ExternalSecurityConfig` | `X-Api-Key`의 SHA-256을 설정 해시와 constant-time 비교, client별 허용 botId | 401 / 403 |
 | `@Order(1)` | `/auth/**` | `authserver.security.AuthServerSecurityConfig` | 일부 공개, 나머지 AccessToken + Redis 세션 | 본문 없는 401 |
 | `@Order(2)` | `/api/**` | `erpweb.security.ErpWebSecurityConfig` | AccessToken, `authenticated()`. `/api/admin/**`은 `ROLE_ADMIN` | 401 JSON, 비관리자 404 |
 | `@Order(3)` | `/actuator/**` | `global.config.security.SecurityConfig` | health 계열만 공개 | 거부 |

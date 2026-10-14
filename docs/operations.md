@@ -61,7 +61,7 @@ graceful shutdown: 종료 단계 제한 30초, Compose `stop_grace_period` 40초
 
 알려진 보안 review 대상(상세: Notion `WebUI_BE API 공통 규격` 9장)
 
-- ChatBot 저장·삭제 API가 요청한 `recommender`/`teacher`가 본인인지 확인하지 않음
+- ChatBot 저장·삭제 API가 요청한 `recommenderDiscordId`/`teacherDiscordId`가 본인인지 확인하지 않음
 - lesson-record 생성 시 body의 academy/class 권한 범위를 확인하지 않음
 - OAuth `state` 미검증, 쿠키 인증인데 CSRF 비활성
 - 서비스 내부 `IllegalArgumentException`·`AccessDeniedException`이 500으로 나갈 수 있음

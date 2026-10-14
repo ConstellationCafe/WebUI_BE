@@ -42,3 +42,7 @@ API 계약, DB 스키마, 설정 키는 바뀌지 않는다. `/auth/**` 체인�
 ## 남은 과제
 
 - `global.common.exception.GlobalExceptionHandler`가 erpweb 포인트 예외를 import하는 global → erpweb 의존이 남아 있다. 별도 작업으로 정리한다.
+
+## 변경 이력
+
+- 2026-10-14: `global.integration`(`IntegrationSecurityConfig` 등)을 `global.external`(`ExternalSecurityConfig` 등)로 이름을 바꿨다. 경로(`/api/integrations/**`), 체인 순서, 설정 키는 그대로다.
