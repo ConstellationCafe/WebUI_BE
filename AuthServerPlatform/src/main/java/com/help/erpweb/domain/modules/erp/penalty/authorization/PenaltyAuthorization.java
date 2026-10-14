@@ -34,7 +34,7 @@ public class PenaltyAuthorization {
 			return true;
 		}
 		// 현재 채팅방의 재적 회원만 조회한다(ADR-0001). roles는 EntityGraph로 함께 읽힌다.
-		return discordUserRepository.findByBotIdAndDiscordID(GuildContext.requireBotId(), authentication.getName())
+		return discordUserRepository.findByBotIdAndDiscordId(GuildContext.requireBotId(), authentication.getName())
 			.map(user -> user.getRoles().stream().anyMatch(PenaltyAuthorization::isManagerRole))
 			.orElse(false);
 	}

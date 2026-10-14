@@ -54,14 +54,14 @@ public class PenaltyRepository {
 						(bot_id, target_discord_id, target_username, channel_id, channel_name,
 							reason, score, issuer_discord_id, occurred_at, requested_occurred_at,
 							created_at, status, request_id)
-						VALUES (:botId, :targetId, :username, :channelId, :channelName,
+						VALUES (:botId, :targetId, :displayName, :channelId, :channelName,
 								:reason, :score, :issuer, :occurredAt, :requestedAt,
 								:createdAt, 'ACTIVE', :requestId)
 						ON DUPLICATE KEY UPDATE id = id
 						""")
 				.setParameter("botId", botId)
 				.setParameter("targetId", member.discordId())
-				.setParameter("username", member.username())
+				.setParameter("displayName", member.displayName())
 				.setParameter("channelId", channelId)
 				.setParameter("channelName", channelName)
 				.setParameter("reason", reason)

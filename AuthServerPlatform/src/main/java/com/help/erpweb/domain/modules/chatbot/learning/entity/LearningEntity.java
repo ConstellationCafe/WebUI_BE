@@ -20,9 +20,10 @@ public class LearningEntity {
     private String lnValue;
 
     @Column(name = "teacher", nullable = false)
-    private String teacher;
+    // DB에는 교사 SK가 저장된다(API의 teacherDiscordId와 다름).
+    private String teacherSk;
 
-    public static LearningEntity of(String lnKey, String lnValue, String teacher) {
-        return new LearningEntity(lnKey, lnValue, teacher);
+    public static LearningEntity of(String lnKey, String lnValue, String teacherSk) {
+        return new LearningEntity(lnKey, lnValue, teacherSk);
     }
 }

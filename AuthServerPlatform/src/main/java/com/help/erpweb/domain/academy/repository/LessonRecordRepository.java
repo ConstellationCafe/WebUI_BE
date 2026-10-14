@@ -23,7 +23,7 @@ public interface LessonRecordRepository
             lr.start_time AS startTime,
             lr.end_time AS endTime,
             lr.education_duration AS educationDuration,
-            lr.main_teacher_id AS mainTeacherId,
+            lr.main_teacher_id AS mainTeacherSk,
             lr.description AS description,
             COALESCE(JSON_LENGTH(lr.member_ids), 0) AS memberCount
 
@@ -73,9 +73,9 @@ public interface LessonRecordRepository
             )
 
             AND (
-                :teacherId IS NULL
-                OR :teacherId = ''
-                OR lr.main_teacher_id = :teacherId
+                :teacherSk IS NULL
+                OR :teacherSk = ''
+                OR lr.main_teacher_id = :teacherSk
             )
 
         ORDER BY lr.education_date DESC
@@ -96,8 +96,8 @@ public interface LessonRecordRepository
             @Param("subject")
             String subject,
 
-            @Param("teacherId")
-            String teacherId
+            @Param("teacherSk")
+            String teacherSk
     );
 
     interface LessonRecordSummaryProjection {
@@ -120,7 +120,7 @@ public interface LessonRecordRepository
 
         Integer getEducationDuration();
 
-        String getMainTeacherId();
+        String getMainTeacherSk();
 
         String getDescription();
 

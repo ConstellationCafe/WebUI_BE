@@ -3,7 +3,7 @@
 //import java.time.LocalDateTime;
 //
 //public interface DiscordMembershipView {
-//    String getDiscordID();
+//    String getDiscordId();
 //    String getUsername();
 //    String getState();
 //    LocalDateTime getJoin_at();

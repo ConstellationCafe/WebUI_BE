@@ -45,7 +45,7 @@ class NotificationControllersTest {
     }
 
     private static CustomUser user(String discordId, String role) {
-        return CustomUser.of(discordId, "OAUTH_USER", role, null);
+        return CustomUser.of(discordId, "OAUTH_USER", role);
     }
 
     @Test

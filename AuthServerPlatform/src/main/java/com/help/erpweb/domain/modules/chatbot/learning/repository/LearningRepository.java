@@ -18,11 +18,11 @@ public interface LearningRepository extends JpaRepository<LearningEntity, Long>,
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         DELETE FROM ChatBot.Learning
-        WHERE teacher = :teacher
+        WHERE teacher = :teacherSk
         AND ln_key IN (:lnKeys)
         """, nativeQuery = true)
     int deleteByLnKey(
-        @Param("teacher") String teacher,
+        @Param("teacherSk") String teacherSk,
         @Param("lnKeys") List<String> lnKeys
     );
 }

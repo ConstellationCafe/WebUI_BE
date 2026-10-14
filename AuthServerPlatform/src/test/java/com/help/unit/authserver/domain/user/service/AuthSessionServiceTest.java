@@ -62,9 +62,9 @@ class AuthSessionServiceTest {
     @Test
     void selectRoomIssuesTokenFromBotScopedIdentityNotThePreSelectionUser() {
         CustomUser preSelectionUser =
-                CustomUser.of("123", "OAUTH_USER", "ROLE_USER", null);
+                CustomUser.of("123", "OAUTH_USER", "ROLE_USER");
         CustomUser scopedIdentity =
-                CustomUser.of("123", "OAUTH_USER", "ROLE_ADMIN", null);
+                CustomUser.of("123", "OAUTH_USER", "ROLE_ADMIN");
         HttpServletResponse response = mock(HttpServletResponse.class);
 
         when(erpSubscriberRepository.findByGuildId("guild-1"))

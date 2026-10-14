@@ -28,21 +28,24 @@ public class LessonRecordController {
             @RequestParam(required = false) LocalDate date,
             @RequestParam(required = false) String time,
             @RequestParam(required = false) String subject,
-            @RequestParam(required = false) String teacherId,
+            @RequestParam(required = false) String teacherSk,
+            // ADR-0008: 이전 이름. FE 전환 후 제거한다.
+            @RequestParam(name = "teacherId", required = false) String legacyTeacherId,
             @RequestParam(required = false) Integer academyId,
             @RequestParam(required = false) Integer classId
     ) {
+        final String effectiveTeacherSk = teacherSk != null ? teacherSk : legacyTeacherId;
         log.info(
                 "[GET] /api/academy/lesson-records " +
-                        "academyId={}, classId={}, date={}, time={}, subject={}, teacherId={}",
-                academyId, classId, date, time, subject, teacherId
+                        "academyId={}, classId={}, date={}, time={}, subject={}, teacherSk={}",
+                academyId, classId, date, time, subject, effectiveTeacherSk
         );
         return lessonRecordService.getLessonRecords(
                 authentication,
                 date,
                 time,
                 subject,
-                teacherId,
+                effectiveTeacherSk,
                 academyId,
                 classId
         );

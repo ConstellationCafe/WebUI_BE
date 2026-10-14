@@ -23,7 +23,7 @@ public final class ChatIdentities {
      * 현재 요청의 인증 principal로부터 ChatUser를 만든다.
      */
     public static ChatUser fromPrincipal(final CustomUser user) {
-        return new DiscordChatUser(user.getUsername(), user.getNickname());
+        return new DiscordChatUser(user.getDiscordId(), null);
     }
 
     /**

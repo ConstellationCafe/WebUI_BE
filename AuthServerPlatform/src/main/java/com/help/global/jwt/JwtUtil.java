@@ -30,6 +30,9 @@ public class JwtUtil {
 	private static final Long ACCESS_TOKEN_EXP = (long)(30 * 1000); // 30초
 	private static final String REFRESH_TOKEN = "RefreshToken";
 	private static final Long REFRESH_TOKEN_EXP = (long)(24 * 60 * 60 * 1000); // 1일
+	private static final String DISCORD_ID_CLAIM = "discordId";
+	// TODO(ADR-0008): 배포 후 RefreshToken 수명(1일)이 지나면 제거한다.
+	private static final String LEGACY_DISCORD_ID_CLAIM = "username";
 	private SecretKey secretKey;
 
 	@Value("${jwt.secret}")
@@ -67,8 +70,7 @@ public class JwtUtil {
 			.collect(Collectors.joining(","));
 
 		final var builder = Jwts.builder()
-			.claim("username", user.getUsername())
-			.claim("nickname", user.getNickname())
+			.claim(DISCORD_ID_CLAIM, user.getDiscordId())
 			.claim("authorities", authorities);
 
 		if (botId != null) {
@@ -95,7 +97,7 @@ public class JwtUtil {
 	 */
 	public String createRefreshToken(final CustomUser user, final String botId) {
 		final var builder = Jwts.builder()
-			.claim("username", user.getUsername());
+			.claim(DISCORD_ID_CLAIM, user.getDiscordId());
 
 		if (botId != null) {
 			builder.claim("botId", botId);
@@ -118,10 +120,18 @@ public class JwtUtil {
 		}
 	}
 
-	public Optional<String> extractUsername(String token) {
-		// JWT Claims에서 username 필드를 꺼냄
+	/**
+	 * 토큰의 Discord ID를 꺼낸다.
+	 * <p>
+	 * ADR-0008: claim 이름을 {@code username}에서 {@code discordId}로 바꿨다. 배포 전에 발급된
+	 * RefreshToken(최대 {@link #getRefreshTokenTtl()})에는 {@code username} claim만 있으므로,
+	 * 그 토큰이 모두 만료될 때까지 이전 claim도 읽는다.
+	 */
+	public Optional<String> extractDiscordId(String token) {
 		try {
-			return Optional.ofNullable(parseToken(token).get("username", String.class));
+			final Claims claims = parseToken(token);
+			final String discordId = claims.get(DISCORD_ID_CLAIM, String.class);
+			return Optional.ofNullable(discordId != null ? discordId : claims.get(LEGACY_DISCORD_ID_CLAIM, String.class));
 		} catch (final JwtException e) {
 			return Optional.empty();
 		}

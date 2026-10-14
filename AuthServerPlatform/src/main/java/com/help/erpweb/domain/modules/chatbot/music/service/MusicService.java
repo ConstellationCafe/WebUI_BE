@@ -49,10 +49,10 @@ public class MusicService {
         int normalizedPage = Math.max(page, 1);
         int normalizedSize = Math.max(size, 1);
 
-        String recommender = null;
+        String recommenderSk = null;
 
         if (!authorization.isAdmin(user)) {
-            recommender =
+            recommenderSk =
                     findSkByChatUser(
                             ChatIdentities.fromPrincipal(user)
                     );
@@ -80,7 +80,7 @@ public class MusicService {
 
         Page<MusicProjection> musicPage =
                 musicRepository.findPage(
-                        recommender,
+                        recommenderSk,
                         normalizedPage - 1,
                         normalizedSize,
                         searchColumn,
@@ -93,13 +93,13 @@ public class MusicService {
         List<MusicDto> musicList =
                 musicPage.getContent()
                         .stream()
-                        .map(entity ->
+                        .map(projection ->
                                 MusicDto.builder()
                                         .videoId(
-                                                entity.getVideoId()
+                                                projection.getVideoId()
                                         )
-                                        .recommender(
-                                                entity.getRecommender()
+                                        .recommenderDiscordId(
+                                                projection.getRecommenderDiscordId()
                                         )
                                         .build()
                         )
@@ -147,7 +147,7 @@ public class MusicService {
             String result =
                     musicRepository.callMusicProcedure(
                             MembershipID.discord.name(),
-                            dto.getRecommender(),
+                            dto.getRecommenderDiscordId(),
                             dto.getVideoId()
                     );
 
@@ -175,11 +175,11 @@ public class MusicService {
 
         int delCount = 0;
 
-        Map<String, List<String>> valuesByRecommender =
+        Map<String, List<String>> valuesByRecommenderDiscordId =
                 musicList.stream()
                         .collect(
                                 Collectors.groupingBy(
-                                        MusicDto::getRecommender,
+                                        MusicDto::getRecommenderDiscordId,
                                         Collectors.mapping(
                                                 MusicDto::getVideoId,
                                                 Collectors.toList()
@@ -188,7 +188,7 @@ public class MusicService {
                         );
 
         for (Map.Entry<String, List<String>> entry
-                : valuesByRecommender.entrySet()) {
+                : valuesByRecommenderDiscordId.entrySet()) {
 
             String recommenderSk =
                     findSkByChatUser(

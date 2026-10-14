@@ -5,7 +5,7 @@ import com.help.global.data.MembershipID;
 /**
  * {@link ChatUser}의 Discord 구현체. discordId를 externalId로 그대로 쓴다.
  */
-public record DiscordChatUser(String discordId, String nickname) implements ChatUser {
+public record DiscordChatUser(String discordId, String displayName) implements ChatUser {
 
     @Override
     public MembershipID getPlatform() {
@@ -19,6 +19,6 @@ public record DiscordChatUser(String discordId, String nickname) implements Chat
 
     @Override
     public String getDisplayName() {
-        return (nickname == null || nickname.isBlank()) ? discordId : nickname;
+        return (displayName == null || displayName.isBlank()) ? discordId : displayName;
     }
 }

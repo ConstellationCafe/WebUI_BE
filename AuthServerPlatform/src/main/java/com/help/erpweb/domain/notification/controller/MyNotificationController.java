@@ -45,13 +45,13 @@ public class MyNotificationController {
             @RequestParam(defaultValue = "20") @Min(1) @Max(NotificationService.LIST_MAX_SIZE) int size
     ) {
         return ApiResponse.success(
-                notificationService.list(GuildContext.requireBotId(), user.getUsername(), beforeId, size)
+                notificationService.list(GuildContext.requireBotId(), user.getDiscordId(), beforeId, size)
         );
     }
 
     @GetMapping("/unread-count")
     public ApiResponse<NotificationUnreadResponse> unreadCount(@AuthenticationPrincipal CustomUser user) {
-        return ApiResponse.success(notificationService.unread(GuildContext.requireBotId(), user.getUsername()));
+        return ApiResponse.success(notificationService.unread(GuildContext.requireBotId(), user.getDiscordId()));
     }
 
     /** 멱등. 같은 값을 여러 번 보내거나 더 작은 값을 보내도 읽음 위치는 뒤로 가지 않는다. */
@@ -62,7 +62,7 @@ public class MyNotificationController {
     ) {
         return ApiResponse.success(notificationService.markRead(
                 GuildContext.requireBotId(),
-                user.getUsername(),
+                user.getDiscordId(),
                 request.lastReadId()
         ));
     }
@@ -75,7 +75,7 @@ public class MyNotificationController {
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter stream(@AuthenticationPrincipal CustomUser user, HttpServletResponse response) {
         String botId = GuildContext.requireBotId();
-        String discordId = user.getUsername();
+        String discordId = user.getDiscordId();
         response.setHeader("Cache-Control", "no-cache");
         // nginx 등 reverse proxy가 응답을 모았다가 보내지 않도록 한다.
         response.setHeader("X-Accel-Buffering", "no");

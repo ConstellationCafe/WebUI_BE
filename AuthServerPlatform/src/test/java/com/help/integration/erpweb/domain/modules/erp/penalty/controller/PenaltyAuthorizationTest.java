@@ -71,7 +71,7 @@ class PenaltyAuthorizationTest {
 	@Test
 	void memberNotInCurrentRoomIsRejected() {
 		login("404", "ROLE_USER");
-		when(users.findByBotIdAndDiscordID(BOT_ID, "404")).thenReturn(Optional.empty());
+		when(users.findByBotIdAndDiscordId(BOT_ID, "404")).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> controller.ranking(null, 1, 20))
 			.isInstanceOf(AuthorizationDeniedException.class);
@@ -107,7 +107,7 @@ class PenaltyAuthorizationTest {
 		controller.ranking(null, 1, 20);
 
 		verify(service).ranking(null, 1, 20);
-		verify(users, never()).findByBotIdAndDiscordID(any(), any());
+		verify(users, never()).findByBotIdAndDiscordId(any(), any());
 		assertThat(permissionsOfCurrentUser()).isTrue();
 	}
 
@@ -117,14 +117,14 @@ class PenaltyAuthorizationTest {
 	}
 
 	private CustomUser login(String discordId, String role) {
-		CustomUser user = CustomUser.of(discordId, "OAUTH_USER", role, null);
+		CustomUser user = CustomUser.of(discordId, "OAUTH_USER", role);
 		SecurityContextHolder.getContext().setAuthentication(
 			new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
 		return user;
 	}
 
 	private void givenRoles(String discordId, List<String> roles) {
-		when(users.findByBotIdAndDiscordID(BOT_ID, discordId))
+		when(users.findByBotIdAndDiscordId(BOT_ID, discordId))
 			.thenReturn(Optional.of(DiscordUser.of(BOT_ID, discordId, roles)));
 	}
 }

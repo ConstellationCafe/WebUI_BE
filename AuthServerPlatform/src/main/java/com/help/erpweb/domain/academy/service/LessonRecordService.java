@@ -47,7 +47,7 @@ public class LessonRecordService {
             LocalDate date,
             String time,
             String subject,
-            String teacherId,
+            String teacherSk,
             Integer academyId,
             Integer classId
     ) {
@@ -63,24 +63,24 @@ public class LessonRecordService {
             }
         }
         String subjectName = convertSubjectIdToName(subject);
-        String targetTeacherId = teacherId;
+        String targetTeacherSk = teacherSk;
         // ADMIN → 기존 조회 유지
         if (academyAuthorization.hasGlobalAccess(authentication)) {
-            // targetTeacherId 그대로 사용
+            // targetTeacherSk 그대로 사용
         }
         // ACADEMY_OWNER → 기존 조회 유지
         else if (academyAuthorization.isOwner(
                 authentication,
                 academyId
         )) {
-            // targetTeacherId 그대로 사용
+            // targetTeacherSk 그대로 사용
         }
         // 그 외
         else {
             // 2026-09-26: discordId(전역)가 아니라 sk(방 스코프 신원)로 조회한다.
             String sk = resolveSk(authentication);
             // TEACHER는 요청 teacherId와 상관없이 자기 자신으로 강제
-            targetTeacherId = academyMemberRepository
+            targetTeacherSk = academyMemberRepository
                     .findTeacherSk(
                             sk,
                             academyId
@@ -88,7 +88,7 @@ public class LessonRecordService {
                     .orElse(null);
 
             // 교사에게 아직 수업 기록이 없으면 빈 목록으로 응답한다.
-            if (targetTeacherId == null) {
+            if (targetTeacherSk == null) {
                 return List.of();
             }
         }
@@ -99,7 +99,7 @@ public class LessonRecordService {
                         date,
                         normalize(time),
                         subjectName,
-                        normalize(targetTeacherId)
+                        normalize(targetTeacherSk)
                 )
                 .stream()
                 .map(projection -> toResponse(
@@ -107,7 +107,7 @@ public class LessonRecordService {
                         canModifyLessonRecord(
                                 authentication,
                                 projection.getAcademyId(),
-                                projection.getMainTeacherId()
+                                projection.getMainTeacherSk()
                         )
                 ))
                 .toList();
@@ -156,12 +156,12 @@ public class LessonRecordService {
                 request.startTime(),
                 request.endTime(),
                 request.educationDuration(),
-                request.mainTeacherId(),
+                request.mainTeacherSk(),
                 objectMapper.valueToTree(
-                        request.coTeacherIds()
+                        request.coTeacherSks()
                 ),
                 objectMapper.valueToTree(
-                        request.memberIds()
+                        request.memberSks()
                 ),
                 request.description()
         );
@@ -205,7 +205,7 @@ public class LessonRecordService {
         if (!canModifyLessonRecord(
                 authentication,
                 lessonRecord.getAcademyId(),
-                lessonRecord.getMainTeacherId()
+                lessonRecord.getMainTeacherSk()
         )) {
             throw new AccessDeniedException(
                     "You do not have permission to modify this lesson record"
@@ -218,7 +218,7 @@ public class LessonRecordService {
     private boolean canModifyLessonRecord(
             Authentication authentication,
             Integer academyId,
-            String mainTeacherId
+            String mainTeacherSk
     ) {
         if (academyAuthorization.hasGlobalAccess(authentication)
                 || academyAuthorization.isOwner(authentication, academyId)) {
@@ -233,7 +233,7 @@ public class LessonRecordService {
                         resolveSk(authentication),
                         academyId
                 )
-                .filter(mainTeacherId::equals)
+                .filter(mainTeacherSk::equals)
                 .isPresent();
     }
 
@@ -261,9 +261,9 @@ public class LessonRecordService {
             LessonRecordRepository.LessonRecordSummaryProjection projection,
             boolean canModify
     ) {
-        String teacherName =
-                findTeacherName(
-                        projection.getMainTeacherId()
+        String teacherDisplayName =
+                findTeacherDisplayName(
+                        projection.getMainTeacherSk()
                 );
 
         return new LessonRecordSummaryResponse(
@@ -275,7 +275,7 @@ public class LessonRecordService {
                 projection.getStartTime(),
                 projection.getEndTime(),
                 projection.getEducationDuration(),
-                teacherName,
+                teacherDisplayName,
                 projection.getDescription(),
                 projection.getMemberCount() != null
                         ? projection.getMemberCount()
@@ -284,7 +284,7 @@ public class LessonRecordService {
         );
     }
 
-    private String findTeacherName(String teacherSk) {
+    private String findTeacherDisplayName(String teacherSk) {
 
         if (teacherSk == null || teacherSk.isBlank()) {
             return null;
@@ -296,8 +296,8 @@ public class LessonRecordService {
                             .findDiscordIdBySk(teacherSk);
 
             return discordUserRepository
-                    .findByBotIdAndDiscordID(GuildContext.requireBotId(), discordId)
-                    .map(DiscordUser::getNickname)
+                    .findByBotIdAndDiscordId(GuildContext.requireBotId(), discordId)
+                    .map(DiscordUser::getDisplayName)
                     .orElse(null);
 
         } catch (Exception e) {

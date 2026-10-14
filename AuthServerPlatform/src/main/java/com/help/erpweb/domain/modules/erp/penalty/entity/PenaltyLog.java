@@ -30,7 +30,7 @@ public class PenaltyLog {
 	@Column(name = "target_discord_id", nullable = false, length = 20)
 	private String targetDiscordId;
 	@Column(name = "target_username", nullable = false, length = 100)
-	private String targetUsername;
+	private String targetDisplayName;
 	@Column(name = "channel_id", nullable = false, length = 20)
 	private String channelId;
 	@Column(name = "channel_name", length = 100)

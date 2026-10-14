@@ -222,7 +222,7 @@ class LessonRecordServiceTest {
     }
 
     private Authentication authentication(String discordId) {
-        CustomUser principal = CustomUser.of(discordId, "OAUTH_USER", "ROLE_USER", null);
+        CustomUser principal = CustomUser.of(discordId, "OAUTH_USER", "ROLE_USER");
         return new org.springframework.security.authentication.UsernamePasswordAuthenticationToken(
                 principal,
                 null,
@@ -230,7 +230,7 @@ class LessonRecordServiceTest {
         );
     }
 
-    private LessonRecord lessonRecord(String mainTeacherId) {
+    private LessonRecord lessonRecord(String mainTeacherSk) {
         ObjectMapper objectMapper = new ObjectMapper();
         return new LessonRecord(
                 1,
@@ -240,7 +240,7 @@ class LessonRecordServiceTest {
                 LocalTime.of(10, 0),
                 LocalTime.of(11, 0),
                 60,
-                mainTeacherId,
+                mainTeacherSk,
                 objectMapper.createArrayNode(),
                 objectMapper.createArrayNode(),
                 "Description"

@@ -17,7 +17,7 @@ import java.util.List;
  * 구현하지 않는다 — 그 인터페이스는 EmailUser(순수 authserver 개념)를 위한
  * 것이었고, DiscordUser가 그걸 구현해야만 했던 유일한 이유는
  * CustomUser.from(User)였다. CustomUser는 이제 원시 값(username/password/
- * roleName/userId)만 받는 CustomUser.of(...)를 쓰므로 이 인터페이스가
+ * roleName)만 받는 CustomUser.of(...)를 쓰므로 이 인터페이스가
  * 필요 없다.
  */
 @Getter
@@ -45,11 +45,13 @@ public class DiscordUser {
     @Column(name = "bot_id", nullable = false)
     private String botId;
 
-    @Column(nullable = false)
-    private String discordID;
+    @Column(name = "discordID", nullable = false)
+    private String discordId;
 
-    @Column
-    private String username;
+    // 서버 표시 이름. 컬럼 이름은 username이지만 봇이 member.display_name을 기록한다
+    // (Discord 계정 username이 아니다).
+    @Column(name = "username")
+    private String displayName;
 
     @Column(nullable = false)
     private String state;
@@ -73,29 +75,21 @@ public class DiscordUser {
 
     private DiscordUser(
         String botId,
-        String discordID,
+        String discordId,
         List<String> roles
     ) {
         this.botId = botId;
-        this.discordID = discordID;
+        this.discordId = discordId;
         this.roles = roles;
     }
 
     public static DiscordUser of(
         String botId,
-        String discordID,
+        String discordId,
         List<String> roles
     ) {
         // 테스트를 위한 DiscordUser 객체 생성
-        return new DiscordUser(botId, discordID, roles);
-    }
-
-    public String getUsername() {
-        return discordID;
-    }
-
-    public String getNickname() {
-        return username;
+        return new DiscordUser(botId, discordId, roles);
     }
 
     /**

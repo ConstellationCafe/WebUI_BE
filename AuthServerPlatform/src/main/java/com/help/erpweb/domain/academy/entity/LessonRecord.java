@@ -47,15 +47,15 @@ public class LessonRecord {
     private Integer educationDuration;
 
     @Column(name = "main_teacher_id", nullable = false)
-    private String mainTeacherId;
+    private String mainTeacherSk;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "co_teacher_ids", columnDefinition = "json")
-    private JsonNode coTeacherIds;
+    private JsonNode coTeacherSks;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "member_ids", columnDefinition = "json")
-    private JsonNode memberIds;
+    private JsonNode memberSks;
 
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
@@ -84,9 +84,9 @@ public class LessonRecord {
             LocalTime startTime,
             LocalTime endTime,
             Integer educationDuration,
-            String mainTeacherId,
-            JsonNode coTeacherIds,
-            JsonNode memberIds,
+            String mainTeacherSk,
+            JsonNode coTeacherSks,
+            JsonNode memberSks,
             String description
     ) {
         this.academyId = academyId;
@@ -96,9 +96,9 @@ public class LessonRecord {
         this.startTime = startTime;
         this.endTime = endTime;
         this.educationDuration = educationDuration;
-        this.mainTeacherId = mainTeacherId;
-        this.coTeacherIds = coTeacherIds;
-        this.memberIds = memberIds;
+        this.mainTeacherSk = mainTeacherSk;
+        this.coTeacherSks = coTeacherSks;
+        this.memberSks = memberSks;
         this.description = description;
     }
 }

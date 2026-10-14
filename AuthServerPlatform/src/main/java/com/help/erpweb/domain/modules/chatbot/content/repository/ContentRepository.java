@@ -21,11 +21,11 @@ public interface ContentRepository
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         DELETE FROM ChatBot.RecommendContent
-        WHERE recommender = :recommender
+        WHERE recommender = :recommenderSk
         AND cn_value IN (:cnValues)
         """, nativeQuery = true)
     int deleteByMnValue(
-        @Param("recommender") String recommender,
+        @Param("recommenderSk") String recommenderSk,
         @Param("cnValues") List<String> cnValues
     );
 }

@@ -81,18 +81,18 @@ class CompetitionAuthorizationTest {
 		controller.boards();
 
 		verify(service).boards();
-		verify(users, never()).findByBotIdAndDiscordID(any(), any());
+		verify(users, never()).findByBotIdAndDiscordId(any(), any());
 	}
 
 	private CustomUser login(String discordId, String role) {
-		CustomUser user = CustomUser.of(discordId, "OAUTH_USER", role, null);
+		CustomUser user = CustomUser.of(discordId, "OAUTH_USER", role);
 		SecurityContextHolder.getContext().setAuthentication(
 			new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
 		return user;
 	}
 
 	private void givenRoles(String discordId, List<String> roles) {
-		when(users.findByBotIdAndDiscordID(BOT_ID, discordId))
+		when(users.findByBotIdAndDiscordId(BOT_ID, discordId))
 			.thenReturn(Optional.of(DiscordUser.of(BOT_ID, discordId, roles)));
 	}
 }

@@ -200,11 +200,11 @@ public class AcademyService {
                         .distinct()
                         .toList();
         Map<String, DiscordUser> discordUserById = discordUserRepository
-                        .findActiveByBotIdAndDiscordIDIn(GuildContext.requireBotId(), discordIds)
+                        .findActiveByBotIdAndDiscordIdIn(GuildContext.requireBotId(), discordIds)
                         .stream()
                         .collect(
                                 Collectors.toMap(
-                                        DiscordUser::getDiscordID,
+                                        DiscordUser::getDiscordId,
                                         Function.identity(),
                                         (existing, replacement) -> existing
                                 )
@@ -248,11 +248,11 @@ public class AcademyService {
                         .distinct()
                         .toList();
         Map<String, DiscordUser> discordUserById = discordUserRepository
-                        .findActiveByBotIdAndDiscordIDIn(GuildContext.requireBotId(), discordIds)
+                        .findActiveByBotIdAndDiscordIdIn(GuildContext.requireBotId(), discordIds)
                         .stream()
                         .collect(
                                 Collectors.toMap(
-                                        DiscordUser::getDiscordID,
+                                        DiscordUser::getDiscordId,
                                         Function.identity()
                                 )
                         );
@@ -306,8 +306,8 @@ public class AcademyService {
                         .stream()
                         .map(student -> new OptionResponse(
                                 student.sk(),
-                                student.discordID(),
-                                student.name()
+                                student.discordId(),
+                                student.displayName()
                         ))
                         .toList();
 
@@ -344,13 +344,13 @@ public class AcademyService {
             discordId = student.getSk();
         }
 
-        String username =
+        String displayName =
                 discordUserRepository
-                        .findByBotIdAndDiscordID(GuildContext.requireBotId(), discordId)
-                        .map(DiscordUser::getNickname)
+                        .findByBotIdAndDiscordId(GuildContext.requireBotId(), discordId)
+                        .map(DiscordUser::getDisplayName)
                         .orElse(null);
 
-        if (username == null) {
+        if (displayName == null) {
             return Optional.empty();
         }
 
@@ -358,7 +358,7 @@ public class AcademyService {
                 new OptionResponse(
                         student.getSk(),
                         discordId,
-                        username
+                        displayName
                 )
         );
     }
@@ -437,7 +437,7 @@ public class AcademyService {
         DiscordUser discordUser = discordUserById.get(
                 discordId
         );
-        if (discordUser == null || discordUser.getNickname() == null) {
+        if (discordUser == null || discordUser.getDisplayName() == null) {
             return Optional.empty();
         }
 
@@ -446,7 +446,7 @@ public class AcademyService {
                 new TeacherResponse(
                         teacher.getSk(),
                         discordId,
-                        discordUser.getNickname(),
+                        discordUser.getDisplayName(),
                         academyClass != null
                                 ? academyClass.getId()
                                 : null,
@@ -473,7 +473,7 @@ public class AcademyService {
         }
 
         DiscordUser discordUser = discordUserById.get(discordId);
-        if (discordUser == null || discordUser.getNickname() == null) {
+        if (discordUser == null || discordUser.getDisplayName() == null) {
             return Optional.empty();
         }
 
@@ -482,7 +482,7 @@ public class AcademyService {
                 new StudentResponse(
                         student.getSk(),
                         discordId,
-                        discordUser.getNickname(),
+                        discordUser.getDisplayName(),
                         academyClass != null
                                 ? academyClass.getAcademy().getId()
                                 : null,

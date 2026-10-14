@@ -181,7 +181,7 @@ class AcademyAuthorizationTest {
     }
 
     private Authentication authentication(String name, String authority) {
-        CustomUser principal = CustomUser.of(name, "OAUTH_USER", authority, null);
+        CustomUser principal = CustomUser.of(name, "OAUTH_USER", authority);
         return new UsernamePasswordAuthenticationToken(
                 principal,
                 null,

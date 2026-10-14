@@ -75,7 +75,7 @@ public class NotificationService implements NotificationPublisher {
     )
     public NotificationPublishResult publish(NotificationCommand command) {
         if (command.targetType() == NotificationTargetType.USER) {
-            discordUserRepository.findByBotIdAndDiscordID(command.botId(), command.targetDiscordId())
+            discordUserRepository.findByBotIdAndDiscordId(command.botId(), command.targetDiscordId())
                     .orElseThrow(NotificationTargetNotFoundException::new);
         }
         Instant now = clock.instant().truncatedTo(ChronoUnit.MILLIS);

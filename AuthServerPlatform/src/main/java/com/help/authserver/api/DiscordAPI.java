@@ -78,7 +78,7 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
         List<DiscordGuildDto> guilds = getGuilds(accessTokenForDiscord);
         return new DiscordUserDto(
                 me.id(),
-                me.username(),
+                me.discordUsername(),
                 me.globalName(),
                 me.avatar(),
                 guilds
@@ -114,7 +114,7 @@ public class DiscordAPI implements LoginAPI<DiscordUserDto> {
         }
         return new DiscordMeDto(
                 me.id(),
-                me.username(),
+                me.discordUsername(),
                 me.globalName(),
                 avatar
         );

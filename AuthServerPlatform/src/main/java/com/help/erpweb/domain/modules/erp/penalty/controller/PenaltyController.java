@@ -61,7 +61,7 @@ public class PenaltyController {
 		return ApiResponse.success(service.create(new PenaltyCreateCommand(
 				request.requestId(), request.targetDiscordId(), request.channelId(),
 				request.channelName(), request.reason(), request.score(), parseUtc(request.occurredAt()),
-				issuer.getUsername())));
+				issuer.getDiscordId())));
 	}
 
 	@GetMapping
@@ -95,7 +95,7 @@ public class PenaltyController {
 			@PathVariable @Positive long penaltyId,
 			@Valid @RequestBody PenaltyCancelRequest request,
 			@AuthenticationPrincipal CustomUser issuer) {
-		return ApiResponse.success(service.cancel(penaltyId, issuer.getUsername(), request.reason()));
+		return ApiResponse.success(service.cancel(penaltyId, issuer.getDiscordId(), request.reason()));
 	}
 
 	private Instant parseUtc(String occurredAt) {

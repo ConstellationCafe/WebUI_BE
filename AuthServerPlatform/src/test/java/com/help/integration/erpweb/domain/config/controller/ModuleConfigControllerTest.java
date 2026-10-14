@@ -64,8 +64,8 @@ class ModuleConfigControllerTest {
 		});
 		when(jwtUtil.isTokenValidate("scoped-token")).thenReturn(true);
 		when(jwtUtil.extractBotId("scoped-token")).thenReturn(Optional.of("bot-a"));
-		when(jwtUtil.extractUsername("scoped-token")).thenReturn(Optional.of("123"));
-		when(users.findByBotIdAndDiscordID("bot-a", "123"))
+		when(jwtUtil.extractDiscordId("scoped-token")).thenReturn(Optional.of("123"));
+		when(users.findByBotIdAndDiscordId("bot-a", "123"))
 				.thenReturn(Optional.of(DiscordUser.of("bot-a", "123", List.of())));
 	}
 
@@ -111,8 +111,8 @@ class ModuleConfigControllerTest {
 	void sameBotReturnsSameConfigurationForDifferentUsersAndRoles() throws Exception {
 		when(jwtUtil.isTokenValidate("other-user-token")).thenReturn(true);
 		when(jwtUtil.extractBotId("other-user-token")).thenReturn(Optional.of("bot-a"));
-		when(jwtUtil.extractUsername("other-user-token")).thenReturn(Optional.of("456"));
-		when(users.findByBotIdAndDiscordID("bot-a", "456"))
+		when(jwtUtil.extractDiscordId("other-user-token")).thenReturn(Optional.of("456"));
+		when(users.findByBotIdAndDiscordId("bot-a", "456"))
 				.thenReturn(Optional.of(DiscordUser.of("bot-a", "456", List.of("서버장"))));
 		when(service.getMenuConfigs("bot-a"))
 				.thenReturn(List.of(new ModuleConfigResponse("chatbot", List.of())));
@@ -131,8 +131,8 @@ class ModuleConfigControllerTest {
 	void sameUserReceivesConfigurationOfSelectedBotOnly() throws Exception {
 		when(jwtUtil.isTokenValidate("other-bot-token")).thenReturn(true);
 		when(jwtUtil.extractBotId("other-bot-token")).thenReturn(Optional.of("bot-b"));
-		when(jwtUtil.extractUsername("other-bot-token")).thenReturn(Optional.of("123"));
-		when(users.findByBotIdAndDiscordID("bot-b", "123"))
+		when(jwtUtil.extractDiscordId("other-bot-token")).thenReturn(Optional.of("123"));
+		when(users.findByBotIdAndDiscordId("bot-b", "123"))
 				.thenReturn(Optional.of(DiscordUser.of("bot-b", "123", List.of())));
 		when(service.getMenuConfigs("bot-a"))
 				.thenReturn(List.of(new ModuleConfigResponse("chatbot", List.of())));
@@ -160,7 +160,7 @@ class ModuleConfigControllerTest {
 
 	@Test
 	void userOutsideSelectedRoomCannotReadModuleConfig() throws Exception {
-		when(users.findByBotIdAndDiscordID("bot-a", "123")).thenReturn(Optional.empty());
+		when(users.findByBotIdAndDiscordId("bot-a", "123")).thenReturn(Optional.empty());
 		mvc.perform(get("/api/bots/current/module-configs").cookie(new Cookie("AccessToken", "scoped-token")))
 				.andExpect(status().isUnauthorized());
 		verifyNoInteractions(service);

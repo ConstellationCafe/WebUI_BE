@@ -17,9 +17,10 @@ public class MusicEntity {
     private String videoId;
 
     @Column(name = "recommender", nullable = false)
-    private String recommender;
+    // DB에는 추천인 SK가 저장된다(API의 recommenderDiscordId와 다름).
+    private String recommenderSk;
 
-    public static MusicEntity of(String videoId, String recommender) {
-        return new MusicEntity(videoId, recommender);
+    public static MusicEntity of(String videoId, String recommenderSk) {
+        return new MusicEntity(videoId, recommenderSk);
     }
 }

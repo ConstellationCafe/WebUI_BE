@@ -75,13 +75,13 @@ class CompetitionWinnerServiceTest {
 		assertThat(saved.getValue().getId())
 			.isEqualTo(new CompetitionWinnerId(BOT_ID, "미니미 Bo1 대회", "s2", "123"));
 		assertThat(saved.getValue().getAcquisition()).isEqualTo(LocalDate.of(2026, 9, 30));
-		assertThat(response.winnerName()).isEqualTo("별");
+		assertThat(response.winnerDisplayName()).isEqualTo("별");
 		assertThat(response.version()).isEqualTo("s2");
 	}
 
 	@Test
 	void rejectsWinnerWhoIsNotActiveMemberOfCurrentRoom() {
-		when(users.findByBotIdAndDiscordID(BOT_ID, "999")).thenReturn(Optional.empty());
+		when(users.findByBotIdAndDiscordId(BOT_ID, "999")).thenReturn(Optional.empty());
 
 		assertThatThrownBy(() -> service.grant("대회", S2, "999", LocalDate.of(2026, 9, 1), "m"))
 			.isInstanceOf(CompetitionMemberNotFoundException.class);
@@ -107,7 +107,7 @@ class CompetitionWinnerServiceTest {
 		// 한국 날짜로는 9월 30일이 오늘이라 허용되고, 10월 1일은 미래다.
 		assertThatThrownBy(() -> service.grant("대회", S2, "123", LocalDate.of(2026, 10, 1), "m"))
 			.isInstanceOf(InvalidCompetitionWinnerException.class);
-		verify(users, never()).findByBotIdAndDiscordID(any(), any());
+		verify(users, never()).findByBotIdAndDiscordId(any(), any());
 	}
 
 	@Test
@@ -118,14 +118,14 @@ class CompetitionWinnerServiceTest {
 			new CompetitionWinnerId(BOT_ID, "대회 B", "s2", "456"), LocalDate.of(2026, 9, 1));
 		when(winners.findHistory(eq(BOT_ID), eq(PageRequest.of(0, 20))))
 			.thenReturn(new PageImpl<>(List.of(first, second), PageRequest.of(0, 20), 2));
-		when(users.findAllByBotIdAndDiscordIDIn(BOT_ID, List.of("123", "456")))
+		when(users.findAllByBotIdAndDiscordIdIn(BOT_ID, List.of("123", "456")))
 			.thenReturn(List.of(DiscordUser.of(BOT_ID, "123", List.of())));
 
 		CompetitionWinnerPageResponse page = service.history(1, 20);
 
 		assertThat(page.items()).extracting(CompetitionWinnerResponse::competitionName)
 			.containsExactly("대회 A", "대회 B");
-		assertThat(page.items().get(1).winnerName()).isNull();
+		assertThat(page.items().get(1).winnerDisplayName()).isNull();
 		assertThat(page.totalElements()).isEqualTo(2);
 		assertThat(page.hasNext()).isFalse();
 	}
@@ -139,7 +139,7 @@ class CompetitionWinnerServiceTest {
 
 	private void givenMember(String discordId) {
 		DiscordUser member = DiscordUser.of(BOT_ID, discordId, List.of());
-		ReflectionTestUtils.setField(member, "username", "별");
-		when(users.findByBotIdAndDiscordID(BOT_ID, discordId)).thenReturn(Optional.of(member));
+		ReflectionTestUtils.setField(member, "displayName", "별");
+		when(users.findByBotIdAndDiscordId(BOT_ID, discordId)).thenReturn(Optional.of(member));
 	}
 }

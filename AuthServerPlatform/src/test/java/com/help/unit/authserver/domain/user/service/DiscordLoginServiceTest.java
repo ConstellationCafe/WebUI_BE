@@ -43,7 +43,7 @@ class DiscordLoginServiceTest {
                 discordAPI, userRepository, sessionRepository,
                 erpSubscriberRepository, authSessionService
         );
-        user = CustomUser.of(DISCORD_ID, "OAUTH_USER", "ROLE_ADMIN", null);
+        user = CustomUser.of(DISCORD_ID, "OAUTH_USER", "ROLE_ADMIN");
         when(sessionRepository.find(DISCORD_ID))
                 .thenReturn(Optional.of(new SessionInfo(DISCORD_ID, true, ACCESS_TOKEN, 0)));
     }

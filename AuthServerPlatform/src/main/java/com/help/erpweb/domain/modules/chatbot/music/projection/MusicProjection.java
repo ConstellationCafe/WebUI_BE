@@ -7,5 +7,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public class MusicProjection {
     private String videoId;
-    private String recommender;
+    // Users와 JOIN해 얻은 Discord ID
+    private String recommenderDiscordId;
 }

@@ -59,14 +59,14 @@ public class DiscordLoginService implements OAuthLoginService, UserDetailsServic
 
     @Override
     public UserDetails loadUserByUsername(
-            final String discordID
+            final String discordId
     ) throws UsernameNotFoundException {
         // ADR-0001: 채팅방 선택 이전이라 botId 스코프가 없다 — 신원 확인만 수행한다.
-        return userRepository.findIdentityByDiscordID(discordID)
+        return userRepository.findIdentityByDiscordId(discordId)
                 .map(DiscordUserMapper::toCustomUser)
                 .orElseThrow(() ->
                         new UsernameNotFoundException(
-                                "UserDetails creation failed. discordID=" + discordID
+                                "UserDetails creation failed. discordId=" + discordId
                         )
                 );
     }
@@ -89,10 +89,10 @@ public class DiscordLoginService implements OAuthLoginService, UserDetailsServic
     }
 
     public ApiResponse<?> me(final CustomUser user) {
-        final String username = user.getUsername();
+        final String discordId = user.getDiscordId();
 
         final SessionInfo sessionInfo =
-                sessionRepository.find(username)
+                sessionRepository.find(discordId)
                         .orElseThrow(() -> new CustomException(ErrorCode.SESSION_EXPIRED));
 
         if (!sessionInfo.isValid()) {
@@ -115,7 +115,7 @@ public class DiscordLoginService implements OAuthLoginService, UserDetailsServic
 
         final CurrentUserDto meDto = new CurrentUserDto(
                 me.id(),
-                me.username(),
+                me.discordUsername(),
                 me.globalName(),
                 me.avatar(),
                 roles
@@ -125,10 +125,10 @@ public class DiscordLoginService implements OAuthLoginService, UserDetailsServic
     }
 
     public ApiResponse<?> guilds(final CustomUser user) {
-        final String username = user.getUsername();
+        final String discordId = user.getDiscordId();
 
         final SessionInfo sessionInfo =
-                sessionRepository.find(username)
+                sessionRepository.find(discordId)
                         .orElseThrow(() -> new CustomException(ErrorCode.SESSION_EXPIRED));
 
         final String discordAccessToken = sessionInfo.getDiscordAccessToken();
@@ -157,7 +157,7 @@ public class DiscordLoginService implements OAuthLoginService, UserDetailsServic
 
             final List<DiscordGuildDto> guilds =
                     erpSubscriberRepository
-                            .findByDiscordId(username)
+                            .findByDiscordId(discordId)
                             .stream()
                             .map(subscriber ->
                                     new DiscordGuildDto(subscriber.getGuildId(), null, null, 0)

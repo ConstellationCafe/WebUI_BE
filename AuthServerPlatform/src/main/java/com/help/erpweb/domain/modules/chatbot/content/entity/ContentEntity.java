@@ -17,9 +17,10 @@ public class ContentEntity {
     private String cnValue;
 
     @Column(name = "recommender", nullable = false)
-    private String recommender;
+    // DB에는 추천인 SK가 저장된다(API의 recommenderDiscordId와 다름).
+    private String recommenderSk;
 
-    public static ContentEntity of(String cnValue, String recommender) {
-        return new ContentEntity(cnValue, recommender);
+    public static ContentEntity of(String cnValue, String recommenderSk) {
+        return new ContentEntity(cnValue, recommenderSk);
     }
 }

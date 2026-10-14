@@ -28,6 +28,6 @@ public class MyPenaltyController {
 			@AuthenticationPrincipal CustomUser user,
 			@RequestParam(defaultValue = "1") @Min(1) int page,
 			@RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
-		return ApiResponse.success(service.member(user.getUsername(), page, size));
+		return ApiResponse.success(service.member(user.getDiscordId(), page, size));
 	}
 }

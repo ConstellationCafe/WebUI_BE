@@ -18,11 +18,11 @@ public interface MusicRepository extends JpaRepository<MusicEntity, Long>, Globa
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         DELETE FROM ChatBot.RecommendMusic
-        WHERE recommender = :recommender
+        WHERE recommender = :recommenderSk
         AND video_id IN (:videoIds)
         """, nativeQuery = true)
     int deleteByMnValue(
-        @Param("recommender") String recommender,
+        @Param("recommenderSk") String recommenderSk,
         @Param("videoIds") List<String> videoIds
     );
 }
