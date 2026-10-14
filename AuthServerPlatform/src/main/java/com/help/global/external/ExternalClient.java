@@ -12,6 +12,6 @@ public record ExternalClient(String id, Set<String> botIds) {
 
     @Override
     public String toString() {
-        return "IntegrationClient[" + id + "]";
+        return "ExternalClient[" + id + "]";
     }
 }

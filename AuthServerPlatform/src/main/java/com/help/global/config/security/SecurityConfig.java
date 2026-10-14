@@ -25,7 +25,7 @@ import java.util.List;
  * <p>
  * ADR-0007: 경로별 보안 체인은 그 경로를 소유한 모듈이 가진다.
  * <ul>
- *   <li>{@code @Order(0)} {@code /api/integrations/**} — {@code global.integration.IntegrationSecurityConfig}</li>
+ *   <li>{@code @Order(0)} {@code /api/integrations/**} — {@code global.external.ExternalSecurityConfig}</li>
  *   <li>{@code @Order(1)} {@code /auth/**} — {@code authserver.security.AuthServerSecurityConfig}</li>
  *   <li>{@code @Order(2)} {@code /api/**} — {@code erpweb.security.ErpWebSecurityConfig}</li>
  *   <li>{@code @Order(3)} {@code /actuator/**} — 이 클래스</li>

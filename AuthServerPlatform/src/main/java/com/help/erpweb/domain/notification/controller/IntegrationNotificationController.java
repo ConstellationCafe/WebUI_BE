@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 외부 시스템용 알림 발행. {@code X-Api-Key}로 인증하며(IntegrationSecurityConfig),
+ * 외부 시스템용 알림 발행. {@code X-Api-Key}로 인증하며(ExternalSecurityConfig),
  * client에 허용된 채팅방(botId)에만 발행할 수 있다.
  * 네트워크 오류로 재시도할 때는 같은 requestId를 보내야 중복 발행되지 않는다.
  */

@@ -8,4 +8,4 @@ Run all backend tests from `AuthServerPlatform` with:
 ./gradlew test
 ```
 
-The Java package declarations remain aligned with the production package under test. The `external` directory classifies source files; it does not change runtime packages.
+The Java package declarations remain aligned with the production package under test. The `integration` directory classifies source files; it does not change runtime packages.
