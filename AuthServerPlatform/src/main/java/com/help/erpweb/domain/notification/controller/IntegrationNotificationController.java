@@ -7,7 +7,7 @@ import com.help.erpweb.domain.notification.service.NotificationCommand;
 import com.help.erpweb.domain.notification.service.NotificationPublishResult;
 import com.help.erpweb.domain.notification.service.NotificationService;
 import com.help.global.common.response.ApiResponse;
-import com.help.global.integration.IntegrationClient;
+import com.help.global.external.ExternalClient;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,7 +31,7 @@ public class IntegrationNotificationController {
 
     @PostMapping
     public ApiResponse<NotificationPublishResult> publish(
-            @AuthenticationPrincipal IntegrationClient client,
+            @AuthenticationPrincipal ExternalClient client,
             @Valid @RequestBody IntegrationNotificationPublishRequest request
     ) {
         if (client == null || !client.canPublishTo(request.botId())) {

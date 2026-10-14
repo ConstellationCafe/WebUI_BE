@@ -9,7 +9,7 @@ import com.help.erpweb.domain.academy.repository.AcademyMemberRepository;
 import com.help.erpweb.domain.academy.repository.AcademyRepository;
 import com.help.erpweb.domain.academy.repository.StudentRepository;
 import com.help.erpweb.domain.academy.repository.TeacherRepository;
-import com.help.global.discord.config.ERPSubscriberRepository;
+import com.help.global.guild.subscriber.ERPSubscriberRepository;
 import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.erpweb.domain.config.repository.ModuleConfigRepository;
 import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;

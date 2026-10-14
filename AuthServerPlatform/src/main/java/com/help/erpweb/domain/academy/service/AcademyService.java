@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 // authserver/erpweb 서비스 분리 준비: DiscordUser/ErpSubscriber는 로그인과
 // erpweb 양쪽에서 쓰이는 공용 식별 데이터라 com.help.global.discord로 옮겼다
 // (기존 FIXME였던 "AuthServer -> ERPWeb 이동"은 이 방향으로 해결됨).
-import com.help.global.discord.config.ERPSubscriberRepository;
-import com.help.global.discord.config.ErpSubscriber;
+import com.help.global.guild.subscriber.ERPSubscriberRepository;
+import com.help.global.guild.subscriber.ErpSubscriber;
 import com.help.global.discord.identity.DiscordUser;
 import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.erpweb.domain.academy.authorization.AcademyAuthorization;
@@ -19,7 +19,6 @@ import com.help.global.chat.ChatIdentities;
 import com.help.global.guild.GuildContext;
 import com.help.global.jwt.CustomUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

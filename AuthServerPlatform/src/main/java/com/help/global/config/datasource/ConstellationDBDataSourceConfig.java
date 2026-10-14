@@ -1,4 +1,4 @@
-package com.help.global.config;
+package com.help.global.config.datasource;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.orm.jpa.JpaTransactionManager;
@@ -25,23 +26,33 @@ import java.util.Map;
 @EnableTransactionManagement
 @EnableJpaRepositories(
 	basePackages = {
-		"com.help.global.discord.config",
-		"com.help.erpweb.domain.config.repository"
+		"com.help.global.discord.identity",
+		"com.help.erpweb.domain.notification.repository",
+		"com.help.erpweb.domain.academy.repository",
+		"com.help.erpweb.domain.modules.chatbot.content.repository",
+		"com.help.erpweb.domain.modules.chatbot.learning.repository",
+		"com.help.erpweb.domain.modules.erp.point.repository",
+		"com.help.erpweb.domain.modules.erp.penalty.repository",
+		"com.help.erpweb.domain.modules.chatbot.menu.repository",
+		"com.help.erpweb.domain.metadata.repository",
+		"com.help.erpweb.domain.modules.chatbot.music.repository",
+		"com.help.erpweb.domain.modules.competition.repository"
 	},
-	entityManagerFactoryRef = "configDBEntityManagerFactory",
-	transactionManagerRef = "configDBTransactionManager"
+	entityManagerFactoryRef = "constellationEntityManagerFactory",
+	transactionManagerRef = "constellationTransactionManager"
 )
-public class ConfigDBDataSourceConfig {
-	@Value("${spring.datasource.config_db.url}")
+public class ConstellationDBDataSourceConfig {
+	@Value("${spring.datasource.constellation.url}")
 	private String dbUrl;
 
-	@Value("${spring.datasource.config_db.username}")
+	@Value("${spring.datasource.constellation.username}")
 	private String dbUser;
 
-	@Value("${spring.datasource.config_db.password}")
+	@Value("${spring.datasource.constellation.password}")
 	private String dbPassword;
 
-	@Bean(name = "configDBDataSource")  // DB 연결 정보
+	@Primary
+	@Bean(name = "constellationDataSource")  // DB 연결 정보
 	public DataSource dataSource() {
 		final HikariConfig config = new HikariConfig();
 		config.setJdbcUrl(dbUrl);
@@ -61,10 +72,11 @@ public class ConfigDBDataSourceConfig {
 		return new HikariDataSource(config);
 	}
 
-	@Bean(name = "configDBEntityManagerFactory")  // JPA 엔티티 매니저
+	@Primary
+	@Bean(name = "constellationEntityManagerFactory")  // JPA 엔티티 매니저
 	public LocalContainerEntityManagerFactoryBean entityManagerFactory(
 		EntityManagerFactoryBuilder builder,
-		@Qualifier("configDBDataSource") DataSource dataSource) {
+		@Qualifier("constellationDataSource") DataSource dataSource) {
 		final Map<String, Object> properties = new HashMap<>();
 		properties.put("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
 		properties.put("hibernate.show_sql", true);
@@ -75,17 +87,27 @@ public class ConfigDBDataSourceConfig {
 		return builder
 			.dataSource(dataSource)
 			.packages(
-				"com.help.global.discord.config",
-				"com.help.erpweb.domain.config.entity"
+				"com.help.global.discord.identity",
+				"com.help.erpweb.domain.notification.entity",
+				"com.help.erpweb.domain.academy.entity",
+				"com.help.erpweb.domain.modules.chatbot.content.entity",
+				"com.help.erpweb.domain.modules.chatbot.learning.entity",
+				"com.help.erpweb.domain.modules.erp.point.entity",
+				"com.help.erpweb.domain.modules.erp.penalty.entity",
+				"com.help.erpweb.domain.modules.chatbot.menu.entity",
+				"com.help.erpweb.domain.metadata.entity",
+				"com.help.erpweb.domain.modules.chatbot.music.entity",
+				"com.help.erpweb.domain.modules.competition.entity"
 			)
-			.persistenceUnit("configDB")
+			.persistenceUnit("constellation")
 			.properties(properties)
 			.build();
 	}
 
-	@Bean(name = "configDBTransactionManager")  // 트랜잭션 관리
+	@Primary
+	@Bean(name = "constellationTransactionManager")  // 트랜잭션 관리
 	public PlatformTransactionManager transactionManager(
-		@Qualifier("configDBEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
+		@Qualifier("constellationEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
 		return new JpaTransactionManager(entityManagerFactory);
 	}
 }

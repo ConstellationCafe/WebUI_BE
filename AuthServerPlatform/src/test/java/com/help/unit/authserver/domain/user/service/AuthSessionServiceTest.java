@@ -8,8 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.help.authserver.domain.user.repository.SessionRepository;
-import com.help.global.discord.config.ERPSubscriberRepository;
-import com.help.global.discord.config.ErpSubscriber;
+import com.help.global.guild.subscriber.ERPSubscriberRepository;
+import com.help.global.guild.subscriber.ErpSubscriber;
 import com.help.global.jwt.CustomUser;
 import com.help.global.jwt.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;

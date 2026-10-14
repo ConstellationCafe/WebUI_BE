@@ -21,7 +21,7 @@ import com.help.erpweb.domain.notification.service.NotificationCommand;
 import com.help.erpweb.domain.notification.service.NotificationService;
 import com.help.global.data.Authority;
 import com.help.global.guild.GuildContext;
-import com.help.global.integration.IntegrationClient;
+import com.help.global.external.ExternalClient;
 import com.help.global.jwt.CustomUser;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -88,7 +88,7 @@ class NotificationControllersTest {
     @Test
     void integrationClientCannotPublishToGuildOutsideItsScope() {
         IntegrationNotificationController controller = new IntegrationNotificationController(service);
-        IntegrationClient client = new IntegrationClient("discord-bot", Set.of("1001"));
+        ExternalClient client = new ExternalClient("discord-bot", Set.of("1001"));
 
         assertThatThrownBy(() -> controller.publish(client, integrationRequest("2002")))
                 .isInstanceOf(NotificationScopeDeniedException.class);
@@ -97,7 +97,7 @@ class NotificationControllersTest {
 
     @Test
     void integrationPublishUsesClientIdAsIssuer() {
-        IntegrationClient client = new IntegrationClient("discord-bot", Set.of("1001"));
+        ExternalClient client = new ExternalClient("discord-bot", Set.of("1001"));
 
         new IntegrationNotificationController(service).publish(client, integrationRequest("1001"));
 
