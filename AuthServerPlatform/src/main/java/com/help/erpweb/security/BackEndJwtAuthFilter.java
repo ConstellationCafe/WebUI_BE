@@ -103,8 +103,8 @@ public class BackEndJwtAuthFilter extends OncePerRequestFilter {
 		// 이 조회가 비면(=등록된 방이지만 이 사용자가 멤버가 아님) 인증 정보를
 		// 저장하지 않고 그대로 흘려보내 401로 걸러지게 한다.
 		if (accessToken.isPresent() && botId.isPresent()) {
-			accessToken.flatMap(jwtUtil::extractUsername)
-				.flatMap(username -> userRepository.findByBotIdAndDiscordID(botId.get(), username))
+			accessToken.flatMap(jwtUtil::extractDiscordId)
+				.flatMap(discordId -> userRepository.findByBotIdAndDiscordId(botId.get(), discordId))
 				.ifPresent(discordUser -> {
 					GuildContext.setBotId(botId.get());
 					saveAuthentication(discordUser);
@@ -120,10 +120,9 @@ public class BackEndJwtAuthFilter extends OncePerRequestFilter {
 
 	private void saveAuthentication(final DiscordUser discordUser) {
 		final UserDetails userDetails = CustomUser.of(
-			discordUser.getUsername(),
+			discordUser.getDiscordId(),
 			discordUser.getPassword(),
-			discordUser.getRoleName(),
-			null
+			discordUser.getRoleName()
 		);
 		final Authentication authentication =
 			new UsernamePasswordAuthenticationToken(

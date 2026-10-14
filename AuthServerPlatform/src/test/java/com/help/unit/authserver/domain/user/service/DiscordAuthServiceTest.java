@@ -32,7 +32,7 @@
 //    @Autowired
 //    DiscordAuthService authService;
 //
-//    static String testDiscordID = "434719628875399169";
+//    static String testDiscordId = "434719628875399169";
 //    static String testUsername = "재의 마녀 일레이나";
 //
 //    @Test
@@ -42,7 +42,7 @@
 //        String redirectUrl = "http://localhost/redirect";
 //
 //        // LoginAPI Mock
-//        DiscordUserDto discordUserDto = new DiscordUserDto(testDiscordID, testUsername, "avatar");
+//        DiscordUserDto discordUserDto = new DiscordUserDto(testDiscordId, testUsername, "avatar");
 //        Mockito.when(loginAPI.getUserInfo(code))
 //               .thenReturn(discordUserDto);
 //

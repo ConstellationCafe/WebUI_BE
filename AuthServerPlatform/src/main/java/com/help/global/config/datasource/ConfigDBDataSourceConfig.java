@@ -1,4 +1,4 @@
-package com.help.global.config;
+package com.help.global.config.datasource;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -25,7 +25,7 @@ import java.util.Map;
 @EnableTransactionManagement
 @EnableJpaRepositories(
 	basePackages = {
-		"com.help.global.discord.config",
+		"com.help.global.guild.subscriber",
 		"com.help.erpweb.domain.config.repository"
 	},
 	entityManagerFactoryRef = "configDBEntityManagerFactory",
@@ -75,7 +75,7 @@ public class ConfigDBDataSourceConfig {
 		return builder
 			.dataSource(dataSource)
 			.packages(
-				"com.help.global.discord.config",
+				"com.help.global.guild.subscriber",
 				"com.help.erpweb.domain.config.entity"
 			)
 			.persistenceUnit("configDB")

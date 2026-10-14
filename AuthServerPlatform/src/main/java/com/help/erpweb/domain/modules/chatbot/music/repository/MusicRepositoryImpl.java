@@ -71,7 +71,7 @@ public class MusicRepositoryImpl
 
     @Override
     public Page<MusicProjection> findPage(
-            String recommender,
+            String recommenderSk,
             int page,
             int size,
             String searchColumn,
@@ -107,8 +107,8 @@ public class MusicRepositoryImpl
         }
 
         boolean filterByRecommender =
-                recommender != null
-                        && !recommender.isBlank();
+                recommenderSk != null
+                        && !recommenderSk.isBlank();
 
         StringBuilder sql = new StringBuilder("""
             SELECT
@@ -130,11 +130,11 @@ public class MusicRepositoryImpl
 
         if (filterByRecommender) {
             sql.append(
-                    " AND m.recommender = :recommender"
+                    " AND m.recommender = :recommenderSk"
             );
 
             countSql.append(
-                    " AND m.recommender = :recommender"
+                    " AND m.recommender = :recommenderSk"
             );
         }
 
@@ -197,13 +197,13 @@ public class MusicRepositoryImpl
 
         if (filterByRecommender) {
             query.setParameter(
-                    "recommender",
-                    recommender
+                    "recommenderSk",
+                    recommenderSk
             );
 
             countQuery.setParameter(
-                    "recommender",
-                    recommender
+                    "recommenderSk",
+                    recommenderSk
             );
         }
 

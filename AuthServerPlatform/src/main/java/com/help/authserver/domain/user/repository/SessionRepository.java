@@ -19,35 +19,35 @@ public class SessionRepository {
 
     private static final String PREFIX = "session:user:";
 
-    private String key(String username) {
-        return PREFIX + username;
+    private String key(String discordId) {
+        return PREFIX + discordId;
     }
 
     public void save(SessionInfo sessionInfo, Duration ttl) {
         redisTemplate.opsForValue().set(
-                key(sessionInfo.getUsername()),
+                key(sessionInfo.getDiscordId()),
                 sessionInfo,
                 ttl
         );
     }
 
-    public Optional<SessionInfo> find(String username) {
-        Object value = redisTemplate.opsForValue().get(key(username));
+    public Optional<SessionInfo> find(String discordId) {
+        Object value = redisTemplate.opsForValue().get(key(discordId));
         if (value == null) {
             return Optional.empty();
         }
         return Optional.of((SessionInfo) value);
     }
 
-    public void invalidate(String username) {
-        find(username).ifPresent(session -> {
+    public void invalidate(String discordId) {
+        find(discordId).ifPresent(session -> {
             SessionInfo revoked = new SessionInfo(
-                    session.getUsername(),
+                    session.getDiscordId(),
                     false,
                     session.getDiscordAccessToken(),
                     session.getIssuedAt()
             );
-            String key = key(username);
+            String key = key(discordId);
             Long ttl = redisTemplate.getExpire(key, TimeUnit.SECONDS);
             redisTemplate.opsForValue().set(key, revoked);
             if (ttl != null && ttl > 0) {
@@ -56,8 +56,8 @@ public class SessionRepository {
         });
     }
 
-    public void refreshTtl(String username, Duration ttl) {
-        String key = key(username);
+    public void refreshTtl(String discordId, Duration ttl) {
+        String key = key(discordId);
 
         Boolean exists = redisTemplate.hasKey(key);
         if (Boolean.FALSE.equals(exists)) {
@@ -66,7 +66,7 @@ public class SessionRepository {
         redisTemplate.expire(key, ttl);
     }
 
-    public void delete(String username) {
-        redisTemplate.delete(key(username));
+    public void delete(String discordId) {
+        redisTemplate.delete(key(discordId));
     }
 }

@@ -70,7 +70,7 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
 
     @Override
     public Page<ContentProjection> findPage(
-            String recommender,
+            String recommenderSk,
             int page,
             int size,
             String searchColumn,
@@ -106,8 +106,8 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
         }
 
         boolean filterByRecommender =
-                recommender != null
-                        && !recommender.isBlank();
+                recommenderSk != null
+                        && !recommenderSk.isBlank();
 
         StringBuilder sql = new StringBuilder("""
             SELECT
@@ -129,11 +129,11 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
 
         if (filterByRecommender) {
             sql.append(
-                    " AND c.recommender = :recommender"
+                    " AND c.recommender = :recommenderSk"
             );
 
             countSql.append(
-                    " AND c.recommender = :recommender"
+                    " AND c.recommender = :recommenderSk"
             );
         }
 
@@ -196,13 +196,13 @@ public class ContentRepositoryImpl implements ContentRepositoryCustom {
 
         if (filterByRecommender) {
             query.setParameter(
-                    "recommender",
-                    recommender
+                    "recommenderSk",
+                    recommenderSk
             );
 
             countQuery.setParameter(
-                    "recommender",
-                    recommender
+                    "recommenderSk",
+                    recommenderSk
             );
         }
 

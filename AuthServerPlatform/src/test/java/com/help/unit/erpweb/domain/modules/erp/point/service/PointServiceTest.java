@@ -220,7 +220,7 @@ class PointServiceTest {
 
     @Test
     void getPointLogReturnsOwnLogsScopedBySkAndExcludesSkColumnFromMetadata() {
-        CustomUser user = CustomUser.of("123", "OAUTH_USER", "ROLE_USER", null);
+        CustomUser user = CustomUser.of("123", "OAUTH_USER", "ROLE_USER");
         when(membershipRepository.findSkByChatUser(any(ChatUser.class)))
                 .thenReturn("member-sk");
         when(pointRepository.findColumnMetas(
@@ -264,7 +264,7 @@ class PointServiceTest {
 
     @Test
     void getPointLogNormalizesNonPositivePageAndSize() {
-        CustomUser user = CustomUser.of("123", "OAUTH_USER", "ROLE_USER", null);
+        CustomUser user = CustomUser.of("123", "OAUTH_USER", "ROLE_USER");
         when(membershipRepository.findSkByChatUser(any(ChatUser.class)))
                 .thenReturn("member-sk");
         when(pointRepository.findColumnMetas(

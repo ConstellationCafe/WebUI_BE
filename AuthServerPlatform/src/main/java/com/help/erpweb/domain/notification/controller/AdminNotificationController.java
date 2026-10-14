@@ -51,7 +51,7 @@ public class AdminNotificationController {
                 request.body(),
                 request.link(),
                 NotificationSource.ADMIN,
-                user.getUsername(),
+                user.getDiscordId(),
                 request.requestId()
         )));
     }

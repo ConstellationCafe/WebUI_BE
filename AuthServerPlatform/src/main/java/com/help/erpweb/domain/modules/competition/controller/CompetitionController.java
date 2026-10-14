@@ -64,6 +64,6 @@ public class CompetitionController {
 		@AuthenticationPrincipal CustomUser manager
 	) {
 		return ApiResponse.success(service.post(
-			request.requestId(), request.boardKey(), request.notice().toNotice(), manager.getUsername()));
+			request.requestId(), request.boardKey(), request.notice().toNotice(), manager.getDiscordId()));
 	}
 }

@@ -1,4 +1,4 @@
-package com.help.global.integration;
+package com.help.global.external;
 
 import com.help.global.data.Authority;
 import jakarta.servlet.FilterChain;
@@ -27,16 +27,16 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * (서블릿 전역 필터로 자동 등록되지 않게 integration chain에서만 생성한다).
  */
 @Slf4j
-public class IntegrationApiKeyAuthenticationFilter extends OncePerRequestFilter {
+public class ExternalApiKeyAuthenticationFilter extends OncePerRequestFilter {
     public static final String HEADER = "X-Api-Key";
 
     private final List<ResolvedClient> clients;
 
-    public IntegrationApiKeyAuthenticationFilter(IntegrationClientProperties properties) {
+    public ExternalApiKeyAuthenticationFilter(ExternalClientProperties properties) {
         HexFormat hex = HexFormat.of();
         this.clients = properties.clients().stream()
                 .map(client -> new ResolvedClient(
-                        new IntegrationClient(client.id(), client.botIdSet()),
+                        new ExternalClient(client.id(), client.botIdSet()),
                         hex.parseHex(client.keySha256())
                 ))
                 .toList();
@@ -50,7 +50,7 @@ public class IntegrationApiKeyAuthenticationFilter extends OncePerRequestFilter 
     ) throws ServletException, IOException {
         String apiKey = request.getHeader(HEADER);
         if (apiKey != null && !apiKey.isBlank()) {
-            IntegrationClient matched = match(apiKey.trim());
+            ExternalClient matched = match(apiKey.trim());
             if (matched != null) {
                 UsernamePasswordAuthenticationToken authentication =
                         UsernamePasswordAuthenticationToken.authenticated(
@@ -66,9 +66,9 @@ public class IntegrationApiKeyAuthenticationFilter extends OncePerRequestFilter 
         filterChain.doFilter(request, response);
     }
 
-    IntegrationClient match(String apiKey) {
+    ExternalClient match(String apiKey) {
         byte[] digest = sha256(apiKey);
-        IntegrationClient matched = null;
+        ExternalClient matched = null;
         for (ResolvedClient client : clients) {
             if (MessageDigest.isEqual(digest, client.keyHash()) && matched == null) {
                 matched = client.client();
@@ -89,6 +89,6 @@ public class IntegrationApiKeyAuthenticationFilter extends OncePerRequestFilter 
         }
     }
 
-    private record ResolvedClient(IntegrationClient client, byte[] keyHash) {
+    private record ResolvedClient(ExternalClient client, byte[] keyHash) {
     }
 }

@@ -41,7 +41,7 @@ public class CompetitionWinnerController {
 			request.version(),
 			request.winnerDiscordId(),
 			request.acquisition(),
-			manager.getUsername()));
+			manager.getDiscordId()));
 	}
 
 	@GetMapping

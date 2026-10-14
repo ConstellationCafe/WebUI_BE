@@ -57,7 +57,7 @@ public class CompetitionWinnerService {
 		final String winner = winnerDiscordId == null ? "" : winnerDiscordId.strip();
 		requireAcquisition(acquisition);
 
-		final DiscordUser member = discordUserRepository.findByBotIdAndDiscordID(botId, winner)
+		final DiscordUser member = discordUserRepository.findByBotIdAndDiscordId(botId, winner)
 			.orElseThrow(CompetitionMemberNotFoundException::new);
 
 		final CompetitionWinnerId id = new CompetitionWinnerId(botId, name, gameVersion.value(), winner);
@@ -72,7 +72,7 @@ public class CompetitionWinnerService {
 		}
 		log.info("대회 우승 칭호 부여 - botId={}, competition={}, version={}, winner={}, managerId={}",
 			botId, name, gameVersion.value(), winner, managerId);
-		return new CompetitionWinnerResponse(name, gameVersion.value(), winner, member.getNickname(), acquisition);
+		return new CompetitionWinnerResponse(name, gameVersion.value(), winner, member.getDisplayName(), acquisition);
 	}
 
 	@Transactional(transactionManager = "constellationTransactionManager", readOnly = true)
@@ -85,8 +85,8 @@ public class CompetitionWinnerService {
 			.toList();
 		final Map<String, DiscordUser> members = winnerIds.isEmpty()
 			? Map.of()
-			: discordUserRepository.findAllByBotIdAndDiscordIDIn(botId, winnerIds).stream()
-				.collect(Collectors.toMap(DiscordUser::getDiscordID, Function.identity(), (first, second) -> first));
+			: discordUserRepository.findAllByBotIdAndDiscordIdIn(botId, winnerIds).stream()
+				.collect(Collectors.toMap(DiscordUser::getDiscordId, Function.identity(), (first, second) -> first));
 
 		final List<CompetitionWinnerResponse> items = result.getContent().stream()
 			.map(winner -> {
@@ -95,7 +95,7 @@ public class CompetitionWinnerService {
 					winner.getId().getCompetitionName(),
 					winner.getId().getVersion(),
 					winner.getId().getWinner(),
-					member == null ? null : member.getNickname(),
+					member == null ? null : member.getDisplayName(),
 					winner.getAcquisition());
 			})
 			.toList();

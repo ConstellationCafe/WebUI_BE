@@ -8,8 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.help.authserver.domain.user.repository.SessionRepository;
-import com.help.global.discord.config.ERPSubscriberRepository;
-import com.help.global.discord.config.ErpSubscriber;
+import com.help.global.guild.subscriber.ERPSubscriberRepository;
+import com.help.global.guild.subscriber.ErpSubscriber;
 import com.help.global.jwt.CustomUser;
 import com.help.global.jwt.JwtUtil;
 import jakarta.servlet.http.HttpServletResponse;
@@ -62,9 +62,9 @@ class AuthSessionServiceTest {
     @Test
     void selectRoomIssuesTokenFromBotScopedIdentityNotThePreSelectionUser() {
         CustomUser preSelectionUser =
-                CustomUser.of("123", "OAUTH_USER", "ROLE_USER", null);
+                CustomUser.of("123", "OAUTH_USER", "ROLE_USER");
         CustomUser scopedIdentity =
-                CustomUser.of("123", "OAUTH_USER", "ROLE_ADMIN", null);
+                CustomUser.of("123", "OAUTH_USER", "ROLE_ADMIN");
         HttpServletResponse response = mock(HttpServletResponse.class);
 
         when(erpSubscriberRepository.findByGuildId("guild-1"))

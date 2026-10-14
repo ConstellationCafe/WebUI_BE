@@ -287,12 +287,12 @@ public class StudentStatusService {
                         student.getSk()
                 );
 
-        String username =
+        String displayName =
                 resolveUsername(
                         discordId
                 );
 
-        if (username == null) {
+        if (displayName == null) {
             return Optional.empty();
         }
 
@@ -300,7 +300,7 @@ public class StudentStatusService {
                 new OptionResponse(
                         student.getSk(),
                         discordId,
-                        username
+                        displayName
                 )
         );
     }
@@ -317,12 +317,12 @@ public class StudentStatusService {
                         student.getSk()
                 );
 
-        String username =
+        String displayName =
                 resolveUsername(
                         discordId
                 );
 
-        if (username == null) {
+        if (displayName == null) {
             return Optional.empty();
         }
 
@@ -333,7 +333,7 @@ public class StudentStatusService {
                 new StudentResponse(
                         student.getSk(),
                         discordId,
-                        username,
+                        displayName,
                         academyClass != null &&
                                 academyClass.getAcademy() != null
                                 ? academyClass
@@ -361,22 +361,22 @@ public class StudentStatusService {
                 .toList();
         Map<String, String> discordIds = membershipRepository.findDiscordIdsBySk(sks);
         List<String> ids = discordIds.values().stream().distinct().toList();
-        Map<String, String> usernames = discordUserRepository.findActiveByBotIdAndDiscordIDIn(GuildContext.requireBotId(), ids)
+        Map<String, String> displayNames = discordUserRepository.findActiveByBotIdAndDiscordIdIn(GuildContext.requireBotId(), ids)
                 .stream()
-                .collect(Collectors.toMap(DiscordUser::getDiscordID, DiscordUser::getNickname,
+                .collect(Collectors.toMap(DiscordUser::getDiscordId, DiscordUser::getDisplayName,
                         (first, ignored) -> first));
 
         return students.stream()
                 .map(student -> {
                     String discordId = discordIds.get(student.getSk());
-                    String username = usernames.get(discordId);
+                    String displayName = displayNames.get(discordId);
                     AcademyClass academyClass = student.getAcademyClass();
-                    if (student.getSk() == null || discordId == null || username == null
+                    if (student.getSk() == null || discordId == null || displayName == null
                             || academyClass == null || academyClass.getAcademy() == null) {
                         return null;
                     }
                     StudentResponse response = new StudentResponse(
-                            student.getSk(), discordId, username,
+                            student.getSk(), discordId, displayName,
                             academyClass.getAcademy().getId(), academyClass.getId(),
                             academyClass.getClassNumber(), student.getState());
                     AcademyResponse academy = new AcademyResponse(
@@ -470,8 +470,8 @@ public class StudentStatusService {
             String discordId
     ) {
         return discordUserRepository
-                .findAllByBotIdAndDiscordID(GuildContext.requireBotId(), discordId)
-                .map(DiscordUser::getNickname)
+                .findAllByBotIdAndDiscordId(GuildContext.requireBotId(), discordId)
+                .map(DiscordUser::getDisplayName)
                 .orElse(null);
     }
 

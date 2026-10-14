@@ -126,7 +126,7 @@ public class PenaltyService {
 		long score = repository.findCumulativeScores(botId, List.of(member.discordId()),
 				now.minus(WINDOW_DAYS, ChronoUnit.DAYS), now)
 				.getOrDefault(member.discordId(), 0L);
-		return new PenaltyMemberDetailResponse(member.discordId(), member.username(),
+		return new PenaltyMemberDetailResponse(member.discordId(), member.displayName(),
 				member.state(), score, history);
 	}
 

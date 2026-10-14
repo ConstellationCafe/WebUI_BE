@@ -12,7 +12,7 @@ public interface MenuRepositoryCustom {
                              String mnValue);
 
     Page<MenuProjection> findPage(
-            String recommender,
+            String recommenderSk,
             int page,
             int size,
             String searchColumn,

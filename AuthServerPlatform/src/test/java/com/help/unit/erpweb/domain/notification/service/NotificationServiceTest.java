@@ -136,7 +136,7 @@ class NotificationServiceTest {
                 null,
                 "point"
         );
-        when(discordUserRepository.findByBotIdAndDiscordID(BOT, "123")).thenReturn(Optional.empty());
+        when(discordUserRepository.findByBotIdAndDiscordId(BOT, "123")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.publish(command))
                 .isInstanceOf(NotificationTargetNotFoundException.class);
@@ -156,7 +156,7 @@ class NotificationServiceTest {
                 null,
                 "point"
         );
-        when(discordUserRepository.findByBotIdAndDiscordID(BOT, "123"))
+        when(discordUserRepository.findByBotIdAndDiscordId(BOT, "123"))
                 .thenReturn(Optional.of(DiscordUser.of(BOT, "123", List.of())));
         when(notificationRepository.save(any(Notification.class))).thenAnswer(invocation -> {
             Notification saved = invocation.getArgument(0);

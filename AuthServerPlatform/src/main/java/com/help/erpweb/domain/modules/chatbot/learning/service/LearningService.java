@@ -49,18 +49,18 @@ public class LearningService {
         int normalizedSize =
                 Math.max(size, 1);
 
-        String teacher = null;
+        String teacherSk = null;
 
         /*
          * 일반 사용자:
          * 자신의 데이터만 조회
          *
          * 관리자:
-         * teacher = null
+         * teacherSk = null
          * 전체 조회
          */
         if (!authorization.isAdmin(user)) {
-            teacher = findSkByChatUser(
+            teacherSk = findSkByChatUser(
                     ChatIdentities.fromPrincipal(user)
             );
         }
@@ -108,7 +108,7 @@ public class LearningService {
          */
         Page<LearningProjection> learningPage =
                 learningRepository.findPage(
-                        teacher,
+                        teacherSk,
                         normalizedPage - 1,
                         normalizedSize,
                         searchColumn,
@@ -119,23 +119,23 @@ public class LearningService {
                 );
 
         /*
-         * Projection.teacher에는
+         * Projection.teacherDiscordId에는
          * SK가 아니라 Discord ID가 들어 있다.
          */
         List<LearningDto> learningList =
                 learningPage
                         .getContent()
                         .stream()
-                        .map(entity ->
+                        .map(projection ->
                                 LearningDto.builder()
                                         .lnKey(
-                                                entity.getLnKey()
+                                                projection.getLnKey()
                                         )
                                         .lnValue(
-                                                entity.getLnValue()
+                                                projection.getLnValue()
                                         )
-                                        .teacher(
-                                                entity.getTeacher()
+                                        .teacherDiscordId(
+                                                projection.getTeacherDiscordId()
                                         )
                                         .build()
                         )
@@ -203,13 +203,13 @@ public class LearningService {
         for (LearningDto dto : learningList) {
 
             /*
-             * dto.teacher는 Discord ID
+             * dto.teacherDiscordId는 Discord ID
              *
              * Stored Procedure 내부에서:
              *
              * search_sk(
              *     "discord",
-             *     dto.teacher
+             *     dto.teacherDiscordId
              * )
              *
              * 를 통해 SK로 변환한다.
@@ -217,7 +217,7 @@ public class LearningService {
             String result =
                     learningRepository.callLearningProcedure(
                             MembershipID.discord.name(),
-                            dto.getTeacher(),
+                            dto.getTeacherDiscordId(),
                             dto.getLnKey(),
                             dto.getLnValue()
                     );
@@ -267,7 +267,7 @@ public class LearningService {
 
             String teacherSk =
                     findSkByChatUser(
-                            ChatIdentities.ofDiscord(dto.getTeacher())
+                            ChatIdentities.ofDiscord(dto.getTeacherDiscordId())
                     );
 
             int deleted =

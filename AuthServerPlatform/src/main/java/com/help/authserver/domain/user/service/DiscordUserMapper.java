@@ -17,10 +17,9 @@ final class DiscordUserMapper {
 
     static CustomUser toCustomUser(final DiscordUser user) {
         return CustomUser.of(
-                user.getUsername(),
+                user.getDiscordId(),
                 user.getPassword(),
-                user.getRoleName(),
-                null
+                user.getRoleName()
         );
     }
 }

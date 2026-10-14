@@ -16,5 +16,5 @@ import java.util.Optional;
  */
 public interface IdentityResolver {
 
-    Optional<CustomUser> resolveIdentity(String username, String botId);
+    Optional<CustomUser> resolveIdentity(String discordId, String botId);
 }

@@ -1,4 +1,4 @@
-package com.help.global.discord.config;
+package com.help.global.guild.subscriber;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

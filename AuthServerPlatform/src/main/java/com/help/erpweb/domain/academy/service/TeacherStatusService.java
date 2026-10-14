@@ -278,12 +278,12 @@ public class TeacherStatusService {
                         teacher.getSk()
                 );
 
-        String username =
+        String displayName =
                 resolveUsername(
                         discordId
                 );
 
-        if (username == null) {
+        if (displayName == null) {
             return Optional.empty();
         }
 
@@ -291,7 +291,7 @@ public class TeacherStatusService {
                 new OptionResponse(
                         teacher.getSk(),
                         discordId,
-                        username
+                        displayName
                 )
         );
     }
@@ -303,16 +303,16 @@ public class TeacherStatusService {
                 .toList();
         Map<String, String> discordIds = membershipRepository.findDiscordIdsBySk(sks);
         List<String> ids = discordIds.values().stream().distinct().toList();
-        Map<String, String> usernames = discordUserRepository.findAllByBotIdAndDiscordIDIn(GuildContext.requireBotId(), ids)
+        Map<String, String> displayNames = discordUserRepository.findAllByBotIdAndDiscordIdIn(GuildContext.requireBotId(), ids)
                 .stream()
-                .collect(Collectors.toMap(DiscordUser::getDiscordID, DiscordUser::getNickname,
+                .collect(Collectors.toMap(DiscordUser::getDiscordId, DiscordUser::getDisplayName,
                         (first, ignored) -> first));
         return teachers.stream()
                 .map(teacher -> {
                     String discordId = discordIds.get(teacher.getSk());
-                    String username = usernames.get(discordId);
-                    return discordId == null || username == null ? null
-                            : new OptionResponse(teacher.getSk(), discordId, username);
+                    String displayName = displayNames.get(discordId);
+                    return discordId == null || displayName == null ? null
+                            : new OptionResponse(teacher.getSk(), discordId, displayName);
                 })
                 .filter(java.util.Objects::nonNull)
                 .toList();
@@ -330,12 +330,12 @@ public class TeacherStatusService {
                         teacher.getSk()
                 );
 
-        String username =
+        String displayName =
                 resolveUsername(
                         discordId
                 );
 
-        if (username == null) {
+        if (displayName == null) {
             return Optional.empty();
         }
 
@@ -346,7 +346,7 @@ public class TeacherStatusService {
                 new TeacherResponse(
                         teacher.getSk(),
                         discordId,
-                        username,
+                        displayName,
                         academyClass != null
                                 ? academyClass.getId()
                                 : null,
@@ -429,8 +429,8 @@ public class TeacherStatusService {
             String discordId
     ) {
         return discordUserRepository
-                .findAllByBotIdAndDiscordID(GuildContext.requireBotId(), discordId)
-                .map(DiscordUser::getNickname)
+                .findAllByBotIdAndDiscordId(GuildContext.requireBotId(), discordId)
+                .map(DiscordUser::getDisplayName)
                 .orElseThrow(() ->
                         new IllegalStateException(
                                 "DiscordUser를 찾을 수 없습니다. discordId="

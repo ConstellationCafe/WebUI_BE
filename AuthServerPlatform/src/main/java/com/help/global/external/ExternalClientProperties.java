@@ -1,4 +1,4 @@
-package com.help.global.integration;
+package com.help.global.external;
 
 import java.util.List;
 import java.util.Set;
@@ -14,8 +14,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * {@code INTEGRATION_CLIENTS_0_BOTIDS}(쉼표 구분). 잘못된 값이면 기동 시 실패한다.
  */
 @ConfigurationProperties(prefix = "integration")
-public record IntegrationClientProperties(List<Client> clients) {
-    public IntegrationClientProperties {
+public record ExternalClientProperties(List<Client> clients) {
+    public ExternalClientProperties {
         clients = clients == null ? List.of() : List.copyOf(clients);
     }
 

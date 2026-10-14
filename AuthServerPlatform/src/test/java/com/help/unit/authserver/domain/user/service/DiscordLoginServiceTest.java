@@ -14,8 +14,8 @@ import com.help.authserver.domain.user.dto.user.CurrentUserDto;
 import com.help.authserver.domain.user.entity.SessionInfo;
 import com.help.authserver.domain.user.repository.SessionRepository;
 import com.help.global.common.response.ApiResponse;
-import com.help.global.discord.config.ERPSubscriberRepository;
-import com.help.global.discord.config.ErpSubscriber;
+import com.help.global.guild.subscriber.ERPSubscriberRepository;
+import com.help.global.guild.subscriber.ErpSubscriber;
 import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.global.jwt.CustomUser;
 import java.util.List;
@@ -43,7 +43,7 @@ class DiscordLoginServiceTest {
                 discordAPI, userRepository, sessionRepository,
                 erpSubscriberRepository, authSessionService
         );
-        user = CustomUser.of(DISCORD_ID, "OAUTH_USER", "ROLE_ADMIN", null);
+        user = CustomUser.of(DISCORD_ID, "OAUTH_USER", "ROLE_ADMIN");
         when(sessionRepository.find(DISCORD_ID))
                 .thenReturn(Optional.of(new SessionInfo(DISCORD_ID, true, ACCESS_TOKEN, 0)));
     }

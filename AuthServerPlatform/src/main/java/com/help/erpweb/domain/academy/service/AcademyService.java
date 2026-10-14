@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 // authserver/erpweb 서비스 분리 준비: DiscordUser/ErpSubscriber는 로그인과
 // erpweb 양쪽에서 쓰이는 공용 식별 데이터라 com.help.global.discord로 옮겼다
 // (기존 FIXME였던 "AuthServer -> ERPWeb 이동"은 이 방향으로 해결됨).
-import com.help.global.discord.config.ERPSubscriberRepository;
-import com.help.global.discord.config.ErpSubscriber;
+import com.help.global.guild.subscriber.ERPSubscriberRepository;
+import com.help.global.guild.subscriber.ErpSubscriber;
 import com.help.global.discord.identity.DiscordUser;
 import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.erpweb.domain.academy.authorization.AcademyAuthorization;
@@ -19,7 +19,6 @@ import com.help.global.chat.ChatIdentities;
 import com.help.global.guild.GuildContext;
 import com.help.global.jwt.CustomUser;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -201,11 +200,11 @@ public class AcademyService {
                         .distinct()
                         .toList();
         Map<String, DiscordUser> discordUserById = discordUserRepository
-                        .findActiveByBotIdAndDiscordIDIn(GuildContext.requireBotId(), discordIds)
+                        .findActiveByBotIdAndDiscordIdIn(GuildContext.requireBotId(), discordIds)
                         .stream()
                         .collect(
                                 Collectors.toMap(
-                                        DiscordUser::getDiscordID,
+                                        DiscordUser::getDiscordId,
                                         Function.identity(),
                                         (existing, replacement) -> existing
                                 )
@@ -249,11 +248,11 @@ public class AcademyService {
                         .distinct()
                         .toList();
         Map<String, DiscordUser> discordUserById = discordUserRepository
-                        .findActiveByBotIdAndDiscordIDIn(GuildContext.requireBotId(), discordIds)
+                        .findActiveByBotIdAndDiscordIdIn(GuildContext.requireBotId(), discordIds)
                         .stream()
                         .collect(
                                 Collectors.toMap(
-                                        DiscordUser::getDiscordID,
+                                        DiscordUser::getDiscordId,
                                         Function.identity()
                                 )
                         );
@@ -307,8 +306,8 @@ public class AcademyService {
                         .stream()
                         .map(student -> new OptionResponse(
                                 student.sk(),
-                                student.discordID(),
-                                student.name()
+                                student.discordId(),
+                                student.displayName()
                         ))
                         .toList();
 
@@ -345,13 +344,13 @@ public class AcademyService {
             discordId = student.getSk();
         }
 
-        String username =
+        String displayName =
                 discordUserRepository
-                        .findByBotIdAndDiscordID(GuildContext.requireBotId(), discordId)
-                        .map(DiscordUser::getNickname)
+                        .findByBotIdAndDiscordId(GuildContext.requireBotId(), discordId)
+                        .map(DiscordUser::getDisplayName)
                         .orElse(null);
 
-        if (username == null) {
+        if (displayName == null) {
             return Optional.empty();
         }
 
@@ -359,7 +358,7 @@ public class AcademyService {
                 new OptionResponse(
                         student.getSk(),
                         discordId,
-                        username
+                        displayName
                 )
         );
     }
@@ -438,7 +437,7 @@ public class AcademyService {
         DiscordUser discordUser = discordUserById.get(
                 discordId
         );
-        if (discordUser == null || discordUser.getNickname() == null) {
+        if (discordUser == null || discordUser.getDisplayName() == null) {
             return Optional.empty();
         }
 
@@ -447,7 +446,7 @@ public class AcademyService {
                 new TeacherResponse(
                         teacher.getSk(),
                         discordId,
-                        discordUser.getNickname(),
+                        discordUser.getDisplayName(),
                         academyClass != null
                                 ? academyClass.getId()
                                 : null,
@@ -474,7 +473,7 @@ public class AcademyService {
         }
 
         DiscordUser discordUser = discordUserById.get(discordId);
-        if (discordUser == null || discordUser.getNickname() == null) {
+        if (discordUser == null || discordUser.getDisplayName() == null) {
             return Optional.empty();
         }
 
@@ -483,7 +482,7 @@ public class AcademyService {
                 new StudentResponse(
                         student.getSk(),
                         discordId,
-                        discordUser.getNickname(),
+                        discordUser.getDisplayName(),
                         academyClass != null
                                 ? academyClass.getAcademy().getId()
                                 : null,

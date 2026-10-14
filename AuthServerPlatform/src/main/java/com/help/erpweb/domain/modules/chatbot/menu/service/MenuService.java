@@ -49,10 +49,10 @@ public class MenuService {
         int normalizedPage = Math.max(page, 1);
         int normalizedSize = Math.max(size, 1);
 
-        String recommender = null;
+        String recommenderSk = null;
 
         if (!authorization.isAdmin(user)) {
-            recommender =
+            recommenderSk =
                     findSkByChatUser(
                             ChatIdentities.fromPrincipal(user)
                     );
@@ -80,7 +80,7 @@ public class MenuService {
 
         Page<MenuProjection> menuPage =
                 menuRepository.findPage(
-                        recommender,
+                        recommenderSk,
                         normalizedPage - 1,
                         normalizedSize,
                         searchColumn,
@@ -93,13 +93,13 @@ public class MenuService {
         List<MenuDto> menuList =
                 menuPage.getContent()
                         .stream()
-                        .map(entity ->
+                        .map(projection ->
                                 MenuDto.builder()
                                         .mnValue(
-                                                entity.getMnValue()
+                                                projection.getMnValue()
                                         )
-                                        .recommender(
-                                                entity.getRecommender()
+                                        .recommenderDiscordId(
+                                                projection.getRecommenderDiscordId()
                                         )
                                         .build()
                         )
@@ -147,7 +147,7 @@ public class MenuService {
             String result =
                     menuRepository.callMenuProcedure(
                             MembershipID.discord.name(),
-                            dto.getRecommender(),
+                            dto.getRecommenderDiscordId(),
                             dto.getMnValue()
                     );
 
@@ -175,11 +175,11 @@ public class MenuService {
 
         int delCount = 0;
 
-        Map<String, List<String>> valuesByRecommender =
+        Map<String, List<String>> valuesByRecommenderDiscordId =
                 menuList.stream()
                         .collect(
                                 Collectors.groupingBy(
-                                        MenuDto::getRecommender,
+                                        MenuDto::getRecommenderDiscordId,
                                         Collectors.mapping(
                                                 MenuDto::getMnValue,
                                                 Collectors.toList()
@@ -188,7 +188,7 @@ public class MenuService {
                         );
 
         for (Map.Entry<String, List<String>> entry
-                : valuesByRecommender.entrySet()) {
+                : valuesByRecommenderDiscordId.entrySet()) {
 
             String recommenderSk =
                     findSkByChatUser(

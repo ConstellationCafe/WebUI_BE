@@ -172,7 +172,7 @@ public class PointService {
                 adminPointRepository.findLogs(discordId, (page - 1) * size, size);
         return new AdminPointDetailResponse(
                 member.discordId(),
-                member.username(),
+                member.displayName(),
                 member.state(),
                 member.coin(),
                 logs,

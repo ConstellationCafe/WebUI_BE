@@ -87,7 +87,7 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
 
     @Override
     public Page<LearningProjection> findPage(
-            String teacher,
+            String teacherSk,
             int page,
             int size,
             String searchColumn,
@@ -128,8 +128,8 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
          * 관리자는 null이므로 전체 조회한다.
          */
         boolean filterByTeacher =
-                teacher != null
-                        && !teacher.isBlank();
+                teacherSk != null
+                        && !teacherSk.isBlank();
 
         /*
          * 중요:
@@ -137,7 +137,7 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
          * l.teacher(SK)는 FE로 보내지 않는다.
          *
          * Users와 JOIN해서 얻은 discordID를
-         * LearningProjection.teacher에 넣는다.
+         * LearningProjection.teacherDiscordId에 넣는다.
          */
         StringBuilder sql = new StringBuilder("""
             SELECT
@@ -158,11 +158,11 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
 
         if (filterByTeacher) {
             sql.append(
-                    " AND l.teacher = :teacher"
+                    " AND l.teacher = :teacherSk"
             );
 
             countSql.append(
-                    " AND l.teacher = :teacher"
+                    " AND l.teacher = :teacherSk"
             );
         }
 
@@ -170,7 +170,7 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
             /*
              * teacher 검색은 주의해야 한다.
              *
-             * FE에서 teacher는 Discord ID지만
+             * FE에서 teacherDiscordId는 Discord ID지만
              * DB metadata의 teacher는 SK 컬럼이다.
              *
              * 따라서 teacher 검색만 JOIN된 discordID를 사용한다.
@@ -193,7 +193,7 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
 
                 if (filterByTeacher) {
                     countSql.append(
-                            " AND l.teacher = :teacher"
+                            " AND l.teacher = :teacherSk"
                     );
                 }
 
@@ -262,13 +262,13 @@ public class LearningRepositoryImpl implements LearningRepositoryCustom {
 
         if (filterByTeacher) {
             query.setParameter(
-                    "teacher",
-                    teacher
+                    "teacherSk",
+                    teacherSk
             );
 
             countQuery.setParameter(
-                    "teacher",
-                    teacher
+                    "teacherSk",
+                    teacherSk
             );
         }
 

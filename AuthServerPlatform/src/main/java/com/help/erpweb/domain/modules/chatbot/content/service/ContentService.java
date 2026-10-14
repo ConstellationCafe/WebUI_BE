@@ -49,10 +49,10 @@ public class ContentService {
         int normalizedPage = Math.max(page, 1);
         int normalizedSize = Math.max(size, 1);
 
-        String recommender = null;
+        String recommenderSk = null;
 
         if (!authorization.isAdmin(user)) {
-            recommender =
+            recommenderSk =
                     findSkByChatUser(
                             ChatIdentities.fromPrincipal(user)
                     );
@@ -80,7 +80,7 @@ public class ContentService {
 
         Page<ContentProjection> contentPage =
                 contentRepository.findPage(
-                        recommender,
+                        recommenderSk,
                         normalizedPage - 1,
                         normalizedSize,
                         searchColumn,
@@ -94,14 +94,14 @@ public class ContentService {
                 contentPage
                         .getContent()
                         .stream()
-                        .map(entity ->
+                        .map(projection ->
                                 ContentDto.builder()
                                         .cnValue(
-                                                entity.getCnValue()
+                                                projection.getCnValue()
                                         )
-                                        // API의 recommender는 Discord ID
-                                        .recommender(
-                                                entity.getRecommender()
+                                        // API의 recommenderDiscordId는 Discord ID (DB recommender 컬럼은 SK)
+                                        .recommenderDiscordId(
+                                                projection.getRecommenderDiscordId()
                                         )
                                         .build()
                         )
@@ -150,8 +150,8 @@ public class ContentService {
                     contentRepository.callContentProcedure(
                             MembershipID.discord.name(),
 
-                            // DTO recommender = Discord ID
-                            dto.getRecommender(),
+                            // DTO recommenderDiscordId = Discord ID
+                            dto.getRecommenderDiscordId(),
 
                             dto.getCnValue()
                     );
@@ -180,11 +180,11 @@ public class ContentService {
 
         int delCount = 0;
 
-        Map<String, List<String>> valuesByRecommender =
+        Map<String, List<String>> valuesByRecommenderDiscordId =
                 contentList.stream()
                         .collect(
                                 Collectors.groupingBy(
-                                        ContentDto::getRecommender,
+                                        ContentDto::getRecommenderDiscordId,
                                         Collectors.mapping(
                                                 ContentDto::getCnValue,
                                                 Collectors.toList()
@@ -193,7 +193,7 @@ public class ContentService {
                         );
 
         for (Map.Entry<String, List<String>> entry
-                : valuesByRecommender.entrySet()) {
+                : valuesByRecommenderDiscordId.entrySet()) {
 
             String recommenderSk =
                     findSkByChatUser(

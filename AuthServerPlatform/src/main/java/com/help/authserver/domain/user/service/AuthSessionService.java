@@ -6,8 +6,8 @@ import com.help.authserver.domain.user.repository.SessionRepository;
 import com.help.global.common.exception.CustomException;
 import com.help.global.common.exception.ErrorCode;
 import com.help.global.common.response.ApiResponse;
-import com.help.global.discord.config.ERPSubscriberRepository;
-import com.help.global.discord.config.ErpSubscriber;
+import com.help.global.guild.subscriber.ERPSubscriberRepository;
+import com.help.global.guild.subscriber.ErpSubscriber;
 import com.help.global.jwt.CustomUser;
 import com.help.global.jwt.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -58,7 +58,7 @@ public class AuthSessionService {
         final String refreshToken = jwtUtil.createRefreshToken(identity);
 
         final SessionInfo sessionInfo = new SessionInfo(
-                identity.getUsername(),
+                identity.getDiscordId(),
                 true,
                 providerAccessToken,
                 System.currentTimeMillis()
@@ -112,16 +112,16 @@ public class AuthSessionService {
         // "선택 대기" 상태이므로 botId 없이 재발급한다.
         final String botId = jwtUtil.extractBotId(refreshToken).orElse(null);
 
-        final String username =
-                jwtUtil.extractUsername(refreshToken)
+        final String discordId =
+                jwtUtil.extractDiscordId(refreshToken)
                         .orElseThrow(() -> new CustomException(ErrorCode.INVALID_TOKEN));
 
         final CustomUser identity =
-                identityResolver.resolveIdentity(username, botId)
+                identityResolver.resolveIdentity(discordId, botId)
                         .orElseThrow(() -> new CustomException(ErrorCode.INVALID_TOKEN));
 
         final SessionInfo sessionInfo =
-                sessionRepository.find(username)
+                sessionRepository.find(discordId)
                         .orElseThrow(() -> new CustomException(ErrorCode.SESSION_EXPIRED));
 
         if (!sessionInfo.isValid()) {
@@ -165,7 +165,7 @@ public class AuthSessionService {
         // 2026-09-26: 검증 결과(botId 스코프로 재조회된 identity)를 버리지
         // 않고 그대로 토큰 발급에 사용한다.
         final CustomUser scopedIdentity =
-                identityResolver.resolveIdentity(user.getUsername(), botId)
+                identityResolver.resolveIdentity(user.getDiscordId(), botId)
                         .orElseThrow(() -> new CustomException(ErrorCode.GUILD_MEMBER_NOT_FOUND));
 
         final String accessToken = jwtUtil.createAccessToken(scopedIdentity, botId);
@@ -184,7 +184,7 @@ public class AuthSessionService {
     }
 
     public void logout(final CustomUser user, final HttpServletResponse response) {
-        sessionRepository.invalidate(user.getUsername());
+        sessionRepository.invalidate(user.getDiscordId());
 
         response.addHeader(
                 "Set-Cookie",

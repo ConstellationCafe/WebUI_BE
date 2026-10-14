@@ -1,4 +1,4 @@
-package com.help.global.integration;
+package com.help.global.external;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -14,15 +14,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-class IntegrationApiKeyAuthenticationFilterTest {
+class ExternalApiKeyAuthenticationFilterTest {
     // 테스트 전용 값. 실제 키가 아니다.
     private static final String TEST_KEY = "test-only-integration-key";
 
-    private final IntegrationApiKeyAuthenticationFilter filter = new IntegrationApiKeyAuthenticationFilter(
-            new IntegrationClientProperties(List.of(
-                    new IntegrationClientProperties.Client(
+    private final ExternalApiKeyAuthenticationFilter filter = new ExternalApiKeyAuthenticationFilter(
+            new ExternalClientProperties(List.of(
+                    new ExternalClientProperties.Client(
                             "discord-bot",
-                            IntegrationApiKeyAuthenticationFilter.sha256Hex(TEST_KEY),
+                            ExternalApiKeyAuthenticationFilter.sha256Hex(TEST_KEY),
                             List.of("1001", " 1002 ")
                     )
             ))
@@ -36,7 +36,7 @@ class IntegrationApiKeyAuthenticationFilterTest {
     private Authentication run(String apiKey) throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/integrations/notifications");
         if (apiKey != null) {
-            request.addHeader(IntegrationApiKeyAuthenticationFilter.HEADER, apiKey);
+            request.addHeader(ExternalApiKeyAuthenticationFilter.HEADER, apiKey);
         }
         filter.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
         return SecurityContextHolder.getContext().getAuthentication();
@@ -50,7 +50,7 @@ class IntegrationApiKeyAuthenticationFilterTest {
         assertThat(authentication.getAuthorities())
                 .extracting(GrantedAuthority::getAuthority)
                 .containsExactly(Authority.INTEGRATION);
-        IntegrationClient client = (IntegrationClient) authentication.getPrincipal();
+        ExternalClient client = (ExternalClient) authentication.getPrincipal();
         assertThat(client.id()).isEqualTo("discord-bot");
         assertThat(client.canPublishTo("1002")).isTrue();
         assertThat(client.canPublishTo("9999")).isFalse();
@@ -70,21 +70,21 @@ class IntegrationApiKeyAuthenticationFilterTest {
 
     @Test
     void misconfiguredClientFailsFastAtStartup() {
-        assertThatThrownBy(() -> new IntegrationClientProperties.Client("bot", "not-a-hash", List.of("1")))
+        assertThatThrownBy(() -> new ExternalClientProperties.Client("bot", "not-a-hash", List.of("1")))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new IntegrationClientProperties.Client(
+        assertThatThrownBy(() -> new ExternalClientProperties.Client(
                 "bot",
-                IntegrationApiKeyAuthenticationFilter.sha256Hex(TEST_KEY),
+                ExternalApiKeyAuthenticationFilter.sha256Hex(TEST_KEY),
                 List.of()
         )).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void noConfiguredClientsMeansFeatureIsDisabled() throws Exception {
-        IntegrationApiKeyAuthenticationFilter disabled =
-                new IntegrationApiKeyAuthenticationFilter(new IntegrationClientProperties(null));
+        ExternalApiKeyAuthenticationFilter disabled =
+                new ExternalApiKeyAuthenticationFilter(new ExternalClientProperties(null));
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/integrations/notifications");
-        request.addHeader(IntegrationApiKeyAuthenticationFilter.HEADER, TEST_KEY);
+        request.addHeader(ExternalApiKeyAuthenticationFilter.HEADER, TEST_KEY);
 
         disabled.doFilter(request, new MockHttpServletResponse(), new MockFilterChain());
 

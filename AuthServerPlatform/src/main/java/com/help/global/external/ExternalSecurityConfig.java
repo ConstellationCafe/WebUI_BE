@@ -1,4 +1,4 @@
-package com.help.global.integration;
+package com.help.global.external;
 
 import com.help.global.config.security.JsonAccessDeniedHandler;
 import com.help.global.config.security.JsonAuthenticationEntryPoint;
@@ -20,14 +20,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * 매칭되어야 하므로 더 높은 우선순위를 준다. 서버 간 호출이므로 CORS를 열지 않는다.
  */
 @Configuration
-@EnableConfigurationProperties(IntegrationClientProperties.class)
-public class IntegrationSecurityConfig {
+@EnableConfigurationProperties(ExternalClientProperties.class)
+public class ExternalSecurityConfig {
 
     @Bean
     @Order(0)
     public SecurityFilterChain integrationChain(
             HttpSecurity http,
-            IntegrationClientProperties properties,
+            ExternalClientProperties properties,
             JsonAuthenticationEntryPoint authenticationEntryPoint,
             JsonAccessDeniedHandler accessDeniedHandler
     ) throws Exception {
@@ -37,7 +37,7 @@ public class IntegrationSecurityConfig {
         http.httpBasic(AbstractHttpConfigurer::disable);
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.addFilterBefore(
-                new IntegrationApiKeyAuthenticationFilter(properties),
+                new ExternalApiKeyAuthenticationFilter(properties),
                 UsernamePasswordAuthenticationFilter.class
         );
         http.authorizeHttpRequests(auth -> auth.anyRequest().hasAuthority(Authority.INTEGRATION));

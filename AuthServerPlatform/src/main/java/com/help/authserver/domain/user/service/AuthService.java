@@ -64,7 +64,7 @@
 //	public ApiResponse<?> refresh(final HttpServletRequest request, final HttpServletResponse response) {
 //		final User user = jwtUtil.extractRefreshTokenFromRequest(request)
 //			.filter(jwtUtil::isTokenValidate)
-//			.flatMap(jwtUtil::extractUsername)
+//			.flatMap(jwtUtil::extractDiscordId)
 //			.flatMap(userRepository::findWithProfileByUsername)
 //			.orElseThrow(() -> new CustomException(ErrorCode.INVALID_TOKEN));
 //

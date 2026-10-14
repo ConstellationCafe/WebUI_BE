@@ -104,17 +104,17 @@ public class AuthServerJwtAuthFilter extends OncePerRequestFilter {
 			final HttpServletResponse response,
 			final FilterChain filterChain
 	) throws ServletException, IOException {
-		// Access Token 검증 및 username 추출
-		final Optional<String> username = jwtUtil.extractAccessTokenFromRequest(request)
+		// Access Token 검증 및 discordId 추출
+		final Optional<String> discordId = jwtUtil.extractAccessTokenFromRequest(request)
 				.filter(jwtUtil::isTokenValidate)
-				.flatMap(jwtUtil::extractUsername);
-		if (username.isEmpty()) {
-			log.warn("유효하지 않은 Access Token 또는 username 추출 실패");
+				.flatMap(jwtUtil::extractDiscordId);
+		if (discordId.isEmpty()) {
+			log.warn("유효하지 않은 Access Token 또는 discordId 추출 실패");
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			return;
 		}
 		// 세션 존재 여부 및 유효성 검증
-		final Optional<SessionInfo> sessionInfo = sessionRepository.find(username.get())
+		final Optional<SessionInfo> sessionInfo = sessionRepository.find(discordId.get())
 				.filter(SessionInfo::isValid);
 		if (sessionInfo.isEmpty()) {
 			log.warn("유효하지 않은 세션 또는 세션 없음");
@@ -127,7 +127,7 @@ public class AuthServerJwtAuthFilter extends OncePerRequestFilter {
 		// 사용하지 않는다(saveAuthentication이 만드는 CustomUser의 authority는
 		// 실제 인가 판단에 쓰이지 않고, /api/**의 진짜 인가는 BackEndJwtAuthFilter가
 		// botId로 다시 조회해서 수행한다).
-		final Optional<DiscordUser> user = userRepository.findIdentityByDiscordID(username.get());
+		final Optional<DiscordUser> user = userRepository.findIdentityByDiscordId(discordId.get());
 		if (user.isEmpty()) {
 			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 			return;
@@ -139,10 +139,9 @@ public class AuthServerJwtAuthFilter extends OncePerRequestFilter {
 
 	private void saveAuthentication(final DiscordUser user) {
 		final UserDetails userDetails = CustomUser.of(
-			user.getUsername(),
+			user.getDiscordId(),
 			user.getPassword(),
-			user.getRoleName(),
-			null
+			user.getRoleName()
 		);
 		final Authentication authentication =
 			new UsernamePasswordAuthenticationToken(

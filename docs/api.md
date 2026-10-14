@@ -2,7 +2,7 @@
 
 > 상태: Active  
 > 적용 범위: WebUI_BE HTTP API (`develope` 기준)  
-> 마지막 검토일: 2026-10-04
+> 마지막 검토일: 2026-10-14
 > 상위 문서: [README](../README.md)
 
 이 문서는 저장소 안에서 API를 빠르게 찾기 위한 요약입니다. **request/response·권한·오류 계약의 기준은 Notion 명세**이며, API를 바꾸면 같은 작업에서 Notion 해당 페이지를 먼저 갱신하고 이 문서도 맞춥니다.
@@ -39,6 +39,19 @@ Notion `섀버 별자리 Cafe 개발 본부 / 명세서 / API 명세서`
 - 토큰: `AccessToken`(30초), `RefreshToken`(1일) HttpOnly 쿠키. 쿠키 `Secure`는 profile이 `prod`일 때만 켜집니다.
 - CORS: `/auth/**`, `/api/**` 모두 `FRONT_REDIRECT_URI` 하나만 허용, credential 허용. `/api/integrations/**`는 CORS를 열지 않습니다.
 - CSRF는 비활성화되어 있고 서버 HTTP session은 `STATELESS`입니다(세션 유효성은 Redis로 확인).
+
+### 사용자 식별자와 이름 용어 ([ADR-0008](adr/0008-user-identifier-naming.md))
+
+| 용어 | 값 | 예 |
+|---|---|---|
+| `discordId` | Discord 사용자 snowflake ID. 역할을 붙일 때는 `<역할>DiscordId` | `targetDiscordId`, `winnerDiscordId`, `recommenderDiscordId` |
+| `sk` | 채팅방 단위 회원 식별자 `(botId, discordId)`. 역할을 붙일 때는 `<역할>Sk` | `mainTeacherSk`, `memberSks` |
+| `displayName` | 서버 표시 이름(`DiscordUsers.username` 컬럼, 봇이 `member.display_name`을 기록). 역할을 붙일 때는 `<역할>DisplayName` | `targetDisplayName`, `winnerDisplayName` |
+| `discordUsername`, `globalName` | Discord 계정 username과 전역 표시 이름(Discord API 값) | `/auth/me` |
+
+- 사람이 아닌 대상의 이름(Academy, 과목, 채널, 게시판)은 `name`을 그대로 씁니다.
+- JWT의 사용자 claim은 `discordId`입니다. 배포 전에 발급된 RefreshToken을 위해 서버는 이전 claim `username`도 읽습니다(RefreshToken 수명 1일 이후 제거).
+- **호환 기간**: 2026-10-14 변경에서 바뀐 응답 필드는 이전 이름도 함께 내려주고, 요청은 이전 이름도 받습니다. FE 전환 배포 뒤 이전 이름을 제거합니다. 대응표는 ADR-0008에 있습니다.
 
 ### 응답과 오류
 
@@ -113,7 +126,7 @@ Notion `섀버 별자리 Cafe 개발 본부 / 명세서 / API 명세서`
 | `GET` | `/` | 인증 | Academy 목록 |
 | `GET` | `/{academyId}/classes` | 인증 | 반 목록 |
 | `GET` | `/{academyId}/subjects` | 인증 | 과목 목록 |
-| `GET` | `/lesson-records?date=&time=&subject=&teacherId=&academyId=&classId=` | 교사 이상 | 수업 기록 목록 (**배열 직접 반환**) |
+| `GET` | `/lesson-records?date=&time=&subject=&teacherSk=&academyId=&classId=` | 교사 이상 | 수업 기록 목록 (**배열 직접 반환**) |
 | `POST` | `/lesson-record` | 교사 이상 | 수업 기록 작성 |
 | `PUT` | `/lesson-record/{id}` | ADMIN / 학원장 / 주 담당 교사 | 수업 기록 수정 |
 | `DELETE` | `/lesson-record/{id}` | ADMIN / 학원장 / 주 담당 교사 | 수업 기록 삭제 |
@@ -124,7 +137,7 @@ Notion `섀버 별자리 Cafe 개발 본부 / 명세서 / API 명세서`
 | `GET` | `/teachers/options?academyId=&classId=` | 인증 | 강사 현황 필터 옵션 |
 | `GET` | `/teachers/{academyId}/classes/{classId}` | 해당 Academy 구성원 | 반 강사 목록 |
 
-Academy 권한은 채팅방 단위 식별자 `sk`(=`(botId, discordId)`)로 판정합니다. `academyId` 없이 학생·강사 현황을 조회하면 "어느 Academy에서든" 해당 역할인지 확인합니다.
+Academy 권한은 채팅방 단위 식별자 `sk`(=`(botId, discordId)`)로 판정합니다. 학생·강사 응답의 회원 필드는 `sk, discordId, displayName`이며, 수업 기록 작성 본문은 `mainTeacherSk`, `coTeacherSks`, `memberSks`(모두 SK), 목록 응답의 담당 교사 이름은 `mainTeacherDisplayName`입니다. `academyId` 없이 학생·강사 현황을 조회하면 "어느 Academy에서든" 해당 역할인지 확인합니다.
 
 ### ChatBot 저장소 (`/api/repository`)
 
@@ -137,6 +150,8 @@ Academy 권한은 채팅방 단위 식별자 `sk`(=`(botId, discordId)`)로 판�
 | Menu | `GET` / `POST` / `POST` | `/menu/list`, `/menu/save_all`, `/menu/delete_all` | 메뉴 추천 |
 | Music | `GET` / `POST` / `POST` | `/music/list`, `/music/save_all`, `/music/delete_all` | 음악 추천 |
 
+- 추천인·교사는 API에서 `recommenderDiscordId`, `teacherDiscordId`(Discord ID)이고, DB에는 stored procedure가 SK로 바꿔 저장합니다. 목록 검색·정렬 컬럼 이름(`recommender`, `teacher`)은 metadata 테이블 값을 그대로 씁니다.
+
 ### 포인트
 
 | Method | Endpoint | 권한 | 설명 |
@@ -148,7 +163,7 @@ Academy 권한은 채팅방 단위 식별자 `sk`(=`(botId, discordId)`)로 판�
 | `PATCH` | `/api/admin/points/members/{discordId}/logs/{originalAmount}?at={timestamp}` | ADMIN | 내역 금액·설명 수정 |
 | `DELETE` | `/api/admin/points/members/{discordId}/logs/{originalAmount}?at={timestamp}` | ADMIN | 내역 삭제와 잔액 롤백 |
 
-- 관리자 API는 `state='재적'`인 Discord 회원만 대상으로 합니다. 이전 경로 `/api/repository/membership/admin/points/**`는 제거되었습니다(404).
+- 회원 응답: `discordId, displayName, state, coin`. 관리자 API는 `state='재적'`인 Discord 회원만 대상으로 합니다. 이전 경로 `/api/repository/membership/admin/points/**`는 제거되었습니다(404).
 - 거래 본문: `type`(`DEPOSIT`|`WITHDRAW`), 양수 `amount`, 255자 이하 `description`. 잔액 변경과 `PayLog` 기록은 하나의 transaction이며, 잔액보다 큰 출금은 409입니다.
 - 내역 수정은 `amount`, `description` 중 하나 이상. 금액 수정 시 `새 금액 - 기존 금액`만큼 잔액을 보정하고, 삭제 시 해당 금액만큼 잔액을 롤백합니다.
 - 입·출금이 성공하면 대상 회원에게 `POINT` 개인 알림이 같은 transaction에서 발행됩니다.
@@ -174,7 +189,7 @@ Academy 권한은 채팅방 단위 식별자 `sk`(=`(botId, discordId)`)로 판�
 - 부여 본문: `requestId`(UUID), `targetDiscordId`, `channelId`, 선택 `channelName`, `reason`, `score=1`, 선택 `occurredAt`. 발생 시각을 생략하면 서버 현재 UTC 시각, 미래 시각은 400입니다. 같은 `requestId`·같은 내용은 현재 상세(이력 첫 페이지)를 반환하고, 다른 내용은 409입니다.
 - 이력 쿼리: `channelId`, `discordId`(정확히 일치), `sort=OCCURRED_AT_DESC|OCCURRED_AT_ASC`, `page`, `size`. 같은 발생 시각은 `id`로 정렬합니다. 순위 쿼리의 `discordId`는 부분 검색입니다.
 - 취소 본문: 필수 `reason`(255자 이하). 이미 취소한 내역을 다시 취소하면 기존 감사 정보를 유지합니다. 다른 길드의 ID나 비재적 대상은 404입니다.
-- 대상 상세: `discordId, username, state, cumulativeScore30d, history`. 이력 item: `penaltyId, channelId, channelName, targetDiscordId, targetUsername, reason, score, issuerDiscordId, occurredAt, createdAt, status, targetCumulativeScore30d, canceledByDiscordId, canceledAt, cancellationReason`. 순위 item: `discordId, username, cumulativeScore30d, penaltyCount30d, lastOccurredAt`.
+- 대상 상세: `discordId, displayName, state, cumulativeScore30d, history`. 이력 item: `penaltyId, channelId, channelName, targetDiscordId, targetDisplayName, reason, score, issuerDiscordId, occurredAt, createdAt, status, targetCumulativeScore30d, canceledByDiscordId, canceledAt, cancellationReason`. 순위 item: `discordId, displayName, cumulativeScore30d, penaltyCount30d, lastOccurredAt`.
 
 ### 알림 ([ADR-0004](adr/0004-notification.md))
 
@@ -218,7 +233,7 @@ WebUI_BE는 로그인한 채팅방(`botId`)의 대회 게시판에 **봇 계정�
 | `GET` | `/boards` | 게시판 목록 `[{key, channelId, name, joinable}]`. `joinable`은 참가 이모지 등이 자동 생성되는 게시판(`inner_board`) |
 | `POST` | `/notices/preview` | 게시하지 않고 검증과 평문 조립만 함 → `{content}` |
 | `POST` | `/notices` | `{requestId, boardKey, notice}` 게시 → `{boardKey, channelId, messageId, messageUrl, content}` |
-| `POST` | `/winners` | 우승 칭호 부여 `{competitionName, version, winnerDiscordId, acquisition}` → `{competitionName, version, winnerDiscordId, winnerName, acquisition}` |
+| `POST` | `/winners` | 우승 칭호 부여 `{competitionName, version, winnerDiscordId, acquisition}` → `{competitionName, version, winnerDiscordId, winnerDisplayName, acquisition}` |
 | `GET` | `/winners?page=1&size=20` | 현재 채팅방 칭호 부여 이력(대회 날짜 최신순) |
 
 - `notice` 본문: `title`(100자, 큰따옴표 불가), `participantWay`, `format`, `registrationStart`, `registrationEnd`, `eventStart`(UTC ISO-8601 `2026-10-02T13:00:00Z`. 게시글에는 한국 시간으로 분 단위까지 적음), 선택 `prizes[{rank, content}]`, 선택 `extraFields[{key, value}]`(각 10개 이하).

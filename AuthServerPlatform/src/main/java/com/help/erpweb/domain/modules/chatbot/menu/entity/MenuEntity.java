@@ -17,9 +17,10 @@ public class MenuEntity {
     private String mnValue;
 
     @Column(name = "recommender", nullable = false)
-    private String recommender;
+    // DB에는 추천인 SK가 저장된다(API의 recommenderDiscordId와 다름).
+    private String recommenderSk;
 
-    public static MenuEntity of(String mnValue, String recommender) {
-        return new MenuEntity(mnValue, recommender);
+    public static MenuEntity of(String mnValue, String recommenderSk) {
+        return new MenuEntity(mnValue, recommenderSk);
     }
 }

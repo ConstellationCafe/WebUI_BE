@@ -6,7 +6,7 @@ import java.util.List;
 
 public record DiscordUserDto (
     String discordId,
-    String username,
+    String discordUsername,
     String globalName,
     String avatar,
     List<DiscordGuildDto> guilds

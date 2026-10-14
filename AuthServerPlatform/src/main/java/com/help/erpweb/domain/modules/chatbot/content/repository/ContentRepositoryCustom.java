@@ -12,7 +12,7 @@ public interface ContentRepositoryCustom {
                                  String cnValue);
 
     Page<ContentProjection> findPage(
-            String recommender,
+            String recommenderSk,
             int page,
             int size,
             String searchColumn,

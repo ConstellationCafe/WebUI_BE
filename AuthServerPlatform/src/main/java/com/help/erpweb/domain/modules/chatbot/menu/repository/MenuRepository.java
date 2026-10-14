@@ -18,11 +18,11 @@ public interface MenuRepository extends JpaRepository<MenuEntity, Long>, GlobalR
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = """
         DELETE FROM ChatBot.RecommendMenu
-        WHERE recommender = :recommender
+        WHERE recommender = :recommenderSk
         AND mn_value IN (:mnValues)
         """, nativeQuery = true)
     int deleteByMnValue(
-        @Param("recommender") String recommender,
+        @Param("recommenderSk") String recommenderSk,
         @Param("mnValues") List<String> mnValues
     );
 }

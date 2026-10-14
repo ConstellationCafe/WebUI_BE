@@ -12,7 +12,7 @@ public interface MusicRepositoryCustom {
                              String videoId);
 
     Page<MusicProjection> findPage(
-            String recommender,
+            String recommenderSk,
             int page,
             int size,
             String searchColumn,

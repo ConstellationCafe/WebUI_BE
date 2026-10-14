@@ -12,7 +12,7 @@ public interface LearningRepositoryCustom {
                                  String lnValue);
 
     Page<LearningProjection> findPage(
-            String teacher,
+            String teacherSk,
             int page,
             int size,
             String searchColumn,
