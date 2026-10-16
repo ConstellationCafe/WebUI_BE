@@ -7,9 +7,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.help.erpweb.domain.academy.repository.AcademyClassRepository;
-import com.help.erpweb.domain.academy.repository.AcademyRepository;
-import com.help.erpweb.domain.academy.repository.TeacherRepository;
+import com.help.erpweb.domain.modules.academy.repository.AcademyClassRepository;
+import com.help.erpweb.domain.modules.academy.repository.AcademyRepository;
+import com.help.erpweb.domain.modules.academy.repository.TeacherRepository;
+import com.help.erpweb.domain.modules.academy.service.TeacherStatusService;
 import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;
 import com.help.global.discord.identity.DiscordUserRepository;
 import java.util.List;

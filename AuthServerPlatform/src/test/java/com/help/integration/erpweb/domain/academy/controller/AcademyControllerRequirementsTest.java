@@ -4,7 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
-import com.help.erpweb.domain.academy.service.AcademyService;
+import com.help.erpweb.domain.modules.academy.controller.AcademyController;
+import com.help.erpweb.domain.modules.academy.service.AcademyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.Authentication;
