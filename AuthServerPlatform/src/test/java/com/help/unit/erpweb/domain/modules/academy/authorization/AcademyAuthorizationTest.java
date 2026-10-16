@@ -1,4 +1,4 @@
-package com.help.erpweb.domain.academy.authorization;
+package com.help.erpweb.domain.modules.academy.authorization;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
-import com.help.erpweb.domain.modules.academy.authorization.AcademyAuthorization;
 import com.help.erpweb.domain.modules.academy.repository.AcademyMemberRepository;
 import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;
 import com.help.global.chat.ChatUser;

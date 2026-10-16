@@ -1,4 +1,4 @@
-package com.help.erpweb.domain.academy.service;
+package com.help.erpweb.domain.modules.academy.service;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,7 +11,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.help.erpweb.domain.modules.academy.service.LessonRecordService;
 import com.help.global.chat.ChatUser;
 import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.global.jwt.CustomUser;

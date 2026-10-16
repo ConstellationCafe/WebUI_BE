@@ -1,4 +1,4 @@
-package com.help.erpweb.domain.academy.service;
+package com.help.erpweb.domain.modules.academy.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -9,49 +9,48 @@ import static org.mockito.Mockito.when;
 
 import com.help.erpweb.domain.modules.academy.repository.AcademyClassRepository;
 import com.help.erpweb.domain.modules.academy.repository.AcademyRepository;
-import com.help.erpweb.domain.modules.academy.repository.TeacherRepository;
-import com.help.erpweb.domain.modules.academy.service.TeacherStatusService;
+import com.help.erpweb.domain.modules.academy.repository.StudentRepository;
 import com.help.erpweb.domain.modules.erp.point.repository.MembershipRepository;
 import com.help.global.discord.identity.DiscordUserRepository;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class TeacherStatusServiceTest {
+class StudentStatusServiceTest {
 	private AcademyRepository academyRepository;
 	private AcademyClassRepository classRepository;
-	private TeacherRepository teacherRepository;
-	private TeacherStatusService service;
+	private StudentRepository studentRepository;
+	private StudentStatusService service;
 
 	@BeforeEach
 	void setUp() {
 		academyRepository = mock(AcademyRepository.class);
 		classRepository = mock(AcademyClassRepository.class);
-		teacherRepository = mock(TeacherRepository.class);
-		service = new TeacherStatusService(
+		studentRepository = mock(StudentRepository.class);
+		service = new StudentStatusService(
 				academyRepository,
 				classRepository,
-				teacherRepository,
+				studentRepository,
 				mock(MembershipRepository.class),
 				mock(DiscordUserRepository.class)
 		);
 	}
 
 	@Test
-	void statusOptionsIncludeSupportedSubjectsAndSkipUnscopedTeacherQueries() {
+	void statusOptionsIncludeSupportedSubjectsAndSkipUnscopedClassQueries() {
 		when(academyRepository.findAll()).thenReturn(List.of());
 
 		var response = service.getStatusOptions(null, null);
 
 		assertThat(response).isNotNull();
 		verify(academyRepository).findAll();
-		verifyNoInteractions(classRepository, teacherRepository);
+		verifyNoInteractions(classRepository, studentRepository);
 	}
 
 	@Test
-	void rejectsUnknownStatusBeforeQueryingTeachers() {
-		assertThatThrownBy(() -> service.getTeacherStatuses(1, 2, null, "UNKNOWN", 1, 20))
+	void rejectsUnknownStatusBeforeQueryingStudents() {
+		assertThatThrownBy(() -> service.getStudentStatuses(1, 2, null, "UNKNOWN", 1, 20))
 				.isInstanceOf(IllegalArgumentException.class);
-		verifyNoInteractions(teacherRepository);
+		verifyNoInteractions(studentRepository);
 	}
 }

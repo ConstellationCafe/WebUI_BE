@@ -33,7 +33,7 @@
 | `authserver.api` | Discord OAuth/API 호출(`DiscordAPI`) |
 | `authserver.domain.user` | `/auth/**` controller, 로그인·세션(`DiscordLoginService`, `AuthSessionService`), Redis 세션 repository |
 | `authserver.security` | `/auth/**` 보안 체인(`AuthServerSecurityConfig`)과 전용 JWT 필터 |
-| `erpweb.domain.academy` | Academy API와 권한 판정(`AcademyAuthorization`, bean 이름 `academyAuth`) |
+| `erpweb.domain.modules.academy` | Academy API와 권한 판정(`AcademyAuthorization`, bean 이름 `academyAuth`) |
 | `erpweb.domain.modules.chatbot.{content,learning,menu,music}` | 추천 저장소 API, stored procedure 호출 |
 | `erpweb.domain.modules.erp.point` | 본인 포인트 내역(`PointController`), 관리자 포인트(`AdminPointController`), 공통 `PointService` |
 | `erpweb.domain.modules.erp.penalty` | 벌점 API (ADR-0003) |

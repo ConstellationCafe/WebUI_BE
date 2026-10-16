@@ -1,4 +1,4 @@
-package com.help.erpweb.domain.academy.service;
+package com.help.erpweb.domain.modules.academy.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -9,7 +9,6 @@ import com.help.erpweb.domain.modules.academy.repository.AcademyMemberRepository
 import com.help.erpweb.domain.modules.academy.repository.AcademyRepository;
 import com.help.erpweb.domain.modules.academy.repository.StudentRepository;
 import com.help.erpweb.domain.modules.academy.repository.TeacherRepository;
-import com.help.erpweb.domain.modules.academy.service.AcademyService;
 import com.help.global.guild.subscriber.ERPSubscriberRepository;
 import com.help.global.discord.identity.DiscordUserRepository;
 import com.help.erpweb.domain.config.repository.ModuleConfigRepository;

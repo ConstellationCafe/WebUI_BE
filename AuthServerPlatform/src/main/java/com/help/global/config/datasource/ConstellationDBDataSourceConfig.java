@@ -28,7 +28,7 @@ import java.util.Map;
 	basePackages = {
 		"com.help.global.discord.identity",
 		"com.help.erpweb.domain.notification.repository",
-		"com.help.erpweb.domain.academy.repository",
+		"com.help.erpweb.domain.modules.academy.repository",
 		"com.help.erpweb.domain.modules.chatbot.content.repository",
 		"com.help.erpweb.domain.modules.chatbot.learning.repository",
 		"com.help.erpweb.domain.modules.erp.point.repository",
@@ -89,7 +89,7 @@ public class ConstellationDBDataSourceConfig {
 			.packages(
 				"com.help.global.discord.identity",
 				"com.help.erpweb.domain.notification.entity",
-				"com.help.erpweb.domain.academy.entity",
+				"com.help.erpweb.domain.modules.academy.entity",
 				"com.help.erpweb.domain.modules.chatbot.content.entity",
 				"com.help.erpweb.domain.modules.chatbot.learning.entity",
 				"com.help.erpweb.domain.modules.erp.point.entity",
