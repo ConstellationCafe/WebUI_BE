@@ -1,0 +1,91 @@
+package com.help.erpweb.domain.modules.academy.controller;
+
+import com.help.erpweb.domain.modules.academy.dto.request.LessonRecordCreateRequest;
+import com.help.erpweb.domain.modules.academy.dto.request.LessonRecordUpdateRequest;
+import com.help.erpweb.domain.modules.academy.dto.response.LessonRecordSummaryResponse;
+import com.help.erpweb.domain.modules.academy.service.LessonRecordService;
+import com.help.global.common.response.ApiResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDate;
+import java.util.List;
+
+@Slf4j
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/academy")
+public class LessonRecordController {
+    private final LessonRecordService lessonRecordService;
+
+    @PreAuthorize("@academyAuth.isTeacherOrAbove(authentication)")
+    @GetMapping("/lesson-records")
+    public List<LessonRecordSummaryResponse> getLessonRecords(
+            Authentication authentication,
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) String time,
+            @RequestParam(required = false) String subject,
+            @RequestParam(required = false) String teacherSk,
+            // ADR-0008: 이전 이름. FE 전환 후 제거한다.
+            @RequestParam(name = "teacherId", required = false) String legacyTeacherId,
+            @RequestParam(required = false) Integer academyId,
+            @RequestParam(required = false) Integer classId
+    ) {
+        final String effectiveTeacherSk = teacherSk != null ? teacherSk : legacyTeacherId;
+        log.info(
+                "[GET] /api/academy/lesson-records " +
+                        "academyId={}, classId={}, date={}, time={}, subject={}, teacherSk={}",
+                academyId, classId, date, time, subject, effectiveTeacherSk
+        );
+        return lessonRecordService.getLessonRecords(
+                authentication,
+                date,
+                time,
+                subject,
+                effectiveTeacherSk,
+                academyId,
+                classId
+        );
+    }
+
+    @PreAuthorize("@academyAuth.isTeacherOrAbove(authentication)")
+    @PutMapping("/lesson-record/{id}")
+    public ApiResponse<?> updateLessonRecord(
+            Authentication authentication,
+            @PathVariable Long id,
+            @RequestBody LessonRecordUpdateRequest request
+    ) {
+        lessonRecordService.updateLessonRecord(authentication, id, request);
+        return ApiResponse.success(null);
+    }
+
+    @PreAuthorize("@academyAuth.isTeacherOrAbove(authentication)")
+    @DeleteMapping("/lesson-record/{id}")
+    public ApiResponse<?> deleteLessonRecord(
+            Authentication authentication,
+            @PathVariable Long id
+    ) {
+        lessonRecordService.deleteLessonRecord(authentication, id);
+        return ApiResponse.success(null);
+    }
+
+    @PreAuthorize("@academyAuth.isTeacherOrAbove(authentication)")
+    @PostMapping("/lesson-record")
+    public ApiResponse<?> lessonRecord(
+            @RequestBody LessonRecordCreateRequest request
+    ) {
+        log.info(
+                "[POST] /api/academy/lesson-record " +
+                        "academyId={}, className={}, subject={}, educationDate={}",
+                request.academyId(),
+                request.className(),
+                request.subject(),
+                request.educationDate()
+        );
+        lessonRecordService.createLessonRecord(request);
+        return ApiResponse.success(null);
+    }
+}
