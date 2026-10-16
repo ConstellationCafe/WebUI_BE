@@ -1,5 +1,7 @@
 package com.help.erpweb.domain.notification.service;
 
+import com.help.erpweb.domain.notification.dto.response.NotificationPublishResponse;
+
 /**
  * WebUI_BE 내부 기능이 알림을 발행하는 함수 수준 계약.
  * <p>
@@ -8,5 +10,5 @@ package com.help.erpweb.domain.notification.service;
  * 대상 회원이 현재 채팅방의 재적 회원이 아니면 {@code NotificationTargetNotFoundException}을 던진다.
  */
 public interface NotificationPublisher {
-    NotificationPublishResult publish(NotificationCommand command);
+    NotificationPublishResponse publish(NotificationCommand command);
 }

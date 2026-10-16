@@ -1,10 +1,10 @@
 package com.help.erpweb.domain.notification.controller;
 
 import com.help.erpweb.domain.notification.dto.request.IntegrationNotificationPublishRequest;
+import com.help.erpweb.domain.notification.dto.response.NotificationPublishResponse;
 import com.help.erpweb.domain.notification.entity.NotificationSource;
 import com.help.erpweb.domain.notification.exception.NotificationScopeDeniedException;
 import com.help.erpweb.domain.notification.service.NotificationCommand;
-import com.help.erpweb.domain.notification.service.NotificationPublishResult;
 import com.help.erpweb.domain.notification.service.NotificationService;
 import com.help.global.common.response.ApiResponse;
 import com.help.global.external.ExternalClient;
@@ -30,7 +30,7 @@ public class IntegrationNotificationController {
     private final NotificationService notificationService;
 
     @PostMapping
-    public ApiResponse<NotificationPublishResult> publish(
+    public ApiResponse<NotificationPublishResponse> publish(
             @AuthenticationPrincipal ExternalClient client,
             @Valid @RequestBody IntegrationNotificationPublishRequest request
     ) {

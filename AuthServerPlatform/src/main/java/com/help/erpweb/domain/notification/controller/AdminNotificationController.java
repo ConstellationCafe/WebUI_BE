@@ -2,9 +2,9 @@ package com.help.erpweb.domain.notification.controller;
 
 import com.help.erpweb.domain.notification.dto.request.AdminNotificationPublishRequest;
 import com.help.erpweb.domain.notification.dto.response.AdminNotificationPageResponse;
+import com.help.erpweb.domain.notification.dto.response.NotificationPublishResponse;
 import com.help.erpweb.domain.notification.entity.NotificationSource;
 import com.help.erpweb.domain.notification.service.NotificationCommand;
-import com.help.erpweb.domain.notification.service.NotificationPublishResult;
 import com.help.erpweb.domain.notification.service.NotificationService;
 import com.help.global.common.response.ApiResponse;
 import com.help.global.guild.GuildContext;
@@ -38,7 +38,7 @@ public class AdminNotificationController {
     private final NotificationService notificationService;
 
     @PostMapping
-    public ApiResponse<NotificationPublishResult> publish(
+    public ApiResponse<NotificationPublishResponse> publish(
             @AuthenticationPrincipal CustomUser user,
             @Valid @RequestBody AdminNotificationPublishRequest request
     ) {

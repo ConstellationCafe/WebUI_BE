@@ -2,6 +2,7 @@ package com.help.erpweb.domain.notification.service;
 
 import com.help.erpweb.domain.notification.dto.response.AdminNotificationPageResponse;
 import com.help.erpweb.domain.notification.dto.response.AdminNotificationResponse;
+import com.help.erpweb.domain.notification.dto.response.NotificationPublishResponse;
 import com.help.erpweb.domain.notification.dto.response.NotificationResponse;
 import com.help.erpweb.domain.notification.dto.response.NotificationSliceResponse;
 import com.help.erpweb.domain.notification.dto.response.NotificationUnreadResponse;
@@ -73,7 +74,7 @@ public class NotificationService implements NotificationPublisher {
             transactionManager = TX,
             noRollbackFor = {NotificationTargetNotFoundException.class, NotificationRequestConflictException.class}
     )
-    public NotificationPublishResult publish(NotificationCommand command) {
+    public NotificationPublishResponse publish(NotificationCommand command) {
         if (command.targetType() == NotificationTargetType.USER) {
             discordUserRepository.findByBotIdAndDiscordId(command.botId(), command.targetDiscordId())
                     .orElseThrow(NotificationTargetNotFoundException::new);
@@ -186,17 +187,17 @@ public class NotificationService implements NotificationPublisher {
         );
     }
 
-    private NotificationPublishResult created(Notification notification, NotificationCommand command) {
+    private NotificationPublishResponse created(Notification notification, NotificationCommand command) {
         eventPublisher.publishEvent(new NotificationCreatedEvent(NotificationMessage.from(notification)));
         Counter.builder("notification.published")
                 .tag("source", command.source().name())
                 .tag("target", command.targetType().name())
                 .register(meterRegistry)
                 .increment();
-        return new NotificationPublishResult(AdminNotificationResponse.of(notification), true);
+        return new NotificationPublishResponse(AdminNotificationResponse.of(notification), true);
     }
 
-    private NotificationPublishResult replay(Notification notification, NotificationCommand command) {
+    private NotificationPublishResponse replay(Notification notification, NotificationCommand command) {
         boolean sameContent = notification.hasSameContent(
                 command.targetType(),
                 command.targetDiscordId(),
@@ -208,7 +209,7 @@ public class NotificationService implements NotificationPublisher {
         if (!sameContent) {
             throw new NotificationRequestConflictException();
         }
-        return new NotificationPublishResult(AdminNotificationResponse.of(notification), false);
+        return new NotificationPublishResponse(AdminNotificationResponse.of(notification), false);
     }
 
     private Optional<Notification> findByKey(NotificationCommand command) {
