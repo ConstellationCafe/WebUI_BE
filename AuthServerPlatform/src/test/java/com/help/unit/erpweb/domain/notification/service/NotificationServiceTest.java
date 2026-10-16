@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.help.erpweb.domain.notification.dto.response.NotificationPublishResponse;
 import com.help.erpweb.domain.notification.dto.response.NotificationResponse;
 import com.help.erpweb.domain.notification.dto.response.NotificationSliceResponse;
 import com.help.erpweb.domain.notification.dto.response.NotificationUnreadResponse;
@@ -113,7 +114,7 @@ class NotificationServiceTest {
                     return saved;
                 });
 
-        NotificationPublishResult result = service.publish(command);
+        NotificationPublishResponse result = service.publish(command);
 
         assertThat(result.created()).isTrue();
         assertThat(result.notification().id()).isEqualTo(7L);
@@ -175,7 +176,7 @@ class NotificationServiceTest {
                 BOT, NotificationSource.ADMIN, "42", "req-1"))
                 .thenReturn(Optional.empty(), Optional.of(row));
 
-        NotificationPublishResult result = service.publish(command);
+        NotificationPublishResponse result = service.publish(command);
 
         assertThat(result.created()).isTrue();
         assertThat(result.notification().id()).isEqualTo(11L);
@@ -195,7 +196,7 @@ class NotificationServiceTest {
                 BOT, NotificationSource.ADMIN, "42", "req-1"))
                 .thenReturn(Optional.of(original));
 
-        NotificationPublishResult result = service.publish(command);
+        NotificationPublishResponse result = service.publish(command);
 
         assertThat(result.created()).isFalse();
         assertThat(result.notification().id()).isEqualTo(11L);
@@ -226,7 +227,7 @@ class NotificationServiceTest {
                 BOT, NotificationSource.ADMIN, "42", "req-1"))
                 .thenReturn(Optional.empty(), Optional.of(winner));
 
-        NotificationPublishResult result = service.publish(command);
+        NotificationPublishResponse result = service.publish(command);
 
         assertThat(result.created()).isFalse();
         assertThat(result.notification().id()).isEqualTo(12L);
