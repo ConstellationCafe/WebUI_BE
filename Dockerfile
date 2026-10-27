@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jdk-jammy AS builder
+FROM eclipse-temurin:22-jdk-jammy AS builder
 
 WORKDIR /workspace
 COPY AuthServerPlatform/ ./
@@ -7,7 +7,7 @@ RUN sed -i 's/\r$//' gradlew \
     && chmod +x gradlew \
     && sh ./gradlew clean bootJar --no-daemon
 
-FROM eclipse-temurin:17-jre-jammy
+FROM eclipse-temurin:22-jre-jammy
 
 RUN groupadd --system app \
     && useradd --system --gid app --home-dir /app app
